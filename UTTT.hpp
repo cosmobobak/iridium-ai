@@ -390,7 +390,9 @@ class State {
         const std::vector<Move> legals = legal_moves();
         std::vector<Move> shiftedLegals;
         std::transform(legals.begin(), legals.end(), std::back_inserter(shiftedLegals), [](Move n) { return n + 1; });
-        std::cout << "Your legal moves are: " << string(shiftedLegals) << "\n--> ";
+        std::cout << "Your legal moves are: "; 
+        showvec(shiftedLegals);
+        std::cout << "\n--> ";
         Move pos;
         std::cin >> pos;
         while (std::none_of(legals.begin(), legals.end(), [pos](Move m) { return m == (pos - 1); })) {

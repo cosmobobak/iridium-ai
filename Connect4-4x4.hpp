@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <array>
 #include <iostream>
+#include <numeric>
 #include <vector>
 
 #include "accelerations.hpp"

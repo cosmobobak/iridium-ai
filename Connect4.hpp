@@ -18,6 +18,7 @@ using Bitboard = uint_fast64_t;
 class State {
    public:
     std::array<std::array<Bitrow, 6>, 2> bbnode = {0};
+    Bitboard node[2] = {0};
     int_fast16_t movecount = 0;
     int_fast32_t nodes = 0;
     std::vector<Move> movestack;
@@ -34,17 +35,17 @@ class State {
         return bbnode[0][r] | bbnode[1][r];
     }
 
-    // auto XXunion_bb() const -> Bitboard {
-    //     return node[0] | node[1];
-    // }
+    auto XXunion_bb() const -> Bitboard {
+        return node[0] | node[1];
+    }
 
     auto is_full() const -> bool {
         return union_bb(0) == 0b1111111;
     }
 
-    // auto XXis_full() const -> bool {
-    //     return XXunion_bb() & 0b111111111 == 0b111111111;
-    // }
+    auto XXis_full() const -> bool {
+        return XXunion_bb() & 0b1111111 == 0b1111111;
+    }
 
     void show() const {
         int_fast8_t row, col;
@@ -71,14 +72,14 @@ class State {
         return bbnode[0][0] & (1 << col) || bbnode[1][0] & (1 << col);
     }
 
-    // auto XXpos_filled(const int_fast8_t row, const int_fast8_t col) const -> bool {
-    //     const int_fast16_t i = (row + 1) * 7 + col;
-    //     return node[0] & (1 << i) || node[1] & (1 << i);
-    // }
+    auto XXpos_filled(const int_fast8_t row, const int_fast8_t col) const -> bool {
+        const int_fast16_t i = (row + 1) * 7 + col;
+        return node[0] & (1 << i) || node[1] & (1 << i);
+    }
 
-    // auto XXpos_filled(const int_fast16_t i) const -> bool {
-    //     return node[0] & (1 << i) || node[1] & (1 << i);
-    // }
+    auto XXpos_filled(const int_fast16_t i) const -> bool {
+        return node[0] & (1 << i) || node[1] & (1 << i);
+    }
 
     auto player_at(const int_fast8_t row, const int_fast8_t col) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
     {

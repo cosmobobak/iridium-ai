@@ -8,7 +8,8 @@ namespace RawTree {
 
 constexpr auto GAME_SOLVABLE = true;
 constexpr auto gameexpfactor = 5;
-const std::array<int, 12> NODE_VALUES = {8, 8, 7, 8, 5, 6, 7, 5, 8, 48, 1, 7};
+const std::array<int, 12> HEURISTIC_VALUES = {8, 8, 7, 8, 5, 6, 7, 5, 8, 48, 1, 7};
+const std::array<int, 12> EVALS = {0, 0, 0, 0, 1, 0, 0, -1, 1, 1, -1, -1};
 const std::array<int, 12> CHILD_COUNT = {2, 1, 3, 2, 0, 2, 1, 0, 0, 0, 0, 0};
 const std::array<int, 6> TERMINAL_NODES = {4, 7, 8, 9, 10, 11};
 using Move = int_fast8_t;
@@ -42,12 +43,16 @@ class State {
         turn = -turn;
     }
 
+    inline auto heuristic_value() const->int_fast8_t {
+        return HEURISTIC_VALUES[node];
+    }
+
     inline auto evaluate() const -> int_fast8_t {
-        return NODE_VALUES[node];
+        return EVALS[node];
     }
 
     void show() const {
-        std::cout << node;
+        std::cout << "You are on node " << node << "\n";
     }
 
     auto is_game_over() const -> bool {
@@ -91,23 +96,17 @@ class State {
         play(moves[rand() % moves.size()]);
     }
 
-    auto heuristic_value() const -> int_fast8_t {
-        return 0;
-    }
-
     auto get_player_move() -> Move {
         const std::vector<Move> legals = legal_moves();
-        std::vector<Move> shiftedLegals;
-        std::transform(legals.begin(), legals.end(), std::back_inserter(shiftedLegals), [](Move n) { return n + 1; });
-        std::cout << "Your legal moves are: " << string(shiftedLegals) << "\n--> ";
+        std::cout << "Your legal moves are: " << string(legals) << "\n--> ";
         Move pos;
         std::cin >> pos;
-        while (std::none_of(legals.begin(), legals.end(), [pos](Move m) { return m == (pos - 1); })) {
+        while (std::none_of(legals.begin(), legals.end(), [pos](Move m) { return m == pos; })) {
             std::cout << "invalid move.\n";
             show();
             std::cin >> pos;
         }
-        return pos - 1;
+        return pos;
     }
 };
 

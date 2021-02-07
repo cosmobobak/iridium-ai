@@ -1,6 +1,3 @@
-// iridium-ai.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #pragma GCC optimize("Ofast", "unroll-loops", "inline")
 #pragma GCC target("avx")
 
@@ -16,19 +13,21 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Connect4.hpp"
 #include "Connect4-4x4.hpp"
-#include "TicTacToe.hpp"
+#include "Connect4.hpp"
 #include "Gomoku.hpp"
 #include "RawTree.hpp"
+#include "TicTacToe.hpp"
 #include "UTTT.hpp"
 
-using namespace RawTree;
+// iridium-ai.cpp : This file contains the 'main' function. Program execution begins and ends there.
+
+using namespace UTTT;
 
 constexpr auto EXP_FACTOR = gameexpfactor;
 
 class TreeNode {
-public:
+   public:
     int_fast32_t winScore = 0;
     int_fast32_t visits = 0;
     int_fast8_t playerNo;
@@ -162,44 +161,43 @@ public:
 };
 
 namespace UCT {
-    inline auto uct_value(
-        const double totalVisit,
-        const double nodeWinScore,
-        const double nodeVisit) -> double {
-        if (nodeVisit == 0) {
-            return INT_MAX;
-        }
-        return (nodeWinScore / nodeVisit) + 1.41 * sqrt(log(totalVisit) / nodeVisit) * EXP_FACTOR;
+inline auto uct_value(
+    const double totalVisit,
+    const double nodeWinScore,
+    const double nodeVisit) -> double {
+    if (nodeVisit == 0) {
+        return INT_MAX;
     }
+    return (nodeWinScore / nodeVisit) + 1.41 * sqrt(log(totalVisit) / nodeVisit) * EXP_FACTOR;
+}
 
-    inline auto uct_compare(const TreeNode* a, const TreeNode* b) -> bool {
-        return (
-            uct_value(
-                a->get_parent_visits(),
-                a->get_win_score(),
-                a->get_visit_count()) <
-            uct_value(
-                b->get_parent_visits(),
-                b->get_win_score(),
-                b->get_visit_count()));
-    }
+inline auto uct_compare(const TreeNode* a, const TreeNode* b) -> bool {
+    return (
+        uct_value(
+            a->get_parent_visits(),
+            a->get_win_score(),
+            a->get_visit_count()) <
+        uct_value(
+            b->get_parent_visits(),
+            b->get_win_score(),
+            b->get_visit_count()));
+}
 
-    inline auto best_node_uct(const TreeNode* node) -> TreeNode* {
-        auto children = node->get_children();
-        std::vector<TreeNode*>::iterator result;
-        result = std::max_element(
-            children.begin(), children.end(),
-            uct_compare);
-        return children[std::distance(children.begin(), result)];
-    }
+inline auto best_node_uct(const TreeNode* node) -> TreeNode* {
+    auto children = node->get_children();
+    std::vector<TreeNode*>::iterator result;
+    result = std::max_element(
+        children.begin(), children.end(),
+        uct_compare);
+    return children[std::distance(children.begin(), result)];
+}
 };  // namespace UCT
 constexpr int_fast8_t WIN_SCORE = 10;
 class MCTS {
-public:
+   public:
     long long timeLimit;        // limiter on search time
     const bool memsafe = true;  // dictates whether we preserve a part of the tree across moves
     int_fast8_t opponent;       // the win score that the opponent wants
-    int_fast8_t reward;         // the win score that the agent wants
     int_fast32_t nodes = 0;
     TreeNode* preservedNode = nullptr;
 
@@ -213,7 +211,6 @@ public:
         srand(time(NULL));
         timeLimit = strength;
         opponent = -player;
-        reward = player;
     }
 
     void deleteTree(TreeNode* root) {
@@ -227,7 +224,6 @@ public:
 
     void set_opponent(const int_fast16_t i) {
         opponent = i;
-        reward = -i;
     }
 
     auto prune(TreeNode* parent, const State& target) -> TreeNode* {
@@ -237,8 +233,7 @@ public:
             if (!found && child->get_state() == target) {
                 out = child;
                 found = true;
-            }
-            else
+            } else
                 deleteTree(child);
         }
         if (out)
@@ -273,8 +268,8 @@ public:
             if (promisingNode->get_children().size() != 0)
                 nodeToExplore = promisingNode->random_child();
 
-            int_fast8_t playoutResult = simulate_playout(nodeToExplore);
-            backpropagate(nodeToExplore, playoutResult);
+            int_fast8_t result = simulate_playout(nodeToExplore);
+            backprop(nodeToExplore, result);
 
             // if (std::chrono::steady_clock::now() > breakunit) {
             //     std::cout << "The best move so far is: " << rootNode->best_child_as_move() + 1 << '\n';
@@ -299,8 +294,7 @@ public:
         // rootNode->show_child_visitrates();
         if (!memsafe) {
             deleteTree(rootNode);
-        }
-        else {
+        } else {
             preservedNode = prune(rootNode, out);
         }
         return out;
@@ -317,14 +311,14 @@ public:
         node->expand();
     }
 
-    inline void backpropagate(TreeNode* nodeToExplore, const int_fast16_t winner) {
-        TreeNode* tempNode = nodeToExplore;
-        while (tempNode) {
-            tempNode->increment_visits();
-            if (tempNode->get_player_no() == winner) {
-                tempNode->add_score(WIN_SCORE);
+    inline void backprop(TreeNode* nodeToExplore, const int_fast16_t winner) {
+        TreeNode* propagator = nodeToExplore;
+        while (propagator) {
+            propagator->increment_visits();
+            if (propagator->get_player_no() == winner) {
+                propagator->add_score(WIN_SCORE);
             }
-            tempNode = tempNode->get_parent();
+            propagator = propagator->get_parent();
         }
     }
 
@@ -332,34 +326,21 @@ public:
         nodes++;
         State tempState = node->get_state();
         tempState.mem_setup();
-        int_fast8_t boardStatus = tempState.evaluate();
-        // if (tempState.evaluate() != tempState.evaluateOLD()) {
-        //     tempState.show();
-        //     std::cout << (int)tempState.evaluate() << " " << (int)tempState.evaluateOLD() << "\n";
-        //     std::cout << tempState.position[0] << " " << tempState.position[1] << "\n";
-        // }
-        // assert(tempState.evaluate() == tempState.evaluateOLD());
-        if (boardStatus == opponent) {
+        int_fast8_t status = tempState.evaluate();
+        if (status == opponent) {
             node->get_parent()->set_win_score(INT_MIN);
-            return boardStatus;
+            return status;
         }
         while (!tempState.is_game_over()) {
             tempState.random_play();
         }
-        boardStatus = tempState.evaluate();
-        // if (tempState.evaluate() != tempState.evaluateOLD()) {
-        //     tempState.show();
-        //     std::cout << (int)tempState.evaluate() << " " << (int)tempState.evaluateOLD() << "\n";
-        //     std::cout << tempState.position[0] << " " << tempState.position[1] << "\n";
-        // }
-        // assert(tempState.evaluate() == tempState.evaluateOLD());
-
-        return boardStatus;
+        status = tempState.evaluate();
+        return status;
     }
 };
 
 class Zero {
-public:
+   public:
     MCTS searchDriver = MCTS();
     State node = State();
 
@@ -385,18 +366,18 @@ public:
     void show_result() const {
         // assert(node.evaluate() == node.evaluateOLD());
         switch (node.evaluate()) {
-        case 0:
-            std::cout << "1/2-1/2" << '\n';
-            break;
-        case 1:
-            std::cout << "1-0" << '\n';
-            break;
-        case -1:
-            std::cout << "0-1" << '\n';
-            break;
-        default:
-            std::cerr << "evaluate returned non-zero";
-            break;
+            case 0:
+                std::cout << "1/2-1/2" << '\n';
+                break;
+            case 1:
+                std::cout << "1-0" << '\n';
+                break;
+            case -1:
+                std::cout << "0-1" << '\n';
+                break;
+            default:
+                std::cerr << "evaluate returned non-zero";
+                break;
         }
     }
 };
@@ -418,7 +399,7 @@ struct TTEntry {
 };
 
 class Istus {
-public:
+   public:
     State node;
     int_fast32_t nodes;
     long long timeLimit;
@@ -473,7 +454,6 @@ public:
         int_fast16_t a = -20000,
         int_fast16_t b = 20000) -> int_fast16_t  //WORKING
     {
-
         assert(colour != 0);
 
         if (depth < 1) {
@@ -547,8 +527,7 @@ public:
                     bestmove = move;
                 }
             }
-        }
-        else {
+        } else {
             int_fast8_t depth = 1;
             while (std::chrono::steady_clock::now() < end && depth < 22) {
                 auto start = std::chrono::steady_clock::now();
@@ -595,10 +574,34 @@ public:
     }
 };
 
+class Perft {
+   public:
+    State node;
+    int nodes = 0;
+
+    void perftx(int n) {
+        if (n == 0) {
+            nodes++;
+        } else {
+            for (Move move : node.legal_moves()) {
+                node.play(move);
+                perftx(n - 1);
+                node.unplay();
+            }
+        }
+    }
+
+    void perft(int n) {
+        nodes = 0;
+        perftx(n);
+        std::cout << nodes;
+    }
+};
+
 auto get_first_player() -> bool {
     bool player;
     std::cout << "Is the human player going first? [1/0]"
-        << "\n";
+              << "\n";
     std::cin >> player;
     return player;
 }
@@ -647,8 +650,7 @@ inline void run_mcts_game(const long long TL) {
             i = glyph.get_player_move();
             glyph.node.play(i);
             glyph.node.show();
-        }
-        else {
+        } else {
             glyph.node.play(i);
             glyph.node.show();
         }
@@ -672,8 +674,7 @@ inline auto selfplay(const long long TL) -> int {
         if (eturn == -1) {
             engine1.engine_move();
             engine2.node = engine1.node;
-        }
-        else {
+        } else {
             engine2.engine_move();
             engine1.node = engine2.node;
         }
@@ -701,14 +702,14 @@ inline void testsuite() {
     Zero game = Zero();
     while (!game.node.is_game_over()) {
         std::cout << "\nposition legal moves: "
-            << game.node.legal_moves().size()
-            << "\nfast move counter: "
-            << game.node.num_legal_moves()
-            << "\nactual list of moves: "
-            << string(game.node.legal_moves())
-            << "\nstate of play (is game over?): "
-            << game.node.is_game_over()
-            << '\n';
+                  << game.node.legal_moves().size()
+                  << "\nfast move counter: "
+                  << game.node.num_legal_moves()
+                  << "\nactual list of moves: "
+                  << string(game.node.legal_moves())
+                  << "\nstate of play (is game over?): "
+                  << game.node.is_game_over()
+                  << '\n';
         // assert(game.node.evaluate() == game.node.evaluateOLD());
         assert(game.node.legal_moves().size() == game.node.num_legal_moves());
         game.node.random_play();
@@ -718,7 +719,7 @@ inline void testsuite() {
 inline void benchmark() {
     const int len = 30;
     const int width = 50;
-    std::array<int, len* width> nodecounts = { 0 };
+    std::array<int, len* width> nodecounts = {0};
     for (int i = 0; i < width; i++) {
         Zero engine = Zero(99);
         for (int j = 0; j < len; j++) {
@@ -731,8 +732,7 @@ inline void benchmark() {
         std::cout << i << " ";
     }
     unsigned long long sum = 0;
-    for (auto i : nodecounts)
-    {
+    for (auto i : nodecounts) {
         sum += i;
     }
     std::cout << "\naverage nodecount: " << (double)sum / (50.0 * 50.0) << "\n";
@@ -747,15 +747,13 @@ inline void benchmark() {
 // }
 
 int main() {
-    // Istus engine = Istus(100000);
-    // engine.node.play(3);
-    // engine.node.play(0);
-    // engine.node.play(3);
-    // engine.node.play(0);
-    // engine.node.play(3);
-    // engine.node.play(0);
-    // engine.engine_move();
-    // std::cout << engine.negamax(2, 1, -4, 4) << "\n";
+    // Perft p;
+    // for (int i = 0; i < 10; i++)
+    // {
+    //     p.perft(i);
+    //     std::cout << "\n";
+    // }
+    // return 0;
 
     std::cout << "Play against Zero [0] | Play against Istus [1] | Watch a self-play game [2] | Play with a friend [3] | Run tests [4] | Benchmark [5]\n--> ";
     int ans;
@@ -766,26 +764,26 @@ int main() {
         std::cin >> TL;
     }
     switch (ans) {
-    case 0:
-        run_mcts_game(TL);
-        break;
-    case 1:
-        run_negamax_game(TL);
-        break;
-    case 2:
-        selfplay(TL);
-        break;
-    case 3:
-        userplay();
-        break;
-    case 4:
-        testsuite();
-        break;
-    case 5:
-        benchmark();
-        break;
-    default:
-        break;
+        case 0:
+            run_mcts_game(TL);
+            break;
+        case 1:
+            run_negamax_game(TL);
+            break;
+        case 2:
+            selfplay(TL);
+            break;
+        case 3:
+            userplay();
+            break;
+        case 4:
+            testsuite();
+            break;
+        case 5:
+            benchmark();
+            break;
+        default:
+            break;
     }
     return 0;
 }
@@ -793,7 +791,7 @@ int main() {
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
 // Debug program: F5 or Debug > Start Debugging menu
 
-// Tips for Getting Started: 
+// Tips for Getting Started:
 //   1. Use the Solution Explorer window to add/manage files
 //   2. Use the Team Explorer window to connect to source control
 //   3. Use the Output window to see build output and other messages
