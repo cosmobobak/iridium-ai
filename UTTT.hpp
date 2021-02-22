@@ -1,3 +1,5 @@
+#pragma once
+
 #include <algorithm>
 #include <array>
 #include <iostream>
@@ -18,7 +20,7 @@ using Num = int_fast8_t;
 
 class SubState {
    public:
-    std::array<Bitboard, 2> position = {0b000000000, 0b000000000};
+    Bitboard position[2] = {0b000000000, 0b000000000};
     // bool cached_death_state = false;
 
     void reset() {
@@ -204,6 +206,7 @@ class State {
         movecount++;
         forcingBoard = square;
         forcingstack.push_back(forcingBoard);
+        assert(forcingstack.size() == movecount + 1);
     }
 
     inline void unplay()  // do not unplay on root
@@ -216,6 +219,7 @@ class State {
         metaposition[board].unplay(square, movecount & 1);
         forcingstack.pop_back();
         forcingBoard = forcingstack.back();
+        assert(forcingstack.size() == movecount + 1);
     }
 
     inline auto board_won(const Num board) const -> bool {
@@ -284,8 +288,11 @@ class State {
         movecount++;
     }
 
-    inline auto get_turn() const -> int_fast8_t {
-        return (movecount & 1) ? -1 : 1;
+    auto get_turn() const -> int_fast8_t {
+        if (movecount & 1)
+            return -1;
+        else
+            return 1;
     }
 
     inline auto is_game_over() const -> bool {
@@ -390,10 +397,10 @@ class State {
         const std::vector<Move> legals = legal_moves();
         std::vector<Move> shiftedLegals;
         std::transform(legals.begin(), legals.end(), std::back_inserter(shiftedLegals), [](Move n) { return n + 1; });
-        std::cout << "Your legal moves are: "; 
+        std::cout << "Your legal moves are: ";
         showvec(shiftedLegals);
         std::cout << "\n--> ";
-        Move pos;
+        int pos;
         std::cin >> pos;
         while (std::none_of(legals.begin(), legals.end(), [pos](Move m) { return m == (pos - 1); })) {
             std::cout << "invalid move.\n";

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <algorithm>
 #include <array>
 #include <iostream>
@@ -6,7 +8,7 @@
 
 #include "accelerations.hpp"
 
-namespace Coin4x4 {
+namespace Connect4x4 {
 
 constexpr auto GAME_SOLVABLE = true;
 constexpr auto gameexpfactor = 5;
@@ -36,6 +38,13 @@ class State {
     auto is_full() const -> bool  //WORKING
     {
         return union_bb(0) == 0b1111;
+    }
+
+    auto get_turn() const -> int_fast8_t {
+        if (movecount & 1)
+            return -1;
+        else
+            return 1;
     }
 
     void show() const  //WORKING
@@ -259,4 +268,4 @@ class State {
 bool operator==(State a, State b) {
     return !(a.bbnode[0] != b.bbnode[0] || a.bbnode[1] != b.bbnode[1]);
 }
-}  // namespace Connect4-4x4
+}  // namespace Connect4x4

@@ -2,11 +2,18 @@
 
 #include <array>
 #include <bitset>
-#include <cstddef>
 #include <cassert>
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <string>
+
+template <typename T>
+inline auto pop(std::vector<T> v) -> T {
+    T result = v.back();
+    v.pop_back();
+    return result;
+}
 
 template <typename T, std::size_t N>
 struct std::hash<std::array<T, N> > {
@@ -20,6 +27,12 @@ struct std::hash<std::array<T, N> > {
         return h;
     }
 };
+
+inline void copy_int8_array_81(const int_fast8_t in[], int_fast8_t out[]) {
+    for (int_fast8_t i = 0; i < 81; i++) {
+        out[i] = in[i];
+    }
+}
 
 inline auto popcount(const unsigned int bb) -> int_fast8_t {
     return __builtin_popcount(bb);
@@ -74,16 +87,15 @@ auto string(std::vector<int_fast8_t> v) -> std::string {
 template <typename T>
 void showvec(std::vector<T> v) {
     std::cout << "{ ";
-    for (auto &&i : v)
-    {
+    for (auto&& i : v) {
         std::cout << (int)i;
         std::cout << ", ";
     }
     std::cout << "}";
 }
 
-    template <class T>
-    auto string(std::vector<T> v) -> std::string {
+template <class T>
+auto string(std::vector<T> v) -> std::string {
     std::string builder;
     builder.append("{ ");
     for (auto&& i : v) {

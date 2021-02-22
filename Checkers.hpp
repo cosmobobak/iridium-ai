@@ -3,7 +3,7 @@
 
 namespace Checkers {
 
-#define Move int
+using Move = int;
 
 class State {
    public:
@@ -227,7 +227,7 @@ class State {
     }
 
     auto is_game_over() -> int {
-        if (evaluate() != 0 || is_full() == true) {
+        if (evaluate() != 0 || is_full()) {
             return true;
         } else {
             return false;

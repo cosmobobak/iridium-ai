@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include <array>
@@ -14,7 +16,7 @@ using Bitboard = int_fast16_t;
 class State {
    public:
     std::array<Bitboard, 2> position = {0b000000000, 0b000000000};
-    int_fast8_t turn = 1;
+    int_fast8_t movecount = 0;
     std::vector<Move> movestack;
 
     void mem_setup() {
@@ -28,30 +30,20 @@ class State {
 
     void play(const Move i) {
         // n ^ (1 << k) is a binary XOR where you flip the kth bit of n
-        if (turn == 1)
-            position[0] |= (1 << i);
-        else
-            position[1] |= (1 << i);
-        turn = -turn;
+        position[movecount & 1] |= (1 << i);
+        movecount++;
         movestack.push_back(i);
     }
 
     void unplay()  // do not unplay on root
     {
-        Move prevmove = movestack.back();
-        movestack.pop_back();
-        if (turn == 1)
-            position[1] &= ~(1 << prevmove);
-        else
-            position[0] &= ~(1 << prevmove);
-        turn = -turn;
+        movecount--;
+        Move prevmove = pop(movestack);
+        position[movecount & 1] &= ~(1 << prevmove);
     }
 
     auto pos_filled(const int_fast8_t i) const -> bool {
-        if (((position[0] | position[1]) & (1L << i)) != 0)
-            return true;
-        else
-            return false;
+        return ((position[0] | position[1]) & (1L << i)) != 0;
     }
 
     auto player_at(const int_fast8_t i) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
@@ -68,44 +60,6 @@ class State {
                 return false;
         }
         return true;
-    }
-
-    inline auto evaluatex() const -> int_fast8_t {
-        const Bitboard x = position[0];
-        const Bitboard o = position[1];
-        if ((x & 0b111000000) == 0b111000000)  // highrow
-            return 1;
-        if ((x & 0b000111000) == 0b000111000)  // midrow
-            return 1;
-        if ((x & 0b000000111) == 0b000000111)  // lowrow
-            return 1;
-        if ((x & 0b100010001) == 0b100010001)  // diaglrdown
-            return 1;
-        if ((x & 0b001010100) == 0b001010100)  // diaglrup
-            return 1;
-        if ((x & 0b100100100) == 0b100100100)  // lcol
-            return 1;
-        if ((x & 0b010010010) == 0b010010010)  // mcol
-            return 1;
-        if ((x & 0b001001001) == 0b001001001)  // rcol
-            return 1;
-        if ((o & 0b111000000) == 0b111000000)  // highrow
-            return -1;
-        if ((o & 0b000111000) == 0b000111000)  // midrow
-            return -1;
-        if ((o & 0b000000111) == 0b000000111)  // lowrow
-            return -1;
-        if ((o & 0b100010001) == 0b100010001)  // diaglrdown
-            return -1;
-        if ((o & 0b001010100) == 0b001010100)  // diaglrup
-            return -1;
-        if ((o & 0b100100100) == 0b100100100)  // lcol
-            return -1;
-        if ((o & 0b010010010) == 0b010010010)  // mcol
-            return -1;
-        if ((o & 0b001001001) == 0b001001001)  // rcol
-            return -1;
-        return 0;
     }
 
     inline auto evaluate() const -> int_fast8_t {
@@ -153,7 +107,14 @@ class State {
     }
 
     void pass_turn() {
-        turn = -turn;
+        movecount++;
+    }
+
+    auto get_turn() const -> int_fast8_t {
+        if (movecount & 1)
+            return -1;
+        else
+            return 1;
     }
 
     void show() const {
@@ -204,8 +165,10 @@ class State {
         const std::vector<Move> legals = legal_moves();
         std::vector<Move> shiftedLegals;
         std::transform(legals.begin(), legals.end(), std::back_inserter(shiftedLegals), [](Move n) { return n + 1; });
-        std::cout << "Your legal moves are: " << string(shiftedLegals) << "\n--> ";
-        Move pos;
+        std::cout << "Your legal moves are: ";
+        showvec(shiftedLegals);
+        std::cout << "\n--> ";
+        int pos;
         std::cin >> pos;
         while (std::none_of(legals.begin(), legals.end(), [pos](Move m) { return m == (pos - 1); })) {
             std::cout << "invalid move.\n";
@@ -217,10 +180,6 @@ class State {
 };
 
 bool operator==(const State a, const State b) {
-    if (a.turn != b.turn)
-        return false;
-    if (a.position != b.position)
-        return false;
-    return a.movestack == b.movestack;
+    return a.position == b.position;
 }
 }  // namespace Glyph
