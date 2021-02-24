@@ -17,9 +17,9 @@ constexpr std::array<char, 2> players = {'X', 'O'};
 
 class State {
    public:
-    using Move = int_fast16_t;
+    using Move = uint_fast16_t;
     std::array<std::bitset<WIDTH * HEIGHT>, 2> node;
-    int_fast8_t turn = 1;
+    uint_fast8_t turn = 1;
     std::vector<Move> movestack;
 
     inline void show() const {
@@ -43,7 +43,7 @@ class State {
         movestack.reserve(WIDTH * HEIGHT);
     }
 
-    inline auto get_turn() const -> int_fast8_t {
+    inline auto get_turn() const -> uint_fast8_t {
         return turn;
     }
 
@@ -64,7 +64,7 @@ class State {
         return (node[0] | node[1]).test(row * WIDTH + col);
     }
 
-    inline auto num_legal_moves() const -> int_fast16_t {
+    inline auto num_legal_moves() const -> uint_fast16_t {
         return WIDTH * HEIGHT - (node[0] | node[1]).count();
     }
 
@@ -114,7 +114,7 @@ class State {
         return num_legal_moves() == 0 || evaluate() != 0;
     }
 
-    inline auto horizontal_term() const -> int_fast8_t {
+    inline auto horizontal_term() const -> uint_fast8_t {
         // iterates the starting positions of the rows
         for (Move row = 0; row < WIDTH * HEIGHT; row += WIDTH) {
             for (Move i = row; i < row + WIDTH - 4; i++) {
@@ -139,7 +139,7 @@ class State {
         return 0;
     }
 
-    inline auto vertical_term() const -> int_fast8_t {
+    inline auto vertical_term() const -> uint_fast8_t {
         // iterates the starting positions of the columns
         for (Move col = 0; col < WIDTH; col++) {
             // this line below could be fucky
@@ -165,7 +165,7 @@ class State {
         return 0;
     }
 
-    inline auto diagdown_term() const -> int_fast8_t {
+    inline auto diagdown_term() const -> uint_fast8_t {
         // iterates the starting positions of the rows
         for (Move row = 0; row < HEIGHT - 4; row++) {
             for (Move col = 0; col < WIDTH - 4; col++) {
@@ -190,7 +190,7 @@ class State {
         return 0;
     }
 
-    inline auto diagup_term() const -> int_fast8_t {
+    inline auto diagup_term() const -> uint_fast8_t {
         // iterates the starting positions of the rows
         for (Move row = 4; row < HEIGHT; row++) {
             for (Move col = 0; col < WIDTH - 4; col++) {
@@ -215,17 +215,17 @@ class State {
         return 0;
     }
 
-    auto evaluate() const -> int_fast8_t {
-        int_fast8_t v = vertical_term();
+    auto evaluate() const -> uint_fast8_t {
+        uint_fast8_t v = vertical_term();
         if (v)
             return v;
-        int_fast8_t h = horizontal_term();
+        uint_fast8_t h = horizontal_term();
         if (h)
             return h;
-        int_fast8_t u = diagup_term();
+        uint_fast8_t u = diagup_term();
         if (u)
             return u;
-        int_fast8_t d = diagdown_term();
+        uint_fast8_t d = diagdown_term();
         if (d)
             return d;
 
@@ -273,7 +273,7 @@ class State {
         return pos;
     }
 
-    auto heuristic_value() const -> int_fast8_t {
+    auto heuristic_value() const -> uint_fast8_t {
         return 0;
     }
 };

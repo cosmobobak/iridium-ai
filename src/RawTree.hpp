@@ -17,10 +17,10 @@ const std::array<int, 6> TERMINAL_NODES = {4, 7, 8, 9, 10, 11};
 
 class State {
    public:
-    using Move = int_fast8_t;
-    using Bitboard = int_fast16_t;
+    using Move = uint_fast8_t;
+    using Bitboard = uint_fast16_t;
     int node = 0;
-    int_fast8_t turn = 1;
+    uint_fast8_t turn = 1;
     std::vector<Move> movestack;
 
     void mem_setup() {
@@ -45,11 +45,11 @@ class State {
         turn = -turn;
     }
 
-    inline auto heuristic_value() const->int_fast8_t {
+    inline auto heuristic_value() const->uint_fast8_t {
         return HEURISTIC_VALUES[node];
     }
 
-    inline auto evaluate() const -> int_fast8_t {
+    inline auto evaluate() const -> uint_fast8_t {
         return EVALS[node];
     }
 

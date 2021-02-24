@@ -8,13 +8,13 @@
 using namespace TreeNode;
 
 namespace SearchDriver {
-constexpr int_fast8_t WIN_SCORE = 10;
+constexpr uint_fast8_t WIN_SCORE = 10;
 
 template <class StateType>
 class MCTS {
     long long timeLimit;        // limiter on search time
     const bool memsafe = true;  // dictates whether we preserve a part of the tree across moves
-    int_fast8_t opponent;       // the win score that the opponent wants
+    uint_fast8_t opponent;       // the win score that the opponent wants
     int_fast32_t nodeCount = 0;
     Node<StateType>* preservedNode = nullptr;
 
@@ -22,10 +22,10 @@ class MCTS {
     MCTS() {
         MCTS(1);
     }
-    MCTS(const int_fast16_t player) {
+    MCTS(const int_fast8_t player) {
         MCTS(player, 3);
     }
-    MCTS(const int_fast16_t player, const long long strength) {
+    MCTS(const int_fast8_t player, const long long strength) {
         srand(time(NULL));
         timeLimit = strength;
         opponent = -player;
@@ -43,7 +43,7 @@ class MCTS {
         return nodeCount;
     }
 
-    void set_opponent(const int_fast16_t i) {
+    void set_opponent(const int_fast8_t i) {
         opponent = i;
     }
 
@@ -99,7 +99,7 @@ class MCTS {
             if (promisingNode->get_children().size() != 0)
                 nodeToExplore = promisingNode->random_child();
 
-            int_fast8_t result = simulate_playout(nodeToExplore);
+            uint_fast8_t result = simulate_playout(nodeToExplore);
             backprop(nodeToExplore, result);
 
             // if (std::chrono::steady_clock::now() > breakunit) {
@@ -114,7 +114,7 @@ class MCTS {
         std::cout << nodeCount << " nodes processed at " << (double)nodeCount / ((double)timeLimit / 1000.0) << "NPS.\n";
         // std::cout << nodes << ", ";
         // std::cout << "Zero win prediction: " << (int)(rootNode->best_child()->get_winrate() * (100 / WIN_SCORE)) << "%\n";
-        int_fast8_t action, sboard, square, row, col;
+        uint_fast8_t action, sboard, square, row, col;
         action = rootNode->best_child_as_move();
         // assert(action >= 0 && action <= 80);
         // std::cout << action << '\n';
@@ -143,7 +143,7 @@ class MCTS {
         node->expand();
     }
 
-    inline void backprop(Node<StateType>* nodeToExplore, const int_fast16_t winner) {
+    inline void backprop(Node<StateType>* nodeToExplore, const int_fast8_t winner) {
         Node<StateType>* propagator = nodeToExplore;
         while (propagator) {
             propagator->increment_visits();
@@ -154,10 +154,10 @@ class MCTS {
         }
     }
 
-    inline auto simulate_playout(Node<StateType>* node) -> int_fast16_t {
+    inline auto simulate_playout(Node<StateType>* node) -> int_fast8_t {
         StateType tempState = node->get_state();
         tempState.mem_setup();
-        int_fast8_t status = tempState.evaluate();
+        uint_fast8_t status = tempState.evaluate();
         if (status == opponent) {
             node->get_parent()->set_win_score(INT_MIN);
             return status;

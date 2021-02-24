@@ -36,12 +36,12 @@ class State {
         std::cout << '\n';
     }
 
-    auto player_at(const int_fast8_t i) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
+    auto player_at(const uint_fast8_t i) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
     {
         return node[0].test(i);
     }
 
-    auto pos_filled(const int_fast8_t i) const -> bool {
+    auto pos_filled(const uint_fast8_t i) const -> bool {
         return (node[0] | node[1]).test(i);
     }
 

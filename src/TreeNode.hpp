@@ -13,7 +13,7 @@ class Node {
    public:
     int_fast32_t winScore = 0;
     int_fast32_t visits = 0;
-    int_fast8_t playerNo;
+    uint_fast8_t playerNo;
     ContainedState board;
     Node* parent = nullptr;
     std::vector<Node*> children;
@@ -22,15 +22,15 @@ class Node {
         this->board = board;
     }
 
-    inline void set_player_no(const int_fast8_t playerNo) {
+    inline void set_player_no(const uint_fast8_t playerNo) {
         this->playerNo = playerNo;
     }
 
-    inline auto get_player_no() const -> int_fast8_t {
+    inline auto get_player_no() const -> uint_fast8_t {
         return playerNo;
     }
 
-    inline auto get_opponent() const -> int_fast8_t {
+    inline auto get_opponent() const -> uint_fast8_t {
         return -playerNo;
     }
 

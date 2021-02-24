@@ -6,7 +6,7 @@ namespace SearchDriver {
 
 template <class StateType>
 class Negamax {
-    int_fast32_t nodes;
+    uint_fast32_t nodes;
     long long timeLimit;
     // TT transpositionTable;
 
@@ -32,8 +32,8 @@ class Negamax {
 
     auto negamax(
         StateType& node,
-        int_fast8_t depth = 10,
-        int_fast8_t colour = 1,
+        uint_fast8_t depth = 10,
+        uint_fast8_t colour = 1,
         int_fast16_t a = -20000,
         int_fast16_t b = 20000) -> int_fast16_t  //WORKING
     {
@@ -66,7 +66,7 @@ class Negamax {
 
     auto dnegamax(
         StateType& node,
-        int_fast8_t colour = 1,
+        uint_fast8_t colour = 1,
         int_fast16_t a = -20000,
         int_fast16_t b = 20000) -> int_fast16_t  //WORKING
     {
@@ -112,7 +112,7 @@ class Negamax {
                 }
             }
         } else {
-            int_fast8_t depth = 1;
+            uint_fast8_t depth = 1;
             while (std::chrono::steady_clock::now() < end && depth < 22) {
                 auto start = std::chrono::steady_clock::now();
                 for (const auto move : node.legal_moves()) {

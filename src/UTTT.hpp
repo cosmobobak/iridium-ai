@@ -9,14 +9,14 @@
 #include "accelerations.hpp"
 
 namespace MOD9 {
-constexpr int_fast8_t LOOKUP[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8};
+constexpr uint_fast8_t LOOKUP[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8};
 }
 
 namespace Board {
 
-using Move = int_fast8_t;
-using Bitboard = int_fast16_t;
-using Num = int_fast8_t;
+using Move = uint_fast8_t;
+using Bitboard = uint_fast16_t;
+using Num = uint_fast8_t;
 
 class SubState {
    public:
@@ -149,9 +149,9 @@ constexpr auto GAME_EXP_FACTOR = 1.41 * 5;
 
 class State {
    public:
-    using Move = int_fast16_t;
-    using Bitboard = int_fast16_t;
-    using Num = int_fast8_t;
+    using Move = uint_fast16_t;
+    using Bitboard = uint_fast16_t;
+    using Num = uint_fast8_t;
     std::array<Board::SubState, 9> metaposition;
     Num forcingBoard = -1;
     Num movecount = 0;
@@ -230,7 +230,7 @@ class State {
         return metaposition[board].is_board_dead();
     }
 
-    inline auto winner_of_board(const Num board) const -> int_fast8_t  //only valid to use if pos_filled() returns true, true = x, false = y
+    inline auto winner_of_board(const Num board) const -> uint_fast8_t  //only valid to use if pos_filled() returns true, true = x, false = y
     {
         return metaposition[board].evaluate();
     }
@@ -288,7 +288,7 @@ class State {
         movecount++;
     }
 
-    auto get_turn() const -> int_fast8_t {
+    auto get_turn() const -> uint_fast8_t {
         if (movecount & 1)
             return -1;
         else
@@ -365,7 +365,7 @@ class State {
             Num bcounter = 0;
             for (const auto &board : metaposition) {
                 if (!board.is_board_dead()) {
-                    int_fast16_t bb = ~board.union_bb() & 0b111111111;
+                    uint_fast16_t bb = ~board.union_bb() & 0b111111111;
                     while (bb) {
                         moves.push_back(bcounter * 9 + (lsb(bb)));
                         bb &= bb - 1;  // clear the least significant bit set
@@ -389,7 +389,7 @@ class State {
         play(moves[rand() % moves.size()]);
     }
 
-    inline auto heuristic_value() const -> int_fast8_t {
+    inline auto heuristic_value() const -> uint_fast8_t {
         return rand() & 0b1111;
     }
 

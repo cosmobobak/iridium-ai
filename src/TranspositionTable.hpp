@@ -4,11 +4,11 @@
 #include <unordered_map>
 
 struct TTEntry {
-    int_fast8_t depth;
-    int_fast16_t score;
-    int_fast8_t type;
+    uint_fast8_t depth;
+    uint_fast16_t score;
+    uint_fast8_t type;
 
-    TTEntry(int_fast8_t d, int_fast16_t s, int_fast8_t t) {
+    TTEntry(uint_fast8_t d, uint_fast16_t s, uint_fast8_t t) {
         depth = d;
         score = s;
         type = t;
@@ -20,7 +20,7 @@ class TT {
     std::unordered_map<unsigned long long, TTEntry> hashtable;
 
    public:
-    void record_hash(State target, int_fast8_t depth, int_fast16_t a, int hashDataType) {
+    void record_hash(State target, uint_fast8_t depth, uint_fast16_t a, int hashDataType) {
         unsigned long long key = target.generateKey();
         if (hashtable.contains(key)) {
             TTEntry entry = hashtable[key];

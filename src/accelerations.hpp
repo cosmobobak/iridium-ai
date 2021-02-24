@@ -107,6 +107,18 @@ auto string(std::vector<T> v) -> std::string {
     return builder;
 }
 
-inline auto lsb(int_fast16_t bitboard) -> int_fast8_t {
-    return __builtin_ffs(bitboard) - 1;
+inline auto lsb(unsigned char bitboard) -> int_fast8_t {
+    return __builtin_clz((unsigned int)bitboard);
+}
+
+inline auto lsb(unsigned int bitboard) -> int_fast8_t {
+    return __builtin_clz(bitboard);
+}
+
+inline auto lsb(unsigned long bitboard) -> int_fast8_t {
+    return __builtin_clzl(bitboard);
+}
+
+inline auto lsb(unsigned long long bitboard) -> int_fast8_t {
+    return __builtin_clzll(bitboard);
 }

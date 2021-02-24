@@ -11,45 +11,67 @@
 namespace Connect4x4 {
 
 constexpr auto GAME_SOLVABLE = true;
+constexpr auto NUM_ROWS = 4;
+constexpr auto NUM_COLS = 4;
 constexpr auto GAME_EXP_FACTOR = 1.41 * 5;
-constexpr std::array<int_fast8_t, 4> weights = {2, 1, 1, 2};
+constexpr uint_fast8_t BB_ALL = 0b1111;
+constexpr std::array<uint_fast8_t, 4> weights = {2, 1, 1, 2};
 
 class State {
    public:
-    using Move = int_fast8_t;
-    using Bitboard = int_fast8_t;
-    std::array<std::array<Bitboard, 4>, 2> bbnode = {0};
-    int_fast16_t movecount = 0;
-    int_fast32_t nodes = 0;
-    std::vector<Move> movestack;
-
-    State() {
-        movestack.reserve(16);
-    }
+    using Move = uint_fast8_t;
+    using Bitrow = uint_fast8_t;
+    std::array<std::array<Bitrow, 4>, 2> bbnode = {0};
+    std::array<Move, NUM_ROWS * NUM_COLS> movestack;
+    uint_fast8_t movecount = 0;
 
     void mem_setup() {
-        movestack.reserve(4 * 4);
+        // movestack.reserve(4 * 4);
     }
 
-    auto union_bb(int_fast8_t r) const -> Bitboard {
+    auto union_bb(uint_fast8_t r) const -> Bitrow {
         return bbnode[0][r] | bbnode[1][r];
     }
 
-    auto is_full() const -> bool  //WORKING
+    auto is_full() const -> bool
     {
-        return union_bb(0) == 0b1111;
+        return union_bb(0) == BB_ALL;
     }
 
-    auto get_turn() const -> int_fast8_t {
+    void play(Move col)  //WORKING
+    {
+        movestack[movecount] = col;
+        for (uint_fast8_t row = NUM_ROWS; row; row--) {
+            if (!pos_filled(row - 1, col)) {
+                bbnode[movecount & 1][row - 1] ^= (1 << col);
+                break;
+            }
+        }
+        movecount++;
+    }
+
+    void unplay()  //WORKING
+    {
+        movecount--;
+        Move col = movestack[movecount];
+        for (uint_fast8_t row = 0; row < NUM_ROWS; row++) {
+            if (pos_filled(row, col)) {
+                bbnode[movecount & 1][row] ^= (1 << col);
+                break;
+            }
+        }
+    }
+
+    auto get_turn() const -> uint_fast8_t {
         if (movecount & 1)
             return -1;
         else
             return 1;
     }
 
-    void show() const  //WORKING
+    void show() const 
     {
-        int_fast8_t row, col;
+        uint_fast8_t row, col;
         for (row = 0; row < 4; ++row) {
             for (col = 0; col < 4; ++col) {
                 if (pos_filled(row, col)) {
@@ -65,27 +87,28 @@ class State {
         std::cout << '\n';
     }
 
-    auto pos_filled(int_fast8_t row, int_fast8_t col) const -> bool {
+    auto pos_filled(int row, int col) const -> bool {
         return bbnode[0][row] & (1 << col) || bbnode[1][row] & (1 << col);
     }
 
-    auto pos_filled(int_fast8_t col) const -> bool {
-        return bbnode[0][0] & (1 << col) || bbnode[1][0] & (1 << col);
-    }
-
-    auto player_at(int_fast8_t row, int_fast8_t col) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
+    auto player_at(int row, int col) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
     {
         return (bbnode[0][row] & (1 << col));
     }
 
-    auto num_legal_moves() const -> int_fast8_t {
-        return 4 - popcount(bbnode[0][0] | bbnode[1][0]);
+    auto probe_spot(int row, int col) const -> bool {
+        // tests the bit of the most recently played side
+        return (bbnode[(movecount + 1) & 1][row] & (1 << col));
+    }
+
+    auto num_legal_moves() const -> uint_fast8_t {
+        return NUM_COLS - popcount(bbnode[0][0] | bbnode[1][0]);
     }
 
     auto legal_moves() const -> std::vector<Move> {
         std::vector<Move> moves;
-        moves.reserve(4);
-        int_fast8_t bb = ~(bbnode[0][0] | bbnode[1][0]) & 0b1111;
+        moves.reserve(num_legal_moves());
+        uint_fast8_t bb = ~(bbnode[0][0] | bbnode[1][0]) & BB_ALL;
         while (bb) {
             moves.push_back(lsb(bb));
             bb &= bb - 1;  // clear the least significant bit set
@@ -102,120 +125,71 @@ class State {
         movecount++;
     }
 
-    void play(Move col)  //WORKING
-    {
-        for (int_fast8_t row = 4; row; row--) {
-            if (!pos_filled(row - 1, col)) {
-                bbnode[movecount & 1][row - 1] |= (1 << col);
-                break;
-            }
-        }
-        movecount++;
-        movestack.push_back(col);
-    }
-
-    void unplay()  //WORKING
-    {
-        movecount--;
-        Move col = movestack.back();
-        movestack.pop_back();
-        for (int_fast8_t row = 0; row < 6; row++) {
-            if (pos_filled(row, col)) {
-                bbnode[movecount & 1][row] &= ~(1 << col);
-                break;
-            }
-        }
-    }
-
-    auto horizontal_term() const -> int_fast8_t {
-        for (int_fast8_t row = 0; row < 4; row++) {
-            const int_fast8_t col = 0;
-            if (pos_filled(row, col) &&
-                pos_filled(row, col + 1) &&
-                pos_filled(row, col + 2) &&
-                pos_filled(row, col + 3)) {
-                if (player_at(row, col) == player_at(row, col + 1) &&
-                    player_at(row, col + 1) == player_at(row, col + 2) &&
-                    player_at(row, col + 2) == player_at(row, col + 3)) {
-                    if (player_at(row, col))
-                        return 1;
-                    else
-                        return -1;
+    auto horizontal_term() const -> uint_fast8_t {
+        // check all the rows for horizontal 4-in-a-rows
+        for (uint_fast8_t row = 0; row < NUM_ROWS; row++) {
+            for (uint_fast8_t bitshift = 0; bitshift < NUM_COLS - 3; bitshift++) {
+                if (((bbnode[0][row] >> bitshift) & 0b1111) == 0b1111) {
+                    return 1;
+                }
+                if (((bbnode[1][row] >> bitshift) & 0b1111) == 0b1111) {
+                    return -1;
                 }
             }
         }
-        return 0;
+        return 0;  // no 4-in-a-rows found
     }
 
-    auto vertical_term() const -> int_fast8_t {
-        const int_fast8_t row = 0;
-        for (int_fast8_t col = 0; col < 4; col++) {
-            if (pos_filled(row, col) &&
-                pos_filled(row + 1, col) &&
-                pos_filled(row + 2, col) &&
-                pos_filled(row + 3, col)) {
-                if (player_at(row, col) == player_at(row + 1, col) &&
-                    player_at(row + 1, col) == player_at(row + 2, col) &&
-                    player_at(row + 2, col) == player_at(row + 3, col)) {
-                    if (player_at(row, col))
-                        return 1;
-                    else
-                        return -1;
+    auto vertical_term() const -> uint_fast8_t {
+        // check all the columns for vertical 4-in-a-rows
+        for (uint_fast8_t row = 0; row < NUM_ROWS - 3; row++) {
+            for (uint_fast8_t col = 0; col < NUM_COLS; col++) {
+                if (probe_spot(row, col) && probe_spot(row + 1, col) && probe_spot(row + 2, col) && probe_spot(row + 3, col)) {
+                    // if we have four adjacent filled positions
+                    return -get_turn();
                 }
             }
         }
-        return 0;
+        return 0;  // no 4-in-a-rows found
     }
 
-    auto diagup_term() const -> int_fast8_t {
-        const int_fast8_t row = 3;
-        const int_fast8_t col = 0;
-        if (pos_filled(row, col) &&
-            pos_filled(row - 1, col + 1) &&
-            pos_filled(row - 2, col + 2) &&
-            pos_filled(row - 3, col + 3)) {
-            if (player_at(row, col) == player_at(row - 1, col + 1) &&
-                player_at(row - 1, col + 1) == player_at(row - 2, col + 2) &&
-                player_at(row - 2, col + 2) == player_at(row - 3, col + 3)) {
-                if (player_at(row, col))
-                    return 1;
-                else
-                    return -1;
+    auto diagup_term() const -> uint_fast8_t {
+        // check all the upward diagonals for 4-in-a-rows
+        for (uint_fast8_t row = 3; row < NUM_ROWS; row++) {
+            for (uint_fast8_t col = 0; col < NUM_COLS - 3; col++) {
+                if (probe_spot(row, col) && probe_spot(row - 1, col + 1) && probe_spot(row - 2, col + 2) && probe_spot(row - 3, col + 3)) {
+                    // if we have four adjacent filled positions
+                    return -get_turn();
+                }
             }
         }
-        return 0;
+        return 0;  // no 4-in-a-rows found
     }
 
-    auto diagdown_term() const -> int_fast8_t {
-        const int_fast8_t row = 0;
-        const int_fast8_t col = 0;
-        if (pos_filled(row, col) &&
-            pos_filled(row + 1, col + 1) &&
-            pos_filled(row + 2, col + 2) &&
-            pos_filled(row + 3, col + 3)) {
-            if (player_at(row, col) == player_at(row + 1, col + 1) &&
-                player_at(row + 1, col + 1) == player_at(row + 2, col + 2) &&
-                player_at(row + 2, col + 2) == player_at(row + 3, col + 3)) {
-                if (player_at(row, col))
-                    return 1;
-                else
-                    return -1;
+    auto diagdown_term() const -> uint_fast8_t {
+        // check all the downward diagonals for 4-in-a-rows
+        for (uint_fast8_t row = 0; row < NUM_ROWS - 3; row++) {
+            for (uint_fast8_t col = 0; col < NUM_COLS - 3; col++) {
+                if (probe_spot(row, col) && probe_spot(row + 1, col + 1) && probe_spot(row + 2, col + 2) && probe_spot(row + 3, col + 3)) {
+                    // if we have four adjacent filled positions
+                    return -get_turn();
+                }
             }
         }
-        return 0;
+        return 0;  // no 4-in-a-rows found
     }
 
-    auto evaluate() const -> int_fast8_t {
-        int_fast8_t v = vertical_term();
+    auto evaluate() const -> uint_fast8_t {
+        uint_fast8_t v = vertical_term();
         if (v)
             return v;
-        int_fast8_t h = horizontal_term();
+        uint_fast8_t h = horizontal_term();
         if (h)
             return h;
-        int_fast8_t u = diagup_term();
+        uint_fast8_t u = diagup_term();
         if (u)
             return u;
-        int_fast8_t d = diagdown_term();
+        uint_fast8_t d = diagdown_term();
         if (d)
             return d;
 
@@ -224,7 +198,7 @@ class State {
 
     void show_result() const  //WORKING
     {
-        int_fast8_t r;
+        uint_fast8_t r;
         r = evaluate();
         if (r == 0) {
             std::cout << "1/2-1/2" << '\n';
@@ -239,14 +213,14 @@ class State {
         return (is_full() || evaluate());
     }
 
-    auto heuristic_value() -> int_fast8_t {
-        int_fast8_t val = 0;
-        for (int_fast8_t row = 0; row < 4; row++) {
-            for (int_fast8_t i = 0; i < 4; i++) {
+    auto heuristic_value() -> uint_fast8_t {
+        uint_fast8_t val = 0;
+        for (uint_fast8_t row = 0; row < NUM_ROWS; row++) {
+            for (uint_fast8_t i = 0; i < NUM_COLS; i++) {
                 val += pos_filled(row, i) * (player_at(row, i) ? 1 : -1) * weights[i];
             }
         }
-        return -(val * 10);  // use some sort of central weighting approach
+        return val;  // use some sort of central weighting approach
     }
 
     auto get_player_move() -> Move {

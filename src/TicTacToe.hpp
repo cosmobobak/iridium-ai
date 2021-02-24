@@ -13,10 +13,10 @@ constexpr auto GAME_EXP_FACTOR = 1.41 * 5;
 
 class State {
    public:
-    using Move = int_fast8_t;
-    using Bitboard = int_fast16_t;
+    using Move = uint_fast8_t;
+    using Bitboard = uint_fast16_t;
     std::array<Bitboard, 2> position = {0b000000000, 0b000000000};
-    int_fast8_t movecount = 0;
+    uint_fast8_t movecount = 0;
     std::vector<Move> movestack;
 
     void mem_setup() {
@@ -42,11 +42,11 @@ class State {
         position[movecount & 1] &= ~(1 << prevmove);
     }
 
-    auto pos_filled(const int_fast8_t i) const -> bool {
+    auto pos_filled(const uint_fast8_t i) const -> bool {
         return ((position[0] | position[1]) & (1L << i)) != 0;
     }
 
-    auto player_at(const int_fast8_t i) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
+    auto player_at(const uint_fast8_t i) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
     {
         if ((position[0] & (1L << i)) != 0)
             return true;
@@ -55,14 +55,14 @@ class State {
     }
 
     auto is_full() const -> bool {
-        for (int_fast8_t i = 0; i < 9; i++) {
+        for (uint_fast8_t i = 0; i < 9; i++) {
             if (!pos_filled(i))
                 return false;
         }
         return true;
     }
 
-    inline auto evaluate() const -> int_fast8_t {
+    inline auto evaluate() const -> uint_fast8_t {
         // check first diagonal
         if (pos_filled(0) && pos_filled(4) && pos_filled(8)) {
             if (player_at(0) == player_at(4) && player_at(4) == player_at(8)) {
@@ -82,7 +82,7 @@ class State {
             }
         }
         // check rows
-        for (int_fast8_t i = 0; i < 3; i++) {
+        for (uint_fast8_t i = 0; i < 3; i++) {
             if (pos_filled(i * 3) && pos_filled(i * 3 + 1) && pos_filled(i * 3 + 2)) {
                 if (player_at(i * 3) == player_at(i * 3 + 1) && player_at(i * 3 + 1) == player_at(i * 3 + 2)) {
                     if (player_at(i * 3))
@@ -93,7 +93,7 @@ class State {
             }
         }
         // check columns
-        for (int_fast8_t i = 0; i < 3; i++) {
+        for (uint_fast8_t i = 0; i < 3; i++) {
             if (pos_filled(i) && pos_filled(i + 3) && pos_filled(i + 6)) {
                 if (player_at(i) == player_at(i + 3) && player_at(i + 3) == player_at(i + 6)) {
                     if (player_at(i))
@@ -110,7 +110,7 @@ class State {
         movecount++;
     }
 
-    auto get_turn() const -> int_fast8_t {
+    auto get_turn() const -> uint_fast8_t {
         if (movecount & 1)
             return -1;
         else
@@ -118,8 +118,8 @@ class State {
     }
 
     void show() const {
-        for (int_fast8_t x = 0; x < 3; x++) {
-            for (int_fast8_t y = 0; y < 3; y++) {
+        for (uint_fast8_t x = 0; x < 3; x++) {
+            for (uint_fast8_t y = 0; y < 3; y++) {
                 if (pos_filled(x * 3 + y)) {
                     if (player_at(x * 3 + y))
                         std::cout << "X ";
@@ -157,7 +157,7 @@ class State {
         play(moves[rand() % moves.size()]);
     }
 
-    auto heuristic_value() const -> int_fast8_t {
+    auto heuristic_value() const -> uint_fast8_t {
         return 0;
     }
 
