@@ -10,11 +10,11 @@ using namespace TreeNode;
 namespace SearchDriver {
 constexpr uint_fast8_t WIN_SCORE = 10;
 
-template <class StateType>
+template <class StateType, int UCT_EXP_FACTOR = 6>
 class MCTS {
     long long timeLimit;        // limiter on search time
     const bool memsafe = true;  // dictates whether we preserve a part of the tree across moves
-    uint_fast8_t opponent;       // the win score that the opponent wants
+    uint_fast8_t opponent;      // the win score that the opponent wants
     int_fast32_t nodeCount = 0;
     Node<StateType>* preservedNode = nullptr;
 
@@ -135,7 +135,7 @@ class MCTS {
     inline auto select_promising_node(Node<StateType>* const rootNode) -> Node<StateType>* {
         Node<StateType>* node = rootNode;
         while (node->get_children().size() != 0)
-            node = UCT<Node<StateType>, 6>::best_node_uct(node);
+            node = UCT<Node<StateType>, UCT_EXP_FACTOR>::best_node_uct(node);
         return node;
     }
 
@@ -177,10 +177,10 @@ class MCTS {
 
 namespace MCSearch {
 
-template <class StateType>
+template <class StateType, int UCT_EXP_FACTOR = 6>
 class Zero {
    public:
-    SearchDriver::MCTS<StateType> searchDriver = SearchDriver::MCTS<StateType>();
+    auto searchDriver = SearchDriver::MCTS<StateType, UCT_EXP_FACTOR>();
     StateType node = StateType();
 
     Zero() {

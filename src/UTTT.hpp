@@ -16,7 +16,7 @@ namespace Board {
 
 using Move = uint_fast8_t;
 using Bitboard = uint_fast16_t;
-using Num = uint_fast8_t;
+using Num = int_fast8_t;
 
 class SubState {
    public:
@@ -116,16 +116,7 @@ class SubState {
     }
 
     inline auto is_board_dead() const -> bool {
-        // if (cached_death_state) return true;
-        if (is_full()) {
-            // cached_death_state = true;
-            return true;
-        }
-        if (evaluate() != 0) {
-            // cached_death_state = true;
-            return true;
-        }
-        return false;
+        return is_full() || evaluate();
     }
 
     auto get_square_as_char(const Num square) const -> char {
@@ -151,7 +142,7 @@ class State {
    public:
     using Move = uint_fast16_t;
     using Bitboard = uint_fast16_t;
-    using Num = uint_fast8_t;
+    using Num = int_fast8_t;
     std::array<Board::SubState, 9> metaposition;
     Num forcingBoard = -1;
     Num movecount = 0;
@@ -230,7 +221,7 @@ class State {
         return metaposition[board].is_board_dead();
     }
 
-    inline auto winner_of_board(const Num board) const -> uint_fast8_t  //only valid to use if pos_filled() returns true, true = x, false = y
+    inline auto winner_of_board(const Num board) const -> int_fast8_t  //only valid to use if pos_filled() returns true, true = x, false = y
     {
         return metaposition[board].evaluate();
     }
@@ -347,11 +338,11 @@ class State {
 
     auto num_legal_moves() const -> Num {
         if (forcingBoard != -1)
-            return 9 - popcount(metaposition[forcingBoard].union_bb());
+            return 9 - __builtin_popcount(metaposition[forcingBoard].union_bb());
         Num cnt = 0;
         for (Num i = 0; i < 9; i++) {
             if (!metaposition[i].is_board_dead())
-                cnt += 9 - popcount(metaposition[i].union_bb());
+                cnt += 9 - __builtin_popcount(metaposition[i].union_bb());
         }
         return cnt;
     }
@@ -367,7 +358,7 @@ class State {
                 if (!board.is_board_dead()) {
                     uint_fast16_t bb = ~board.union_bb() & 0b111111111;
                     while (bb) {
-                        moves.push_back(bcounter * 9 + (lsb(bb)));
+                        moves.push_back(bcounter * 9 + (__builtin_ctz(bb)));
                         bb &= bb - 1;  // clear the least significant bit set
                     }
                 }
@@ -377,7 +368,7 @@ class State {
             moves.reserve(9);
             Bitboard bb = ~metaposition[forcingBoard].union_bb() & 0b111111111;
             while (bb) {
-                moves.push_back(forcingBoard * 9 + (lsb(bb)));
+                moves.push_back(forcingBoard * 9 + (__builtin_ctz(bb)));
                 bb &= bb - 1;  // clear the least significant bit set
             }
         }

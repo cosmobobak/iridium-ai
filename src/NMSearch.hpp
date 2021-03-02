@@ -51,7 +51,7 @@ class Negamax {
 
         int_fast16_t score;
 
-        for (const auto& move : node.legal_moves()) {
+        for (auto move : node.legal_moves()) {
             node.play(move);
             score = -negamax(node, depth - 1, -colour, -b, -a);
             node.unplay();
@@ -76,7 +76,7 @@ class Negamax {
         }
         int_fast16_t score;
 
-        for (const auto& move : node.legal_moves()) {
+        for (auto move : node.legal_moves()) {
             node.play(move);
             nodes += 1;
             score = -dnegamax(node, -colour, -b, -a);

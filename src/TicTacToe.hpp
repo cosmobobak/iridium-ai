@@ -43,7 +43,7 @@ class State {
     }
 
     auto pos_filled(const uint_fast8_t i) const -> bool {
-        return ((position[0] | position[1]) & (1L << i)) != 0;
+        return (position[0] | position[1]) & (1 << i);
     }
 
     auto player_at(const uint_fast8_t i) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
@@ -62,7 +62,7 @@ class State {
         return true;
     }
 
-    inline auto evaluate() const -> uint_fast8_t {
+    inline auto evaluate() const -> int_fast8_t {
         // check first diagonal
         if (pos_filled(0) && pos_filled(4) && pos_filled(8)) {
             if (player_at(0) == player_at(4) && player_at(4) == player_at(8)) {
@@ -110,7 +110,7 @@ class State {
         movecount++;
     }
 
-    auto get_turn() const -> uint_fast8_t {
+    auto get_turn() const -> int_fast8_t {
         if (movecount & 1)
             return -1;
         else
@@ -138,7 +138,7 @@ class State {
     }
 
     auto num_legal_moves() const {
-        return 9 - popcount(position[0] | position[1]);
+        return 9 - __builtin_popcount(position[0] | position[1]);
     }
 
     auto legal_moves() const -> std::vector<Move> {
@@ -146,7 +146,7 @@ class State {
         moves.reserve(9);
         Bitboard bb = ~(position[0] | position[1]) & 0b111111111;
         for (; bb;) {
-            moves.push_back(lsb(bb));
+            moves.push_back(__builtin_ctz(bb));
             bb &= bb - 1;  // clear the least significant bit set
         }
         return moves;

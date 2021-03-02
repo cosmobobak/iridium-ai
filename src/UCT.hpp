@@ -10,7 +10,7 @@
 
 using namespace TreeNode;
 
-template <class NodeType, int EXP_FACTOR>
+template <class NodeType, int EXP_FACTOR = 6>
 class UCT {
    public:
     inline static auto uct_value(

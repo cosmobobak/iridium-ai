@@ -28,17 +28,30 @@ struct std::hash<std::array<T, N> > {
     }
 };
 
-inline void copy_int8_array_81(const int_fast8_t in[], int_fast8_t out[]) {
-    for (int_fast8_t i = 0; i < 81; i++) {
+inline void copy_int8_array_81(const uint_fast8_t in[], uint_fast8_t out[]) {
+    for (uint_fast8_t i = 0; i < 81; i++) {
         out[i] = in[i];
     }
 }
 
-inline auto popcount(const unsigned int bb) -> int_fast8_t {
-    return __builtin_popcount(bb);
+auto zipstring(std::vector<int> v1, std::vector<int> v2) -> std::string {
+    assert(v1.size() == v2.size());
+    std::string builder;
+    builder.append("{ ");
+    for (int i = 0; i < v1.size(); i++) {
+        // builder.append((std::to_string)(i));
+        builder += '(';
+        builder.append(std::to_string(v1[i]));
+        builder += ',';
+        builder.append(std::to_string(v2[i]));
+        builder += ')';
+        builder.append(", ");
+    }
+    builder.append("}");
+    return builder;
 }
 
-auto zipstring(std::vector<int> v1, std::vector<int> v2) -> std::string {
+auto zipstring(std::vector<short unsigned int> v1, std::vector<short unsigned int> v2) -> std::string {
     assert(v1.size() == v2.size());
     std::string builder;
     builder.append("{ ");
@@ -72,7 +85,7 @@ auto zipstring(std::vector<short> v1, std::vector<short> v2) -> std::string {
     return builder;
 }
 
-auto string(std::vector<int_fast8_t> v) -> std::string {
+auto string(std::vector<uint_fast8_t> v) -> std::string {
     std::string builder;
     builder.append("{ ");
     for (auto&& i : v) {
@@ -105,20 +118,4 @@ auto string(std::vector<T> v) -> std::string {
     }
     builder.append("}");
     return builder;
-}
-
-inline auto lsb(unsigned char bitboard) -> int_fast8_t {
-    return __builtin_clz((unsigned int)bitboard);
-}
-
-inline auto lsb(unsigned int bitboard) -> int_fast8_t {
-    return __builtin_clz(bitboard);
-}
-
-inline auto lsb(unsigned long bitboard) -> int_fast8_t {
-    return __builtin_clzl(bitboard);
-}
-
-inline auto lsb(unsigned long long bitboard) -> int_fast8_t {
-    return __builtin_clzll(bitboard);
 }

@@ -12,7 +12,7 @@ template <class ContainedState>
 class Node {
    public:
     int_fast32_t winScore = 0;
-    int_fast32_t visits = 0;
+    uint_fast32_t visits = 0;
     uint_fast8_t playerNo;
     ContainedState board;
     Node* parent = nullptr;

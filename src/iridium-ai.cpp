@@ -81,8 +81,8 @@ inline void run_mcts_game(const long long TL) {
 
 template <class GameType>
 inline auto selfplay(const long long TL) -> int {
-    Zero<GameType> engine1 = Zero<GameType>(TL);
-    Zero<GameType> engine2 = Zero<GameType>(TL);
+    auto engine1 = Zero<GameType>(TL);
+    auto engine2 = Zero<GameType, 7>(TL);
     int eturn = 1;
     while (!engine1.node.is_game_over() && !engine2.node.is_game_over()) {
         engine1.node.show();

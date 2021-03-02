@@ -62,7 +62,7 @@ class State {
         }
     }
 
-    auto get_turn() const -> uint_fast8_t {
+    auto get_turn() const -> int_fast8_t {
         if (movecount & 1)
             return -1;
         else
@@ -102,7 +102,7 @@ class State {
     }
 
     auto num_legal_moves() const -> uint_fast8_t {
-        return NUM_COLS - popcount(bbnode[0][0] | bbnode[1][0]);
+        return NUM_COLS - __builtin_popcount(bbnode[0][0] | bbnode[1][0]);
     }
 
     auto legal_moves() const -> std::vector<Move> {
@@ -110,7 +110,7 @@ class State {
         moves.reserve(num_legal_moves());
         uint_fast8_t bb = ~(bbnode[0][0] | bbnode[1][0]) & BB_ALL;
         while (bb) {
-            moves.push_back(lsb(bb));
+            moves.push_back(__builtin_ctz(bb));
             bb &= bb - 1;  // clear the least significant bit set
         }
         return moves;
@@ -125,7 +125,7 @@ class State {
         movecount++;
     }
 
-    auto horizontal_term() const -> uint_fast8_t {
+    auto horizontal_term() const -> int_fast8_t {
         // check all the rows for horizontal 4-in-a-rows
         for (uint_fast8_t row = 0; row < NUM_ROWS; row++) {
             for (uint_fast8_t bitshift = 0; bitshift < NUM_COLS - 3; bitshift++) {
@@ -140,7 +140,7 @@ class State {
         return 0;  // no 4-in-a-rows found
     }
 
-    auto vertical_term() const -> uint_fast8_t {
+    auto vertical_term() const -> int_fast8_t {
         // check all the columns for vertical 4-in-a-rows
         for (uint_fast8_t row = 0; row < NUM_ROWS - 3; row++) {
             for (uint_fast8_t col = 0; col < NUM_COLS; col++) {
@@ -153,7 +153,7 @@ class State {
         return 0;  // no 4-in-a-rows found
     }
 
-    auto diagup_term() const -> uint_fast8_t {
+    auto diagup_term() const -> int_fast8_t {
         // check all the upward diagonals for 4-in-a-rows
         for (uint_fast8_t row = 3; row < NUM_ROWS; row++) {
             for (uint_fast8_t col = 0; col < NUM_COLS - 3; col++) {
@@ -166,7 +166,7 @@ class State {
         return 0;  // no 4-in-a-rows found
     }
 
-    auto diagdown_term() const -> uint_fast8_t {
+    auto diagdown_term() const -> int_fast8_t {
         // check all the downward diagonals for 4-in-a-rows
         for (uint_fast8_t row = 0; row < NUM_ROWS - 3; row++) {
             for (uint_fast8_t col = 0; col < NUM_COLS - 3; col++) {
@@ -179,17 +179,17 @@ class State {
         return 0;  // no 4-in-a-rows found
     }
 
-    auto evaluate() const -> uint_fast8_t {
-        uint_fast8_t v = vertical_term();
+    auto evaluate() const -> int_fast8_t {
+        int_fast8_t v = vertical_term();
         if (v)
             return v;
-        uint_fast8_t h = horizontal_term();
+        int_fast8_t h = horizontal_term();
         if (h)
             return h;
-        uint_fast8_t u = diagup_term();
+        int_fast8_t u = diagup_term();
         if (u)
             return u;
-        uint_fast8_t d = diagdown_term();
+        int_fast8_t d = diagdown_term();
         if (d)
             return d;
 

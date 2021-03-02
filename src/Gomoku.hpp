@@ -114,7 +114,7 @@ class State {
         return num_legal_moves() == 0 || evaluate() != 0;
     }
 
-    inline auto horizontal_term() const -> uint_fast8_t {
+    inline auto horizontal_term() const -> int_fast8_t {
         // iterates the starting positions of the rows
         for (Move row = 0; row < WIDTH * HEIGHT; row += WIDTH) {
             for (Move i = row; i < row + WIDTH - 4; i++) {
@@ -139,7 +139,7 @@ class State {
         return 0;
     }
 
-    inline auto vertical_term() const -> uint_fast8_t {
+    inline auto vertical_term() const -> int_fast8_t {
         // iterates the starting positions of the columns
         for (Move col = 0; col < WIDTH; col++) {
             // this line below could be fucky
@@ -165,7 +165,7 @@ class State {
         return 0;
     }
 
-    inline auto diagdown_term() const -> uint_fast8_t {
+    inline auto diagdown_term() const -> int_fast8_t {
         // iterates the starting positions of the rows
         for (Move row = 0; row < HEIGHT - 4; row++) {
             for (Move col = 0; col < WIDTH - 4; col++) {
@@ -190,7 +190,7 @@ class State {
         return 0;
     }
 
-    inline auto diagup_term() const -> uint_fast8_t {
+    inline auto diagup_term() const -> int_fast8_t {
         // iterates the starting positions of the rows
         for (Move row = 4; row < HEIGHT; row++) {
             for (Move col = 0; col < WIDTH - 4; col++) {
@@ -215,17 +215,17 @@ class State {
         return 0;
     }
 
-    auto evaluate() const -> uint_fast8_t {
-        uint_fast8_t v = vertical_term();
+    auto evaluate() const -> int_fast8_t {
+        int_fast8_t v = vertical_term();
         if (v)
             return v;
-        uint_fast8_t h = horizontal_term();
+        int_fast8_t h = horizontal_term();
         if (h)
             return h;
-        uint_fast8_t u = diagup_term();
+        int_fast8_t u = diagup_term();
         if (u)
             return u;
-        uint_fast8_t d = diagdown_term();
+        int_fast8_t d = diagdown_term();
         if (d)
             return d;
 
