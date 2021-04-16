@@ -12,11 +12,14 @@ constexpr uint_fast8_t WIN_SCORE = 10;
 
 template <class StateType, int UCT_EXP_FACTOR = 6>
 class MCTS {
-    long long timeLimit;        // limiter on search time
+    long long time_limit;        // limiter on search time
+    long long rollout_limit;     // limiter on rollouts
     const bool memsafe = true;  // dictates whether we preserve a part of the tree across moves
     uint_fast8_t opponent;      // the win score that the opponent wants
-    int_fast32_t nodeCount = 0;
+    int_fast32_t node_count = 0;
     Node<StateType>* preservedNode = nullptr;
+    bool use_rollout_limit;
+    bool use_time_limit;
 
    public:
     MCTS() {
@@ -27,20 +30,37 @@ class MCTS {
     }
     MCTS(const int_fast8_t player, const long long strength) {
         srand(time(NULL));
-        timeLimit = strength;
+        time_limit = strength;
+        opponent = -player;
+        use_rollout_limit = false;
+        use_time_limit = true;
+    }
+    MCTS(const int_fast8_t player, const long long strength, bool use_rollout_limit) {
+        srand(time(NULL));
+        this->use_rollout_limit = use_rollout_limit;
+        this->use_time_limit = !use_rollout_limit;
+        if (use_rollout_limit) {
+            rollout_limit = strength;
+        } else {
+            time_limit = strength;
+        }
         opponent = -player;
     }
 
     void set_time_limit(long long tl) {
-        timeLimit = tl;
+        time_limit = tl;
+    }
+
+    void set_rollout_limit(long long rl) {
+        rollout_limit = rl;
     }
 
     void set_nodes(int_fast32_t n) {
-        nodeCount = n;
+        node_count = n;
     }
 
     auto get_nodes() -> int_fast32_t {
-        return nodeCount;
+        return node_count;
     }
 
     void set_opponent(const int_fast8_t i) {
@@ -73,10 +93,10 @@ class MCTS {
     }
 
     auto find_best_next_board(const StateType board) -> StateType {
-        nodeCount = 0;
+        node_count = 0;
         set_opponent(-board.get_turn());
         // an end time which will act as a terminating condition
-        auto end = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeLimit);
+        auto end = std::chrono::steady_clock::now() + std::chrono::milliseconds(time_limit);
         Node<StateType>* rootNode = nullptr;
         if (preservedNode) {
             rootNode = prune(preservedNode, board);
@@ -88,7 +108,7 @@ class MCTS {
         }
         // if you start getting weird out_of_range() errors at low TC then expand the root node here
         // auto breakunit = std::chrono::steady_clock::now();
-        while (std::chrono::steady_clock::now() < end) {
+        while ((!use_time_limit || std::chrono::steady_clock::now() < end) && (!use_rollout_limit || node_count < rollout_limit)) {
             Node<StateType>* promisingNode = select_promising_node(rootNode);
 
             if (!promisingNode->board.is_game_over())
@@ -107,11 +127,11 @@ class MCTS {
             //     breakunit += std::chrono::milliseconds(500);
             //     rootNode->show_child_visitrates();
             // }
-            nodeCount++;
+            node_count++;
         }
         StateType out = rootNode->best_child()->get_state();
         // std::cout << "ZERO:\n";
-        std::cout << nodeCount << " nodes processed at " << (double)nodeCount / ((double)timeLimit / 1000.0) << "NPS.\n";
+        std::cout << node_count << " nodes processed at " << (double)node_count / ((double)time_limit / 1000.0) << "NPS.\n";
         // std::cout << nodes << ", ";
         // std::cout << "Zero win prediction: " << (int)(rootNode->best_child()->get_winrate() * (100 / WIN_SCORE)) << "%\n";
         uint_fast8_t action, sboard, square, row, col;

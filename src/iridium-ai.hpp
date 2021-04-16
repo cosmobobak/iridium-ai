@@ -14,11 +14,8 @@
 #include <vector>
 
 #include "MCSearch.hpp"
-#include "NMSearch.hpp"
 
-using namespace MCSearch;
-using namespace NMSearch;
-
+namespace Iridium {
 auto get_first_player() -> bool {
     bool player;
     std::cout << "Is the human player going first? [1/0]"
@@ -208,50 +205,4 @@ enum names : int {
 };
 }
 
-int main() {
-    std::cout << "Which game would you like to play? Checkers[1], Connect4[2], Connect4(4x4)[3], Go[4], Gomoku[5], RawTree[6], TicTacToe[7], or UTTT[8]?\n--> ";
-    int response;
-    
-    std::cin >> response;
-    switch (response) {
-        // case Games::Checkers:
-        //     main_template<Checkers::State>();
-        //     break;
-        case Games::Connect4:
-            main_template<Connect4::State>();
-            break;
-        case Games::Connect4x4:
-            main_template<Connect4x4::State>();
-            break;
-        // case Games::Go:
-        //     main_template<Go::State>();
-        //     break;
-        case Games::Gomoku:
-            main_template<Gomoku::State>();
-            break;
-        case Games::RawTree:
-            main_template<RawTree::State>();
-            break;
-        case Games::TicTacToe:
-            main_template<TicTacToe::State>();
-            break;
-        case Games::UTTT:
-            main_template<UTTT::State>();
-            break;
-
-        default:
-            break;
-    }
-    return 0;
-}
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started:
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
+}  // namespace Iridium
