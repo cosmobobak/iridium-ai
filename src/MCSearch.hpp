@@ -8,18 +8,31 @@
 using namespace TreeNode;
 
 namespace SearchDriver {
-constexpr uint_fast8_t WIN_SCORE = 10;
+constexpr uint_fast8_t REWARD = 10;
 
 template <class StateType, int UCT_EXP_FACTOR = 6>
 class MCTS {
-    long long time_limit;        // limiter on search time
-    long long rollout_limit;     // limiter on rollouts
-    const bool memsafe = true;  // dictates whether we preserve a part of the tree across moves
-    uint_fast8_t opponent;      // the win score that the opponent wants
-    int_fast32_t node_count = 0;
-    Node<StateType>* preservedNode = nullptr;
+    // limiter on search time
+    long long time_limit;
+    // limiter on rollouts
+    long long rollout_limit;
+
+    // the win score that the opponent wants
+    uint_fast8_t opponent;
+
+    // flags
+    bool readout = true;
     bool use_rollout_limit;
     bool use_time_limit;
+
+    // recorded search data
+    // the win / loss ratio of the most recently played move
+    double last_winloss;
+    int node_count;
+
+    // dictates whether we preserve a part of the tree across moves
+    const bool memsafe = true;
+    Node<StateType>* preservedNode = nullptr;
 
    public:
     MCTS() {
@@ -46,9 +59,26 @@ class MCTS {
         }
         opponent = -player;
     }
+    MCTS(bool url) {
+        time_limit = 1000;
+        opponent = -1;
+        last_winloss = 5;
+        node_count = 0;
+        use_rollout_limit = url;
+        use_time_limit = !url;
+    }
 
+    // SETTERS
     void set_time_limit(long long tl) {
         time_limit = tl;
+    }
+
+    void set_opponent(const int_fast8_t i) {
+        opponent = i;
+    }
+
+    void set_readout(boolean b) {
+        readout = b;
     }
 
     void set_rollout_limit(long long rl) {
@@ -63,8 +93,9 @@ class MCTS {
         return node_count;
     }
 
-    void set_opponent(const int_fast8_t i) {
-        opponent = i;
+    // GETTERS
+    double get_most_recent_winrate() {
+        return last_winloss;
     }
 
     void deleteTree(Node<StateType>* root) {
@@ -93,74 +124,62 @@ class MCTS {
     }
 
     auto find_best_next_board(const StateType board) -> StateType {
+        // board is immediately copied ^^^
+
         node_count = 0;
         set_opponent(-board.get_turn());
-        // an end time which will act as a terminating condition
-        auto end = std::chrono::steady_clock::now() + std::chrono::milliseconds(time_limit);
-        Node<StateType>* rootNode = nullptr;
-        if (preservedNode) {
-            rootNode = prune(preservedNode, board);
-        }
-        if (!rootNode) {
-            rootNode = new Node<StateType>(board);
-            rootNode->set_state(board);
-            rootNode->set_player_no(opponent);
-        }
-        // if you start getting weird out_of_range() errors at low TC then expand the root node here
+
+        // tracks time
+        auto start = std::chrono::steady_clock::now()
+        auto end = start + std::chrono::milliseconds(time_limit);
+
+        auto rootNode = new Node<StateType>(board);
+        rootNode->set_state(board);
+        rootNode->set_player_no(opponent);
+        
         // auto breakunit = std::chrono::steady_clock::now();
-        while ((!use_time_limit || std::chrono::steady_clock::now() < end) && (!use_rollout_limit || node_count < rollout_limit)) {
-            Node<StateType>* promisingNode = select_promising_node(rootNode);
 
-            if (!promisingNode->board.is_game_over())
-                expand_node(promisingNode);
-
-            Node<StateType>* nodeToExplore = promisingNode;
-
-            if (promisingNode->get_children().size() != 0)
-                nodeToExplore = promisingNode->random_child();
-
-            uint_fast8_t result = simulate_playout(nodeToExplore);
-            backprop(nodeToExplore, result);
-
-            // if (std::chrono::steady_clock::now() > breakunit) {
-            //     std::cout << "The best move so far is: " << rootNode->best_child_as_move() + 1 << '\n';
-            //     breakunit += std::chrono::milliseconds(500);
-            //     rootNode->show_child_visitrates();
-            // }
+        int result;
+        do {
+            select_expand_simulate_backpropagate(rootNode);
             node_count++;
-        }
+        } while ((!use_time_limit || std::chrono::steady_clock::now() < end) && (!use_rollout_limit || node_count < rollout_limit));
+
         StateType out = rootNode->best_child()->get_state();
-        // std::cout << "ZERO:\n";
-        std::cout << node_count << " nodes processed at " << (double)node_count / ((double)time_limit / 1000.0) << "NPS.\n";
-        // std::cout << nodes << ", ";
-        // std::cout << "Zero win prediction: " << (int)(rootNode->best_child()->get_winrate() * (100 / WIN_SCORE)) << "%\n";
-        uint_fast8_t action, sboard, square, row, col;
-        action = rootNode->best_child_as_move();
-        // assert(action >= 0 && action <= 80);
-        // std::cout << action << '\n';
-        square = action % 9;
-        sboard = action / 9;
-        col = (sboard % 3) * 3 + square % 3;
-        row = (sboard / 3) * 3 + square / 3;
-        std::cout << row << " " << col << std::endl;
-        // rootNode->show_child_visitrates();
-        if (!memsafe) {
-            deleteTree(rootNode);
-        } else {
-            preservedNode = prune(rootNode, out);
+        
+        if (readout) {
+            auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count();
+            std::cout << node_count << " nodes processed in " << time << "ms at " << (double)node_count / ((double)time_limit / 1000.0) << "NPS.\n";
         }
+
+        deleteTree(rootNode);
         return out;
+    }
+
+    void select_expand_simulate_backpropagate(Node<StateType>* rootNode) {
+        // SELECTION
+        Node<StateType>* promisingNode = select_promising_node(rootNode);
+
+        // EXPANSION
+        if (!promisingNode->board.is_game_over())
+            promisingNode->expand();
+
+        Node<StateType>* nodeToExplore = promisingNode;
+
+        if (promisingNode->get_children().size() != 0)
+            nodeToExplore = promisingNode->random_child();
+
+        // SIMULATION
+        result = simulate_playout(nodeToExplore);
+        // BACKPROPAGATION
+        backprop(nodeToExplore, result);
     }
 
     inline auto select_promising_node(Node<StateType>* const rootNode) -> Node<StateType>* {
         Node<StateType>* node = rootNode;
-        while (node->get_children().size() != 0)
+        while (node->get_children().size())
             node = UCT<Node<StateType>, UCT_EXP_FACTOR>::best_node_uct(node);
         return node;
-    }
-
-    inline void expand_node(Node<StateType>* node) {
-        node->expand();
     }
 
     inline void backprop(Node<StateType>* nodeToExplore, const int_fast8_t winner) {
@@ -168,24 +187,26 @@ class MCTS {
         while (propagator) {
             propagator->increment_visits();
             if (propagator->get_player_no() == winner) {
-                propagator->add_score(WIN_SCORE);
+                propagator->add_score(REWARD);
             }
             propagator = propagator->get_parent();
         }
     }
 
     inline auto simulate_playout(Node<StateType>* node) -> int_fast8_t {
-        StateType tempState = node->get_state();
-        tempState.mem_setup();
-        uint_fast8_t status = tempState.evaluate();
+        StateType playout_board = node->get_state();
+        playout_board.mem_setup();
+        uint_fast8_t status = playout_board.evaluate();
         if (status == opponent) {
+            // tests for an immediate loss in the position and sets to MIN_VALUE
+            // if there is one.
             node->get_parent()->set_win_score(INT_MIN);
             return status;
         }
-        while (!tempState.is_game_over()) {
-            tempState.random_play();
+        while (!playout_board.is_game_over()) {
+            playout_board.random_play();
         }
-        status = tempState.evaluate();
+        status = playout_board.evaluate();
         return status;
     }
 };

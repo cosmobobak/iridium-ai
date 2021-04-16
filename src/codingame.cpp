@@ -503,7 +503,7 @@ class UCT {
 };
 
 namespace SearchDriver {
-constexpr uint_fast8_t WIN_SCORE = 10;
+constexpr uint_fast8_t REWARD = 10;
 
 template <class StateType>
 class MCTS {
@@ -643,7 +643,7 @@ class MCTS {
         while (propagator) {
             propagator->increment_visits();
             if (propagator->get_player_no() == winner) {
-                propagator->add_score(WIN_SCORE);
+                propagator->add_score(REWARD);
             }
             propagator = propagator->get_parent();
         }
