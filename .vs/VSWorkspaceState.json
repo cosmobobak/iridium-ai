@@ -1,7 +1,8 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\src"
   ],
-  "SelectedNode": "\\Iridium.cpp",
+  "SelectedNode": "\\src",
   "PreviewInSolutionExplorer": false
 }

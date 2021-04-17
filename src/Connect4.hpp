@@ -9,7 +9,6 @@
 #include "accelerations.hpp"
 
 namespace Connect4 {
-using Move = uint_fast8_t;
 using Bitrow = uint_fast8_t;
 using Bitboard = uint_fast64_t;
 
@@ -22,16 +21,17 @@ constexpr Bitrow BB_ALL = 0b1111111;
 constexpr std::array<uint_fast8_t, NUM_COLS> weights = {1, 2, 3, 4, 3, 2, 1};
 
 class State {
+   public:
+    using Move = uint_fast8_t;
+
+   private:
     std::array<Move, NUM_ROWS * NUM_COLS> move_stack;
     uint_fast8_t move_count;
     // Bitboard node[2] = {0};
 
    public:
-    std::vector<std::vector<Bitrow>> node;
+    std::array<std::array<Bitrow, NUM_COLS>, 2> node;
     State() {
-        node.resize(2);
-        node[0].resize(NUM_COLS);
-        node[1].resize(NUM_COLS);
         move_count = 0;
     }
 
@@ -67,7 +67,7 @@ class State {
         // . . . O . . .
         // . . O X . X .
         // unionBitboard(5) = 0b0011010, or 26
-        return node[r][0] | node[r][1];
+        return node[0][r] | node[1][r];
     }
 
     inline auto is_full() const -> bool {
@@ -77,7 +77,7 @@ class State {
     void play(const Move col) {
         // we assume play is not called on a filled column
         // iterate upward and break at the first empty position
-        for (uint_fast8_t row = NUM_ROWS; row; row--) {
+        for (int row = NUM_ROWS; row; row--) {
             if (!pos_filled(row - 1, col)) {
                 // moveCount acts to determine which colour is played
                 node[move_count & 1][row - 1] ^= (1 << col);
@@ -174,10 +174,9 @@ class State {
         // the following loop runs until all the occupied
         // spaces have had moves generated
         while (bb) {
-            moves[counter] = __builtin_ctz(bb);
+            moves[counter++] = __builtin_ctz(bb);
             // clear the least significant bit set
             bb &= bb - 1;
-            counter++;
         }
         // should be [0, 1, 2, 3, 4, 5, 6]
         // for move 1 on a 7-wide board
@@ -185,7 +184,9 @@ class State {
     }
 
     void random_play() {
+        // consider inlining and stopping halfway through movegen
         std::vector<Move> moves = legal_moves();
+        // assert(moves.size() != 0);
         play(moves[rand() % moves.size()]);
     }
 
@@ -212,10 +213,7 @@ class State {
         // check all the columns for vertical 4-in-a-rows
         for (int row = 0; row < NUM_ROWS - 3; row++) {
             for (int col = 0; col < NUM_COLS; col++) {
-                if (probe_spot(row, col) 
-                && probe_spot(row + 1, col) 
-                && probe_spot(row + 2, col) 
-                && probe_spot(row + 3, col)) {
+                if (probe_spot(row, col) && probe_spot(row + 1, col) && probe_spot(row + 2, col) && probe_spot(row + 3, col)) {
                     // if we have four adjacent filled positions
                     return -get_turn();
                 }
@@ -341,10 +339,10 @@ class State {
     }
 
     auto vectorise_board() {
-        std::vector<int> out(42);
+        std::vector<int> out(NUM_ROWS * NUM_COLS);
         for (int row = 0; row < NUM_ROWS; row++) {
             for (int col = 0; col < NUM_COLS; col++) {
-                out[row * NUM_COLS + col] = getPositionContents(row, col);
+                out[row * NUM_COLS + col] = get_position_contents(row, col);
             }
         }
         return out;

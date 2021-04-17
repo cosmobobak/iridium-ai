@@ -1,5 +1,8 @@
 #pragma once
 
+#include <climits>
+#include <cmath>
+
 #include "Connect4-4x4.hpp"
 #include "Connect4.hpp"
 #include "Gomoku.hpp"

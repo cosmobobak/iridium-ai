@@ -14,6 +14,10 @@
 #include <vector>
 
 #include "MCSearch.hpp"
+#include "NMSearch.hpp"
+
+using namespace MCSearch;
+using namespace NMSearch;
 
 namespace Iridium {
 auto get_first_player() -> bool {
@@ -25,52 +29,52 @@ auto get_first_player() -> bool {
 }
 
 template <class GameType>
-inline void run_negamax_game(const long long TL) {
+inline void run_negamax_engine(const long long TL) {
     Istus<GameType> engine = Istus<GameType>(TL);
     typename GameType::Move i;
-    engine.node.show();
+    engine.get_node().show();
     if (get_first_player()) {
         i = engine.get_player_move();
-        engine.node.play(i);
-        engine.node.show();
+        engine.get_node().play(i);
+        engine.get_node().show();
     }
-    while (!engine.node.is_game_over()) {
+    while (!engine.get_node().is_game_over()) {
         engine.engine_move();
-        engine.node.show();
-        if (engine.node.is_game_over())
+        engine.get_node().show();
+        if (engine.get_node().is_game_over())
             break;
         i = engine.get_player_move();
-        engine.node.play(i);
-        engine.node.show();
+        engine.get_node().play(i);
+        engine.get_node().show();
     }
     engine.show_result();
 }
 
 template <class GameType>
-inline void run_mcts_game(const long long TL) {
+inline void run_mcts_engine(const long long TL) {
     Zero<GameType> engine = Zero<GameType>(TL);
     typename GameType::Move i;
-    engine.node.show();
+    engine.get_node().show();
     if (get_first_player()) {
         i = engine.get_player_move();
-        engine.node.play(i);
-        engine.node.show();
+        engine.get_node().play(i);
+        engine.get_node().show();
     }
-    while (!engine.node.is_game_over()) {
+    while (!engine.get_node().is_game_over()) {
         engine.engine_move();
-        engine.node.show();
-        if (engine.node.is_game_over())
+        engine.get_node().show();
+        if (engine.get_node().is_game_over())
             break;
         i = engine.get_player_move();
         if (i == -1) {
-            engine.node.unplay();
-            engine.node.unplay();
+            engine.get_node().unplay();
+            engine.get_node().unplay();
             i = engine.get_player_move();
-            engine.node.play(i);
-            engine.node.show();
+            engine.get_node().play(i);
+            engine.get_node().show();
         } else {
-            engine.node.play(i);
-            engine.node.show();
+            engine.get_node().play(i);
+            engine.get_node().show();
         }
     }
     engine.show_result();
@@ -81,57 +85,57 @@ inline auto selfplay(const long long TL) -> int {
     auto engine1 = Zero<GameType>(TL);
     auto engine2 = Zero<GameType, 7>(TL);
     int eturn = 1;
-    while (!engine1.node.is_game_over() && !engine2.node.is_game_over()) {
-        engine1.node.show();
+    while (!engine1.is_game_over() && !engine2.is_game_over()) {
+        engine1.show_node();
         if (eturn == -1) {
             engine1.engine_move();
-            engine2.node = engine1.node;
+            engine2.set_node(engine1.get_node());
         } else {
             engine2.engine_move();
-            engine1.node = engine2.node;
+            engine1.set_node(engine2.get_node());
         }
         eturn = -eturn;
     }
-    engine1.node.show();
+    engine1.show_node();
     engine1.show_result();
-    return engine1.node.evaluate();
+    return engine1.node_eval();
 }
 
 template <class GameType>
 inline void userplay() {
-    Zero<GameType> game = Zero<GameType>();
-    game.node.show();
-    while (!game.node.is_game_over() && !game.node.is_game_over()) {
+    Zero<GameType> engine = Zero<GameType>();
+    engine.get_node().show();
+    while (!engine.get_node().is_game_over() && !engine.get_node().is_game_over()) {
         int i;
-        i = game.get_player_move();
-        game.node.play(i);
-        game.node.show();
+        i = engine.get_player_move();
+        engine.get_node().play(i);
+        engine.get_node().show();
     }
-    game.node.show();
-    game.show_result();
+    engine.get_node().show();
+    engine.show_result();
 }
 
 template <class GameType>
 inline void testsuite() {
-    Zero<GameType> game = Zero<GameType>();
-    while (!game.node.is_game_over()) {
-        game.node.show();
+    Zero<GameType> engine = Zero<GameType>();
+    while (!engine.get_node().is_game_over()) {
+        engine.get_node().show();
         std::cout << "\nforcing board: "
-                  //<< (int)game.node.forcingBoard
+                  //<< (int)engine.get_node().forcingBoard
                   << "\nposition legal moves: "
-                  << game.node.legal_moves().size()
+                  << engine.get_node().legal_moves().size()
                   << "\nfast move counter: "
-                  << (int)game.node.num_legal_moves()
+                  << (int)engine.get_node().num_legal_moves()
                   << "\nforcing board after movegen: "
-                  //<< (int)game.node.forcingBoard
+                  //<< (int)engine.get_node().forcingBoard
                   << "\nactual list of moves: ";
-        showvec(game.node.legal_moves());
-        std::cout << "\nstate of play (is game over?): "
-                  << game.node.is_game_over()
+        showvec(engine.get_node().legal_moves());
+        std::cout << "\nstate of play (is engine over?): "
+                  << engine.get_node().is_game_over()
                   << '\n';
-        // assert(game.node.evaluate() == game.node.evaluateOLD());
-        assert(game.node.legal_moves().size() == game.node.num_legal_moves());
-        game.node.random_play();
+        // assert(engine.get_node().evaluate() == engine.get_node().evaluateOLD());
+        assert(engine.get_node().legal_moves().size() == engine.get_node().num_legal_moves());
+        engine.get_node().random_play();
     }
 }
 
@@ -144,9 +148,9 @@ inline void benchmark() {
         Zero<GameType> engine = Zero<GameType>(99);
         for (int j = 0; j < len; j++) {
             engine.engine_move();
-            nodecounts[i * len + j] = engine.searchDriver.get_nodes();
+            nodecounts[i * len + j] = engine.get_node_count();
         }
-        if (engine.node.is_game_over()) {
+        if (engine.get_node().is_game_over()) {
             break;
         }
         std::cout << i << " ";
@@ -160,7 +164,7 @@ inline void benchmark() {
 
 template <class GameType>
 void main_template() {
-    std::cout << "Play against Zero [0] | Play against Istus [1] | Watch a self-play game [2] | Play with a friend [3] | Run tests [4] | Benchmark [5]\n--> ";
+    std::cout << "Play against Zero [0] | Play against Istus [1] | Watch a self-play engine [2] | Play with a friend [3] | Run tests [4] | Benchmark [5]\n--> ";
     int ans;
     std::cin >> ans;
     long long TL;
@@ -170,10 +174,10 @@ void main_template() {
     }
     switch (ans) {
         case 0:
-            run_mcts_game<GameType>(TL);
+            run_mcts_engine<GameType>(TL);
             break;
         case 1:
-            run_negamax_game<GameType>(TL);
+            run_negamax_engine<GameType>(TL);
             break;
         case 2:
             selfplay<GameType>(TL);

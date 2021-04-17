@@ -664,7 +664,7 @@ class MCTS {
         return status;
     }
 };
-};  // namespace SearchDriver
+} // namespace SearchDriver
 
 // Possible heuristic improvement: use a long search to generate MCTS values for each starting square, use them as a heuristic starter.
 // The RAVE approach makes this heuristic value = some sort of aggregate score of the move on parent nodes.

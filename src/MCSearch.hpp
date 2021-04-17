@@ -36,10 +36,7 @@ class MCTS {
 
    public:
     MCTS() {
-        MCTS(1);
-    }
-    MCTS(const int_fast8_t player) {
-        MCTS(player, 3);
+        MCTS(1, 3);
     }
     MCTS(const int_fast8_t player, const long long strength) {
         srand(time(NULL));
@@ -47,6 +44,8 @@ class MCTS {
         opponent = -player;
         use_rollout_limit = false;
         use_time_limit = true;
+        last_winloss = 5;
+        node_count = 0;
     }
     MCTS(const int_fast8_t player, const long long strength, bool use_rollout_limit) {
         srand(time(NULL));
@@ -58,14 +57,27 @@ class MCTS {
             time_limit = strength;
         }
         opponent = -player;
-    }
-    MCTS(bool url) {
-        time_limit = 1000;
-        opponent = -1;
         last_winloss = 5;
         node_count = 0;
+    }
+    MCTS(bool url) {
+        srand(time(NULL));
+        time_limit = 1000;
+        opponent = -1;
         use_rollout_limit = url;
         use_time_limit = !url;
+        last_winloss = 5;
+        node_count = 0;
+    }
+
+    void choose_rollout_limit() {
+        use_rollout_limit = true;
+        use_time_limit = false;
+    }
+
+    void choose_time_limit() {
+        use_rollout_limit = false;
+        use_time_limit = true;
     }
 
     // SETTERS
@@ -77,7 +89,7 @@ class MCTS {
         opponent = i;
     }
 
-    void set_readout(boolean b) {
+    void set_readout(bool b) {
         readout = b;
     }
 
@@ -130,33 +142,63 @@ class MCTS {
         set_opponent(-board.get_turn());
 
         // tracks time
-        auto start = std::chrono::steady_clock::now()
+        auto start = std::chrono::steady_clock::now();
         auto end = start + std::chrono::milliseconds(time_limit);
 
-        auto rootNode = new Node<StateType>(board);
+        Node<StateType>* rootNode = new Node<StateType>(board);
         rootNode->set_state(board);
         rootNode->set_player_no(opponent);
-        
-        // auto breakunit = std::chrono::steady_clock::now();
 
-        int result;
         do {
             select_expand_simulate_backpropagate(rootNode);
             node_count++;
-        } while ((!use_time_limit || std::chrono::steady_clock::now() < end) && (!use_rollout_limit || node_count < rollout_limit));
+        } while (
+            (!use_time_limit || std::chrono::steady_clock::now() < end) 
+            && (!use_rollout_limit || node_count < rollout_limit));
 
         StateType out = rootNode->best_child()->get_state();
         
         if (readout) {
-            auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count();
-            std::cout << node_count << " nodes processed in " << time << "ms at " << (double)node_count / ((double)time_limit / 1000.0) << "NPS.\n";
+            auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+            std::cout << node_count << " nodes processed in " << time << "ms at " << (double)node_count / ((double)time / 1000.0) << "NPS.\n";
         }
 
         deleteTree(rootNode);
         return out;
     }
 
-    void select_expand_simulate_backpropagate(Node<StateType>* rootNode) {
+    auto getRolloutCounts(const StateType board) -> std::vector<int> {
+        // board is immediately copied ^^^
+
+        node_count = 0;
+        set_opponent(-board.get_turn());
+
+        // tracks time
+        auto start = std::chrono::steady_clock::now(); 
+        auto end = start + std::chrono::milliseconds(time_limit);
+
+        auto rootNode = new Node<StateType>(board);
+        rootNode->set_state(board);
+        rootNode->set_player_no(opponent);
+
+        do {
+            select_expand_simulate_backpropagate(rootNode);
+            node_count++;
+        } while ((!use_time_limit || std::chrono::steady_clock::now() < end) && (!use_rollout_limit || node_count < rollout_limit));
+
+        last_winloss = rootNode->best_child()->get_winrate();
+        last_winloss = std::max(last_winloss, 0.0);
+
+        std::vector<int> out(rootNode->get_children().size());
+        for (int child_idx = 0; child_idx < rootNode->get_children().size(); child_idx++) {
+            out[child_idx] = rootNode->get_children()[child_idx].get_visit_count();
+        }
+
+        return out;
+    }
+
+    inline void select_expand_simulate_backpropagate(Node<StateType>* rootNode) {
+        int result;
         // SELECTION
         Node<StateType>* promisingNode = select_promising_node(rootNode);
 
@@ -210,7 +252,7 @@ class MCTS {
         return status;
     }
 };
-};  // namespace SearchDriver
+} // namespace SearchDriver
 
 // Possible heuristic improvement: use a long search to generate MCTS values for each starting square, use them as a heuristic starter.
 // The RAVE approach makes this heuristic value = some sort of aggregate score of the move on parent nodes.
@@ -220,15 +262,31 @@ namespace MCSearch {
 
 template <class StateType, int UCT_EXP_FACTOR = 6>
 class Zero {
-   public:
-    auto searchDriver = SearchDriver::MCTS<StateType, UCT_EXP_FACTOR>();
+    SearchDriver::MCTS<StateType, UCT_EXP_FACTOR> search_driver = SearchDriver::MCTS<StateType, UCT_EXP_FACTOR>();
     StateType node = StateType();
 
+public:
     Zero() {
         Zero(99);
     }
-    Zero(const long long strength) {
-        searchDriver.set_time_limit(strength);
+    Zero(const long long str) {
+        search_driver.set_time_limit(str);
+    }
+
+    void set_time_limit(long long x) {
+        search_driver.set_time_limit(x);
+    }
+    void choose_time_limit() {
+        search_driver.choose_time_limit();
+    }
+    void set_rollout_limit(long long x) {
+        search_driver.set_rollout_limit(x);
+    }
+    void choose_rollout_limit() {
+        search_driver.choose_rollout_limit();
+    }
+    void set_readout(bool b) {
+        search_driver.set_readout(b);
     }
 
     inline void print(const std::string input, const std::string end = "\n") {
@@ -239,8 +297,36 @@ class Zero {
         return node.get_player_move();
     }
 
+    auto get_node() {
+        return node;
+    }
+
+    void set_node(StateType n) {
+        node = n;
+    }
+
+    void reset_node() {
+        node.reset();
+    }
+
+    void show_node() {
+        node.show();
+    }
+
+    auto node_eval() {
+        return node.evaluate();
+    }
+
+    auto is_game_over() {
+        return node.is_game_over();
+    }
+
+    auto get_node_count() {
+        return search_driver.get_nodes();
+    }
+
     void engine_move() {
-        node = searchDriver.find_best_next_board(node);
+        node = search_driver.find_best_next_board(node);
     }
 
     void show_result() const {

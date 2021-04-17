@@ -164,6 +164,10 @@ class Istus {
         return node.get_player_move();
     }
 
+    auto get_node() {
+        return node;
+    }
+
     void engine_move() {
         node = searchDriver.find_best_next_board(node);
     }
