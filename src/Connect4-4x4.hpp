@@ -33,8 +33,7 @@ class State {
         return bbnode[0][r] | bbnode[1][r];
     }
 
-    auto is_full() const -> bool
-    {
+    auto is_full() const -> bool {
         return union_bb(0) == BB_ALL;
     }
 
@@ -69,8 +68,7 @@ class State {
             return 1;
     }
 
-    void show() const 
-    {
+    void show() const {
         uint_fast8_t row, col;
         for (row = 0; row < 4; ++row) {
             for (col = 0; col < 4; ++col) {

@@ -13,17 +13,14 @@
 
 using namespace TreeNode;
 
-template <class NodeType, int EXP_FACTOR = 6>
+template <class NodeType, int EXP_FACTOR>
 class UCT {
    public:
-    inline static auto uct_value(
-        int totalVisit,
-        double nodeWinScore,
-        int nodeVisit) -> double {
-        if (nodeVisit == 0) {
+    inline static auto uct_value(int parent_visits, double win_count, int visits) -> double {
+        if (visits == 0) {
             return INT_MAX;
         }
-        return (nodeWinScore / (double)nodeVisit) + sqrt(log(totalVisit) / (double)nodeVisit) * EXP_FACTOR;
+        return (win_count / (double)visits) + sqrt(log(parent_visits) / (double)visits) * EXP_FACTOR;
     }
 
     inline static auto compute_uct(const NodeType* a) -> double {
@@ -33,16 +30,21 @@ class UCT {
             a->get_visit_count());
     }
 
+    inline static auto compare_ucb1(const NodeType* a, const NodeType* b) -> bool {
+        return uct_value(
+                   a->get_parent_visits(),
+                   a->get_win_score(),
+                   a->get_visit_count()) <
+               uct_value(
+                   b->get_parent_visits(),
+                   b->get_win_score(),
+                   b->get_visit_count());
+    }
+    
     inline static auto best_node_uct(const NodeType* node) -> NodeType* {
-        int maxpos = 0;
-        double maxval = compute_uct(node->children[0]), currentUCT;
-        for (int i = 1; i < node->children.size(); i++) {
-            currentUCT = compute_uct(node->children[i]);
-            if (currentUCT > maxval) {
-                maxpos = i;
-                maxval = currentUCT;
-            }
-        }
-        return node->children[maxpos];
+        return *std::max_element(
+            node->children.begin(),
+            node->children.end(),
+            compare_ucb1);
     }
 };

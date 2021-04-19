@@ -11,26 +11,26 @@ namespace TreeNode {
 template <class ContainedState>
 class Node {
    public:
-    int_fast32_t winScore = 0;
-    uint_fast32_t visits = 0;
-    uint_fast8_t playerNo;
     ContainedState board;
-    Node* parent = nullptr;
     std::vector<Node*> children;
+    Node* parent = nullptr;
+    int_fast32_t win_count = 0;
+    uint_fast32_t visits = 0;
+    int_fast8_t playerNo;
 
     Node(const ContainedState& board) {
         this->board = board;
     }
 
-    inline void set_player_no(const uint_fast8_t playerNo) {
+    inline void set_player_no(const int playerNo) {
         this->playerNo = playerNo;
     }
 
-    inline auto get_player_no() const -> uint_fast8_t {
+    inline auto get_player_no() const -> int {
         return playerNo;
     }
 
-    inline auto get_opponent() const -> uint_fast8_t {
+    inline auto get_opponent() const -> int {
         return -playerNo;
     }
 
@@ -57,18 +57,20 @@ class Node {
     }
 
     inline void expand() {
-        children.reserve(board.num_legal_moves());
-        for (const auto& move : board.legal_moves()) {
+        children.resize(board.num_legal_moves());
+        int x = 0;
+        for (int move : board.legal_moves()) {
             board.play(move);
-            children.push_back(new Node(board));
-            children.back()->set_parent(this);
-            children.back()->set_player_no(get_opponent());
+            children[x] = new Node(board);
+            children[x]->set_parent(this);
+            children[x]->set_player_no(get_opponent());
             board.unplay();
+            x++;
         }
     }
 
     inline auto get_win_score() const -> int_fast32_t {
-        return winScore;
+        return win_count;
     }
 
     inline auto get_visit_count() const -> int_fast32_t {
@@ -84,11 +86,11 @@ class Node {
     }
 
     inline void add_score(const int_fast32_t s) {
-        winScore += s;
+        win_count += s;
     }
 
     inline void set_win_score(const int_fast32_t s) {
-        winScore = s;
+        win_count = s;
     }
 
     inline auto get_parent() const -> Node* {
@@ -104,7 +106,7 @@ class Node {
     }
 
     inline auto get_winrate() const -> double {
-        return (double)winScore / (double)visits;
+        return (double)win_count / (double)visits;
     }
 
     inline auto best_child() -> Node* {
@@ -112,7 +114,7 @@ class Node {
         result = std::max_element(
             children.begin(), children.end(),
             [](Node* a, Node* b) { return (a->get_visit_count() < b->get_visit_count()); });
-        return children[std::distance(children.begin(), result)];
+        return *result;
     }
 
     inline auto best_child_as_move() {
@@ -130,16 +132,14 @@ class Node {
 
     inline void show_child_winrates() const {
         for (const auto& child : children) {
-            std::cout << child->get_win_score() << " ";
+            std::cout << (child->get_win_score() * 10) / child->get_visit_count() << " ";
         }
-        std::cout << "\n";
     }
 
     inline void show_child_visitrates() const {
         for (const auto& child : children) {
             std::cout << child->get_visit_count() << " ";
         }
-        std::cout << "\n";
     }
 };
 }

@@ -165,7 +165,7 @@ class Istus {
     }
 
     auto get_node() {
-        return node;
+        return &node;
     }
 
     void engine_move() {

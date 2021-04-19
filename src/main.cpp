@@ -8,28 +8,28 @@ int main() {
     std::cin >> response;
     switch (response) {
         // case Games::Checkers:
-        //     main_template<Checkers::State>();
+        //     main_template<Checkers::State, 6>();
         //     break;
         case Iridium::Games::Connect4:
-            Iridium::main_template<Connect4::State>();
+            Iridium::main_template<Connect4::State, 10>();
             break;
         case Iridium::Games::Connect4x4:
-            Iridium::main_template<Connect4x4::State>();
+            Iridium::main_template<Connect4x4::State, 6>();
             break;
         // case Games::Go:
-        //     main_template<Go::State>();
+        //     main_template<Go::State, 6>();
         //     break;
         case Iridium::Games::Gomoku:
-            Iridium::main_template<Gomoku::State>();
+            Iridium::main_template<Gomoku::State, 6>();
             break;
         case Iridium::Games::RawTree:
-            Iridium::main_template<RawTree::State>();
+            Iridium::main_template<RawTree::State, 6>();
             break;
         case Iridium::Games::TicTacToe:
-            Iridium::main_template<TicTacToe::State>();
+            Iridium::main_template<TicTacToe::State, 6>();
             break;
         case Iridium::Games::UTTT:
-            Iridium::main_template<UTTT::State>();
+            Iridium::main_template<UTTT::State, 6>();
             break;
 
         default:

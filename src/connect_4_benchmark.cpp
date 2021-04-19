@@ -7,8 +7,11 @@ int main(int argc, char const *argv[]) {
     auto test = MCSearch::Zero<Connect4::State, 6>();
     test.choose_rollout_limit();
     test.set_readout(false);
+    test.set_debug(false);
 
     if (argc <= 2) {
+        test.set_rollout_limit(200000);
+        test.engine_move();
         std::cout << "Run with arg1: rollouts, arg2: iterations.";
         return 0;
     }

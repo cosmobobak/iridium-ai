@@ -34,7 +34,8 @@ inline void copy_int8_array_81(const uint_fast8_t in[], uint_fast8_t out[]) {
     }
 }
 
-auto zipstring(std::vector<int> v1, std::vector<int> v2) -> std::string {
+template <typename T>
+auto zipstring(std::vector<T> v1, std::vector<T> v2) -> std::string {
     assert(v1.size() == v2.size());
     std::string builder;
     builder.append("{ ");

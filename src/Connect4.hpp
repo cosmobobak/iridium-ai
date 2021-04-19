@@ -10,7 +10,7 @@
 
 namespace Connect4 {
 using Bitrow = uint_fast8_t;
-using Bitboard = uint_fast64_t;
+using Bitboard = unsigned long long;
 
 constexpr auto GAME_SOLVABLE = false;
 constexpr auto NUM_ROWS = 6;
@@ -25,12 +25,12 @@ class State {
     using Move = uint_fast8_t;
 
    private:
-    std::array<Move, NUM_ROWS * NUM_COLS> move_stack;
-    uint_fast8_t move_count;
+    std::array<Move, NUM_ROWS * NUM_COLS> move_stack = {0};
+    int8_t move_count;
     // Bitboard node[2] = {0};
 
    public:
-    std::array<std::array<Bitrow, NUM_COLS>, 2> node;
+    std::array<std::array<Bitrow, NUM_COLS>, 2> node = {0};
     State() {
         move_count = 0;
     }
@@ -106,7 +106,7 @@ class State {
         // decrement move counter
         move_count--;
         // iterate downward and break at the first filled position
-        for (uint_fast8_t row = 0; row < NUM_ROWS; row++) {
+        for (int row = 0; row < NUM_ROWS; row++) {
             if (pos_filled(row, col)) {
                 // a bit is removed by XOR
                 node[move_count & 1][row] ^= (1 << col);
@@ -116,7 +116,7 @@ class State {
     }
 
     void show() const {
-        uint_fast8_t row, col;
+        int row, col;
         for (row = 0; row < NUM_ROWS; ++row) {
             for (col = 0; col < NUM_COLS; ++col) {
                 if (pos_filled(row, col)) {
@@ -132,7 +132,7 @@ class State {
         std::cout << '\n';
     }
 
-    auto pos_filled(const uint_fast8_t row, const uint_fast8_t col) const -> bool {
+    auto pos_filled(int row, int col) const -> bool {
         // tests if a given location is filled, indexed by the row and column
         // this is done by indexing the row in the 2D array, then performing shifts
         // to produce a mask with only the desired bit. This mask is then AND-ed with
@@ -141,7 +141,7 @@ class State {
         return node[0][row] & (1 << col) || node[1][row] & (1 << col);
     }
 
-    auto player_at(const uint_fast8_t row, const uint_fast8_t col) const -> bool {
+    auto player_at(int row, int col) const -> bool {
         // only valid to use if posFilled returns true
         // this function essentially performs the same job as posFilled
         // except it only checks against the first half of the array
@@ -155,7 +155,7 @@ class State {
         return (node[(move_count + 1) & 1][row] & (1 << col));
     }
 
-    inline auto num_legal_moves() const -> uint_fast8_t {
+    inline auto num_legal_moves() const -> int {
         // this is a fast function to determine the number
         // of empty spaces on the top row
         return NUM_COLS - __builtin_popcount(union_bitboard(0));
@@ -169,7 +169,7 @@ class State {
         // the top row (0b0011000 -> 0b1100111)
         Bitrow bb = ~union_bitboard(0) & BB_ALL;
 
-        uint_fast8_t counter = 0;
+        int counter = 0;
 
         // the following loop runs until all the occupied
         // spaces have had moves generated
@@ -186,7 +186,6 @@ class State {
     void random_play() {
         // consider inlining and stopping halfway through movegen
         std::vector<Move> moves = legal_moves();
-        // assert(moves.size() != 0);
         play(moves[rand() % moves.size()]);
     }
 
@@ -224,8 +223,8 @@ class State {
 
     auto diagup_term() const -> int_fast8_t {
         // check all the upward diagonals for 4-in-a-rows
-        for (uint_fast8_t row = 3; row < NUM_ROWS; row++) {
-            for (uint_fast8_t col = 0; col < NUM_COLS - 3; col++) {
+        for (int row = 3; row < NUM_ROWS; row++) {
+            for (int col = 0; col < NUM_COLS - 3; col++) {
                 if (probe_spot(row, col) && probe_spot(row - 1, col + 1) && probe_spot(row - 2, col + 2) && probe_spot(row - 3, col + 3)) {
                     // if we have four adjacent filled positions
                     return -get_turn();
@@ -237,8 +236,8 @@ class State {
 
     auto diagdown_term() const -> int_fast8_t {
         // check all the downward diagonals for 4-in-a-rows
-        for (uint_fast8_t row = 0; row < NUM_ROWS - 3; row++) {
-            for (uint_fast8_t col = 0; col < NUM_COLS - 3; col++) {
+        for (int row = 0; row < NUM_ROWS - 3; row++) {
+            for (int col = 0; col < NUM_COLS - 3; col++) {
                 if (probe_spot(row, col) && probe_spot(row + 1, col + 1) && probe_spot(row + 2, col + 2) && probe_spot(row + 3, col + 3)) {
                     // if we have four adjacent filled positions
                     return -get_turn();
@@ -263,7 +262,7 @@ class State {
     }
 
     void show_result() const {
-        uint_fast8_t r;
+        int r;
         r = evaluate();
         if (r == 0) {
             std::cout << "1/2-1/2" << '\n';
@@ -278,10 +277,10 @@ class State {
         return (is_full() || evaluate());
     }
 
-    auto heuristic_value() -> uint_fast8_t {
-        uint_fast8_t val = 0;
-        for (uint_fast8_t row = 0; row < NUM_ROWS; row++) {
-            for (uint_fast8_t i = 0; i < NUM_COLS; i++) {
+    auto heuristic_value() -> int {
+        int val = 0;
+        for (int row = 0; row < NUM_ROWS; row++) {
+            for (int i = 0; i < NUM_COLS; i++) {
                 val += pos_filled(row, i) * (player_at(row, i) ? 1 : -1) * weights[i];
             }
         }

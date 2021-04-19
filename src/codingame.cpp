@@ -345,7 +345,7 @@ namespace TreeNode {
 template <class ContainedState>
 class Node {
    public:
-    int_fast32_t winScore = 0;
+    int_fast32_t win_count = 0;
     uint_fast32_t visits = 0;
     uint_fast8_t playerNo;
     ContainedState board;
@@ -402,7 +402,7 @@ class Node {
     }
 
     inline auto get_win_score() const -> int_fast32_t {
-        return winScore;
+        return win_count;
     }
 
     inline auto get_visit_count() const -> int_fast32_t {
@@ -418,11 +418,11 @@ class Node {
     }
 
     inline void add_score(const int_fast32_t s) {
-        winScore += s;
+        win_count += s;
     }
 
     inline void set_win_score(const int_fast32_t s) {
-        winScore = s;
+        win_count = s;
     }
 
     inline auto get_parent() const -> Node* {
@@ -438,7 +438,7 @@ class Node {
     }
 
     inline auto get_winrate() const -> double {
-        return (double)winScore / (double)visits;
+        return (double)win_count / (double)visits;
     }
 
     inline auto best_child() -> Node* {
