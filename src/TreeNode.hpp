@@ -8,18 +8,23 @@
 #include "UTTT.hpp"
 
 namespace TreeNode {
-template <class ContainedState>
+template <class State>
 class Node {
    public:
-    ContainedState board;
+    State board;
     std::vector<Node*> children;
     Node* parent = nullptr;
     int_fast32_t win_count = 0;
     uint_fast32_t visits = 0;
     int_fast8_t playerNo;
 
-    Node(const ContainedState& board) {
+    Node(const State& board) {
         this->board = board;
+    }
+    ~Node() {
+        for (Node* child : children) {
+            delete child;
+        }
     }
 
     inline void set_player_no(const int playerNo) {
@@ -38,7 +43,7 @@ class Node {
         this->parent = parent;
     }
 
-    inline void set_state(const ContainedState& board) {
+    inline void set_state(const State& board) {
         this->board = board;
     }
 
@@ -97,7 +102,7 @@ class Node {
         return parent;
     }
 
-    inline auto get_state() const -> ContainedState {
+    inline auto get_state() const -> State {
         return board;
     }
 

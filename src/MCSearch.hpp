@@ -5,12 +5,12 @@
 #include "TreeNode.hpp"
 #include "UCT.hpp"
 
-using namespace TreeNode;
+using TreeNode::Node;
 
 namespace SearchDriver {
 constexpr int REWARD = 10;
 
-template <class StateType, int UCT_EXP_FACTOR>
+template <class State, int UCT_EXP_FACTOR>
 class MCTS {
     // limiter on search time
     long long time_limit;
@@ -33,7 +33,7 @@ class MCTS {
 
     // dictates whether we preserve a part of the tree across moves
     bool memsafe = true;
-    Node<StateType>* preservedNode = nullptr;
+    Node<State>* preservedNode = nullptr;
 
    public:
     MCTS() {
@@ -115,32 +115,23 @@ class MCTS {
         return last_winloss;
     }
 
-    void deleteTree(Node<StateType>* root) {
-        /* first delete the subtrees */
-        for (Node<StateType>* child : root->children) {
-            deleteTree(child);
-        }
-        /* then delete the node */
-        delete root;
-    }
+    // auto prune(Node<State>* parent, const State& target) -> Node<State>* {
+    //     Node<State>* out = nullptr;
+    //     bool found = false;
+    //     for (Node<State>* child : parent->children) {
+    //         if (!found && child->get_state() == target) {
+    //             out = child;
+    //             found = true;
+    //         } else
+    //             delete child;
+    //     }
+    //     if (out)
+    //         out->set_parent(nullptr);
+    //     delete parent; // FIX THIS
+    //     return out;
+    // }
 
-    auto prune(Node<StateType>* parent, const StateType& target) -> Node<StateType>* {
-        Node<StateType>* out = nullptr;
-        bool found = false;
-        for (Node<StateType>* child : parent->children) {
-            if (!found && child->get_state() == target) {
-                out = child;
-                found = true;
-            } else
-                deleteTree(child);
-        }
-        if (out)
-            out->set_parent(nullptr);
-        delete parent;
-        return out;
-    }
-
-    auto find_best_next_board(const StateType board) -> StateType {
+    auto find_best_next_board(const State board) -> State {
         // board is immediately copied        ^^^
 
         node_count = 0;
@@ -150,7 +141,7 @@ class MCTS {
         auto start = std::chrono::steady_clock::now();
         auto end = start + std::chrono::milliseconds(time_limit);
 
-        Node<StateType>* root_node = new Node<StateType>(board);
+        Node<State>* root_node = new Node<State>(board);
         root_node->set_state(board);
         root_node->set_player_no(opponent);
 
@@ -163,7 +154,7 @@ class MCTS {
                 root_node->show_child_winrates();
                 std::cout << "| ";
                 for (auto child : root_node->get_children()) {
-                    std::cout << UCT<Node<StateType>, UCT_EXP_FACTOR>::compute_uct(child) << " ";
+                    std::cout << UCT<Node<State>, UCT_EXP_FACTOR>::compute_uct(child) << " ";
                 }
                 std::cout << "\n";
             }
@@ -172,18 +163,18 @@ class MCTS {
             (!use_time_limit || std::chrono::steady_clock::now() < end) 
             && (!use_rollout_limit || node_count < rollout_limit));
 
-        StateType out = root_node->best_child()->get_state();
+        State out = root_node->best_child()->get_state();
         
         if (readout) {
             auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
             std::cout << node_count << " nodes processed in " << time << "ms at " << (double)node_count / ((double)time / 1000.0) << "NPS.\n";
         }
 
-        deleteTree(root_node);
+        delete root_node;
         return out;
     }
 
-    auto get_rollout_counts(const StateType board) -> std::vector<int> {
+    auto get_rollout_counts(const State board) -> std::vector<int> {
         // board is immediately copied      ^^^
 
         node_count = 0;
@@ -193,7 +184,7 @@ class MCTS {
         auto start = std::chrono::steady_clock::now(); 
         auto end = start + std::chrono::milliseconds(time_limit);
 
-        Node<StateType>* root_node = new Node<StateType>(board);
+        Node<State>* root_node = new Node<State>(board);
         root_node->set_state(board);
         root_node->set_player_no(opponent);
 
@@ -220,16 +211,16 @@ class MCTS {
         return out;
     }
 
-    inline void select_expand_simulate_backpropagate(Node<StateType>* root_node) {
+    inline void select_expand_simulate_backpropagate(Node<State>* root_node) {
         int result;
         // SELECTION
-        Node<StateType>* promisingNode = select_promising_node(root_node);
+        Node<State>* promisingNode = select_promising_node(root_node);
 
         // EXPANSION
         if (!promisingNode->board.is_game_over())
             promisingNode->expand();
 
-        Node<StateType>* nodeToExplore = promisingNode;
+        Node<State>* nodeToExplore = promisingNode;
 
         if (promisingNode->children.size() != 0)
             nodeToExplore = promisingNode->random_child();
@@ -240,15 +231,15 @@ class MCTS {
         backprop(nodeToExplore, result);
     }
 
-    inline auto select_promising_node(Node<StateType>* root_node) const -> Node<StateType>* {
-        Node<StateType>* node = root_node;
+    inline auto select_promising_node(Node<State>* root_node) const -> Node<State>* {
+        Node<State>* node = root_node;
         while (node->children.size())
-            node = UCT<Node<StateType>, UCT_EXP_FACTOR>::best_node_uct(node);
+            node = UCT<Node<State>, UCT_EXP_FACTOR>::best_node_uct(node);
         return node;
     }
 
-    inline void backprop(Node<StateType>* nodeToExplore, int winner) {
-        Node<StateType>* propagator = nodeToExplore;
+    inline void backprop(Node<State>* nodeToExplore, int winner) {
+        Node<State>* propagator = nodeToExplore;
         while (propagator) {
             propagator->increment_visits();
             if (propagator->get_player_no() == winner) {
@@ -258,8 +249,8 @@ class MCTS {
         }
     }
 
-    inline auto simulate_playout(Node<StateType>* node) -> int {
-        StateType playout_board = node->get_state();
+    inline auto simulate_playout(Node<State>* node) -> int {
+        State playout_board = node->get_state();
         playout_board.mem_setup();
         int status = playout_board.evaluate();
         if (status == opponent) {
@@ -283,10 +274,10 @@ class MCTS {
 
 namespace MCSearch {
 
-template <class StateType, int UCT_EXP_FACTOR = 6>
+template <class State, int EXP_FACTOR>
 class Zero {
-    SearchDriver::MCTS<StateType, UCT_EXP_FACTOR> search_driver = SearchDriver::MCTS<StateType, UCT_EXP_FACTOR>();
-    StateType node = StateType();
+    SearchDriver::MCTS<State, EXP_FACTOR> search_driver = SearchDriver::MCTS<State, EXP_FACTOR>();
+    State node = State();
 
 public:
     Zero() {
@@ -323,7 +314,7 @@ public:
         return node.get_player_move();
     }
 
-    auto get_node() -> StateType* {
+    auto get_node() -> State* {
         return &node;
     }
 
@@ -331,7 +322,7 @@ public:
         return node.get_turn();
     }
 
-    void set_node(StateType n) {
+    void set_node(State n) {
         node = n;
     }
 
@@ -359,7 +350,7 @@ public:
         node = search_driver.find_best_next_board(node);
     }
 
-    auto rollout_vector(StateType node) {
+    auto rollout_vector(State node) {
         std::vector<int> child_rollout_counts = search_driver.get_rollout_counts(node);
         std::vector<int> out(7);
         int idx = 0;
@@ -374,7 +365,7 @@ public:
         return 10 * search_driver.get_most_recent_winrate();
     }
 
-    auto make_sample_move(std::vector<int> dist, StateType model) {
+    auto make_sample_move(std::vector<int> dist, State model) {
         int mod = std::accumulate(dist.begin(), dist.end(), 0);
         assert(mod != 0);
         int num = rand() % mod;

@@ -11,9 +11,7 @@
 #include "TreeNode.hpp"
 #include "UTTT.hpp"
 
-using namespace TreeNode;
-
-template <class NodeType, int EXP_FACTOR>
+template <class Node, int EXP_FACTOR>
 class UCT {
    public:
     inline static auto uct_value(int parent_visits, double win_count, int visits) -> double {
@@ -23,14 +21,14 @@ class UCT {
         return (win_count / (double)visits) + sqrt(log(parent_visits) / (double)visits) * EXP_FACTOR;
     }
 
-    inline static auto compute_uct(const NodeType* a) -> double {
+    inline static auto compute_uct(const Node* a) -> double {
         return uct_value(
             a->get_parent_visits(),
             a->get_win_score(),
             a->get_visit_count());
     }
 
-    inline static auto compare_ucb1(const NodeType* a, const NodeType* b) -> bool {
+    inline static auto compare_ucb1(const Node* a, const Node* b) -> bool {
         return uct_value(
                    a->get_parent_visits(),
                    a->get_win_score(),
@@ -40,8 +38,8 @@ class UCT {
                    b->get_win_score(),
                    b->get_visit_count());
     }
-    
-    inline static auto best_node_uct(const NodeType* node) -> NodeType* {
+
+    inline static auto best_node_uct(const Node* node) -> Node* {
         return *std::max_element(
             node->children.begin(),
             node->children.end(),
