@@ -1,6 +1,6 @@
 #pragma once
 
-#include <climits>
+#include <limits>
 #include <cmath>
 
 #include "Connect4-4x4.hpp"
@@ -16,7 +16,7 @@ class UCT {
    public:
     inline static auto uct_value(int parent_visits, double win_count, int visits) -> double {
         if (visits == 0) {
-            return INT_MAX;
+            return std::numeric_limits<double>::max();
         }
         return (win_count / (double)visits) + sqrt(log(parent_visits) / (double)visits) * EXP_FACTOR;
     }

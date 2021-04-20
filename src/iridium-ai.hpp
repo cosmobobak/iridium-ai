@@ -85,18 +85,26 @@ inline void run_mcts_engine(const long long TL) {
 template <class GameType>
 inline auto selfplay(const long long TL) -> int {
     auto engine1 = Zero<GameType, 10>(TL);
-    auto engine2 = Zero<GameType, 6>(TL);
+    auto engine2 = Zero<GameType, 8>(TL);
     engine1.choose_rollout_limit();
     engine2.choose_rollout_limit();
-    engine1.set_rollout_limit(50000);
-    engine2.set_rollout_limit(50000);
     engine1.set_readout(false);
     engine1.set_debug(false);
     engine2.set_readout(false);
     engine2.set_debug(false);
 
+    std::cout << "Enter the number of rollouts/move:\n--> ";
+    int rollouts;
+    std::cin >> rollouts;
+    engine1.set_rollout_limit(rollouts);
+    engine2.set_rollout_limit(rollouts);
+
+    std::cout << "Enter the number of games to play:\n--> ";
     int rounds;
     std::cin >> rounds;
+
+    std::cout << "generation should be done in about " << ((double)rounds * 30.0 * (350.0 / 50000.0) * rollouts) / (1000.0 * 60.0 * 60.0) << " hours. good luck.\n";
+
     std::vector<int> results(rounds);
     for (size_t i = 0; i < rounds; i++) {
         engine1.set_node(GameType());
@@ -127,7 +135,7 @@ inline auto selfplay(const long long TL) -> int {
 
 template <class GameType>
 inline void userplay() {
-    Zero<GameType> engine = Zero<GameType>();
+    Zero<GameType, 8> engine = Zero<GameType, 8>();
     engine.get_node()->show();
     while (!engine.get_node()->is_game_over() && !engine.get_node()->is_game_over()) {
         int i;
@@ -141,7 +149,7 @@ inline void userplay() {
 
 template <class GameType>
 inline void testsuite() {
-    Zero<GameType> engine = Zero<GameType>();
+    Zero<GameType, 8> engine = Zero<GameType, 8>();
     while (!engine.get_node()->is_game_over()) {
         engine.get_node()->show();
         std::cout << "\nforcing board: "
@@ -169,7 +177,7 @@ inline void benchmark() {
     const int width = 50;
     std::array<int, len* width> nodecounts = {0};
     for (int i = 0; i < width; i++) {
-        Zero<GameType> engine = Zero<GameType>(99);
+        Zero<GameType, 8> engine = Zero<GameType, 8>(99);
         for (int j = 0; j < len; j++) {
             engine.engine_move();
             nodecounts[i * len + j] = engine.get_node_count();

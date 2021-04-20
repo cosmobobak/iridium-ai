@@ -17,8 +17,8 @@ class MCTS {
     // limiter on rollouts
     long long rollout_limit;
 
-    // the win score that the opponent wants
-    int opponent;
+    // the perspective that we're searching from
+    int side;
 
     // flags
     bool readout = true;
@@ -42,7 +42,7 @@ class MCTS {
     MCTS(int player, long long strength) {
         srand(time(NULL));
         time_limit = strength;
-        opponent = -player;
+        side = player;
         use_rollout_limit = false;
         use_time_limit = true;
         last_winloss = 5;
@@ -57,14 +57,14 @@ class MCTS {
         } else {
             time_limit = strength;
         }
-        opponent = -player;
+        side = player;
         last_winloss = 5;
         node_count = 0;
     }
     MCTS(bool url) {
         srand(time(NULL));
         time_limit = 1000;
-        opponent = -1;
+        side = 1;
         use_rollout_limit = url;
         use_time_limit = !url;
         last_winloss = 5;
@@ -87,7 +87,11 @@ class MCTS {
     }
 
     void set_opponent(int i) {
-        opponent = i;
+        side = -i;
+    }
+
+    void set_side(int i) {
+        side = i;
     }
 
     void set_readout(bool b) {
@@ -135,7 +139,7 @@ class MCTS {
         // board is immediately copied        ^^^
 
         node_count = 0;
-        opponent = -board.get_turn();
+        side = board.get_turn();
 
         // tracks time
         auto start = std::chrono::steady_clock::now();
@@ -143,7 +147,7 @@ class MCTS {
 
         Node<State>* root_node = new Node<State>(board);
         root_node->set_state(board);
-        root_node->set_player_no(opponent);
+        root_node->set_player_no(-side);
 
         do {
             select_expand_simulate_backpropagate(root_node);
@@ -178,7 +182,7 @@ class MCTS {
         // board is immediately copied      ^^^
 
         node_count = 0;
-        opponent = -board.get_turn();
+        side = board.get_turn();
 
         // tracks time
         auto start = std::chrono::steady_clock::now(); 
@@ -186,7 +190,7 @@ class MCTS {
 
         Node<State>* root_node = new Node<State>(board);
         root_node->set_state(board);
-        root_node->set_player_no(opponent);
+        root_node->set_player_no(-side);
 
         do {
             select_expand_simulate_backpropagate(root_node);
@@ -253,7 +257,7 @@ class MCTS {
         State playout_board = node->get_state();
         playout_board.mem_setup();
         int status = playout_board.evaluate();
-        if (status == opponent) {
+        if (status == -side) {
             // tests for an immediate loss in the position and sets to MIN_VALUE
             // if there is one.
             node->get_parent()->set_win_score(INT_MIN);

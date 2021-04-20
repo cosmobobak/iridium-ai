@@ -16,7 +16,7 @@ class Node {
     Node* parent = nullptr;
     int_fast32_t win_count = 0;
     uint_fast32_t visits = 0;
-    int_fast8_t playerNo;
+    int_fast8_t turn;
 
     Node(const State& board) {
         this->board = board;
@@ -27,38 +27,72 @@ class Node {
         }
     }
 
-    inline void set_player_no(const int playerNo) {
-        this->playerNo = playerNo;
-    }
-
-    inline auto get_player_no() const -> int {
-        return playerNo;
-    }
-
-    inline auto get_opponent() const -> int {
-        return -playerNo;
+    // SETTERS
+    inline void set_state(const State& board) {
+        this->board = board;
     }
 
     inline void set_parent(Node* parent) {
         this->parent = parent;
     }
 
-    inline void set_state(const State& board) {
-        this->board = board;
+
+    inline void set_player_no(const int turn) {
+        this->turn = turn;
     }
 
-    void show() {
-        std::cout << "My state is:\n";
-        board.show();
-        if (parent) {
-            std::cout << "My parent's state is:\n";
-            parent->show();
-        }
-        std::cout << "and I have " << children.size() << " children.\n";
+    inline void set_win_score(const int_fast32_t s) {
+        win_count = s;
+    }
+
+    // GETTERS
+    inline auto get_state() const -> State {
+        return board;
     }
 
     inline auto get_children() const -> std::vector<Node*> {
         return children;
+    }
+
+    inline auto get_parent() const -> Node* {
+        return parent;
+    }
+
+    inline auto get_player_no() const -> int {
+        return turn;
+    }
+
+    inline auto get_opponent() const -> int {
+        return -turn;
+    }
+
+    inline auto get_win_score() const -> int_fast32_t {
+        return win_count;
+    }
+
+    inline auto get_visit_count() const -> int_fast32_t {
+        return visits;
+    }
+
+    inline auto get_winrate() const -> double {
+        return (double)win_count / (double)visits;
+    }
+
+    inline auto get_parent_visits() const -> int_fast32_t {
+        return parent->get_visit_count();
+    }
+
+    // INTERACTIONS
+    inline void add_score(const int_fast32_t s) {
+        win_count += s;
+    }
+
+    inline void increment_visits() {
+        visits++;
+    }
+
+    inline auto random_child() -> Node* {
+        return children[rand() % children.size()];
     }
 
     inline void expand() {
@@ -72,46 +106,6 @@ class Node {
             board.unplay();
             x++;
         }
-    }
-
-    inline auto get_win_score() const -> int_fast32_t {
-        return win_count;
-    }
-
-    inline auto get_visit_count() const -> int_fast32_t {
-        return visits;
-    }
-
-    inline auto get_parent_visits() const -> int_fast32_t {
-        return parent->get_visit_count();
-    }
-
-    inline void increment_visits() {
-        visits++;
-    }
-
-    inline void add_score(const int_fast32_t s) {
-        win_count += s;
-    }
-
-    inline void set_win_score(const int_fast32_t s) {
-        win_count = s;
-    }
-
-    inline auto get_parent() const -> Node* {
-        return parent;
-    }
-
-    inline auto get_state() const -> State {
-        return board;
-    }
-
-    inline auto random_child() -> Node* {
-        return children[rand() % children.size()];
-    }
-
-    inline auto get_winrate() const -> double {
-        return (double)win_count / (double)visits;
     }
 
     inline auto best_child() -> Node* {
@@ -133,6 +127,17 @@ class Node {
         //     std::terminate();
         // }
         return board.legal_moves()[std::distance(children.begin(), result)];
+    }
+
+    // DEBUG
+    void show() {
+        std::cout << "My state is:\n";
+        board.show();
+        if (parent) {
+            std::cout << "My parent's state is:\n";
+            parent->show();
+        }
+        std::cout << "and I have " << children.size() << " children.\n";
     }
 
     inline void show_child_winrates() const {
