@@ -51,7 +51,7 @@ template <class GameType, int UCT_EXP_FACTOR>
 void run_mcts_engine(const long long TL) {
     Zero<GameType, UCT_EXP_FACTOR> engine = Zero<GameType, UCT_EXP_FACTOR>(TL);
     engine.set_debug(false);
-    engine.choose_time_limit();
+    engine.use_time_limit(true);
     engine.set_time_limit(TL);
     typename GameType::Move i;
     engine.get_node().show();
@@ -84,8 +84,8 @@ template <class GameType>
 auto selfplay(const long long TL) -> int {
     auto engine1 = Zero<GameType, 10>(TL);
     auto engine2 = Zero<GameType, 8>(TL);
-    engine1.choose_rollout_limit();
-    engine2.choose_rollout_limit();
+    engine1.use_rollout_limit(true);
+    engine2.use_rollout_limit(true);
     engine1.set_readout(false);
     engine1.set_debug(false);
     engine2.set_readout(false);
@@ -122,7 +122,7 @@ auto selfplay(const long long TL) -> int {
         }
         engine1.show_node();
         engine1.show_result();
-        results[i] = engine1.node_eval();
+        results[i] = engine1.get_node_eval();
     }
     int p1win = std::count_if(results.begin(), results.end(), [](int i){ return i == 1; });
     int p2win = std::count_if(results.begin(), results.end(), [](int i) { return i == -1; });

@@ -98,7 +98,7 @@ class State {
         play(moves[rand() % moves.size()]);
     }
 
-    auto get_player_move() -> Move {
+    auto get_player_move() const -> Move {
         const std::vector<Move> legals = legal_moves();
         std::cout << "Your legal moves are: " << string(legals) << "\n--> ";
         Move pos;

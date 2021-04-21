@@ -7,7 +7,7 @@
 
 int main(int argc, char const *argv[]) {
     auto test = MCSearch::Zero<UTTT::State, 6>();
-    test.choose_rollout_limit();
+    test.use_rollout_limit(true);
     test.set_readout(false);
     test.set_debug(false);
 

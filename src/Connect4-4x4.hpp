@@ -37,6 +37,14 @@ class State {
         return union_bb(0) == BB_ALL;
     }
 
+    auto is_legal(Move move) const -> bool {
+        auto legals = legal_moves();
+        return std::any_of(
+            legals.begin(),
+            legals.end(),
+            [move](Move i) { return i == move; });
+    }
+
     void play(Move col)  //WORKING
     {
         movestack[movecount] = col;
@@ -221,19 +229,25 @@ class State {
         return val;  // use some sort of central weighting approach
     }
 
-    auto get_player_move() -> Move {
-        const std::vector<Move> legals = legal_moves();
+    void show_legal_moves() const {
+        std::vector<Move> legals = legal_moves();
         std::vector<Move> shiftedLegals;
         std::transform(legals.begin(), legals.end(), std::back_inserter(shiftedLegals), [](Move n) { return n + 1; });
-        std::cout << "Your legal moves are: " << string(shiftedLegals) << "\n--> ";
-        Move pos;
-        std::cin >> pos;
-        while (std::none_of(legals.begin(), legals.end(), [pos](Move m) { return m == (pos - 1); })) {
+        std::cout << "Your legal moves are: ";
+        showvec(shiftedLegals);
+    }
+
+    auto get_player_move() const -> Move {
+        show_legal_moves();
+        std::cout << "\n--> ";
+        int move;
+        std::cin >> move;
+        while (!is_legal(move - 1)) {
             std::cout << "invalid move.\n";
             show();
-            std::cin >> pos;
+            std::cin >> move;
         }
-        return pos - 1;
+        return move - 1;
     }
 };
 

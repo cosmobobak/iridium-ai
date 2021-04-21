@@ -28,34 +28,34 @@ class SubState {
         position[1] = 0b000000000;
     }
 
-    inline auto union_bb() const -> Bitboard {
+    auto union_bb() const -> Bitboard {
         return position[0] | position[1];
     }
 
-    inline void play(const Num i, const Num idx) {
+    void play(const Num i, const Num idx) {
         // n ^ (1 << k) is a binary XOR where you flip the kth bit of n
         position[idx] ^= (1 << i);
     }
 
-    inline void unplay(const Num prevmove, const Num idx)  // do not unplay on root
+    void unplay(const Num prevmove, const Num idx)  // do not unplay on root
     {
         position[idx] ^= (1 << prevmove);
     }
 
-    inline auto pos_filled(const Num i) const -> bool {
+    auto pos_filled(const Num i) const -> bool {
         return position[0] & (1 << i) || position[1] & (1 << i);
     }
 
-    inline auto player_at(const Num i) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
+    auto player_at(const Num i) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
     {
         return (position[0] & (1 << i));
     }
 
-    inline auto is_full() const -> bool {
+    auto is_full() const -> bool {
         return position[0] + position[1] == 0b111111111;
     }
 
-    inline auto evaluate() const -> Num {
+    auto evaluate() const -> Num {
         // check first diagonal
         if (pos_filled(0) && pos_filled(4) && pos_filled(8)) {
             if (player_at(0) == player_at(4) && player_at(4) == player_at(8)) {
@@ -115,7 +115,7 @@ class SubState {
         std::cout << "\n";
     }
 
-    inline auto is_board_dead() const -> bool {
+    auto is_board_dead() const -> bool {
         return is_full() || evaluate();
     }
 
@@ -177,7 +177,7 @@ class State {
         }
     }
 
-    inline void mem_setup() {
+    void mem_setup() {
         movestack.reserve(81);
         forcingstack.reserve(81);
     }
@@ -189,7 +189,7 @@ class State {
             [](Board::SubState &b) { b.reset(); });
     }
 
-    inline void play(const Num i) {
+    void play(const Num i) {
         const Num board = i / 9;
         const Num square = MOD9::LOOKUP[i];
         metaposition[board].play(square, movecount & 1);
@@ -198,10 +198,12 @@ class State {
         forcingBoard = square;
         forcingstack.push_back(forcingBoard);
         assert(forcingstack.size() == movecount + 1);
+        if (metaposition[forcingBoard].is_board_dead()) {
+            forcingBoard = -1;
+        }
     }
 
-    inline void unplay()  // do not unplay on root
-    {
+    void unplay() {
         movecount--;
         const Num prevmove = movestack.back();
         const Num board = prevmove / 9;
@@ -213,24 +215,32 @@ class State {
         assert(forcingstack.size() == movecount + 1);
     }
 
-    inline auto board_won(const Num board) const -> bool {
+    auto board_won(const Num board) const -> bool {
         return metaposition[board].evaluate() != 0;
     }
 
-    inline auto board_over(const Num board) const -> bool {
+    auto board_over(const Num board) const -> bool {
         return metaposition[board].is_board_dead();
     }
 
-    inline auto winner_of_board(const Num board) const -> int_fast8_t  //only valid to use if pos_filled() returns true, true = x, false = y
+    auto winner_of_board(const Num board) const -> int_fast8_t  //only valid to use if pos_filled() returns true, true = x, false = y
     {
         return metaposition[board].evaluate();
     }
 
-    inline auto is_full() -> bool {
+    auto is_full() -> bool {
         return std::all_of(metaposition.begin(), metaposition.end(), [](Board::SubState p) { return p.is_board_dead(); });
     }
 
-    inline auto evaluate() const -> Num {
+    auto is_legal(Move move) const -> bool {
+        auto legals = legal_moves();
+        return std::any_of(
+            legals.begin(),
+            legals.end(),
+            [move](Move i) { return i == move; });
+    }
+
+    auto evaluate() const -> Num {
         // check first diagonal
         Num middle = winner_of_board(4);
         if (middle) {
@@ -275,7 +285,7 @@ class State {
         }
     }
 
-    inline void pass_turn() {
+    void pass_turn() {
         movecount++;
     }
 
@@ -286,7 +296,7 @@ class State {
             return 1;
     }
 
-    inline auto is_game_over() const -> bool {
+    auto is_game_over() const -> bool {
         if (num_legal_moves() == 0)
             return true;
         return (evaluate() != 0);
@@ -347,10 +357,8 @@ class State {
         return cnt;
     }
 
-    inline auto legal_moves() -> std::vector<Move> {
+    auto legal_moves() const -> std::vector<Move> {
         std::vector<Move> moves;
-        if (metaposition[forcingBoard].is_board_dead())
-            forcingBoard = -1;
         if (forcingBoard == -1) {
             moves.reserve(81);
             Num bcounter = 0;
@@ -375,30 +383,34 @@ class State {
         return moves;
     }
 
-    inline void random_play() {
+    void random_play() {
         std::vector<Move> moves = legal_moves();
         play(moves[rand() % moves.size()]);
     }
 
-    inline auto heuristic_value() const -> uint_fast8_t {
+    auto heuristic_value() const -> uint_fast8_t {
         return rand() & 0b1111;
     }
 
-    auto get_player_move() -> Move {
-        const std::vector<Move> legals = legal_moves();
+    void show_legal_moves() const {
+        std::vector<Move> legals = legal_moves();
         std::vector<Move> shiftedLegals;
         std::transform(legals.begin(), legals.end(), std::back_inserter(shiftedLegals), [](Move n) { return n + 1; });
         std::cout << "Your legal moves are: ";
         showvec(shiftedLegals);
+    }
+
+    auto get_player_move() const -> Move {
+        show_legal_moves();
         std::cout << "\n--> ";
-        int pos;
-        std::cin >> pos;
-        while (std::none_of(legals.begin(), legals.end(), [pos](Move m) { return m == (pos - 1); })) {
+        int move;
+        std::cin >> move;
+        while (!is_legal(move - 1)) {
             std::cout << "invalid move.\n";
             show();
-            std::cin >> pos;
+            std::cin >> move;
         }
-        return pos - 1;
+        return move - 1;
     }
 };
 

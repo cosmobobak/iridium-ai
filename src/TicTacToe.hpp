@@ -62,7 +62,15 @@ class State {
         return true;
     }
 
-    inline auto evaluate() const -> int_fast8_t {
+    auto is_legal(Move move) const -> bool {
+        auto legals = legal_moves();
+        return std::any_of(
+            legals.begin(),
+            legals.end(),
+            [move](Move i) { return i == move; });
+    }
+
+    auto evaluate() const -> int_fast8_t {
         // check first diagonal
         if (pos_filled(0) && pos_filled(4) && pos_filled(8)) {
             if (player_at(0) == player_at(4) && player_at(4) == player_at(8)) {
@@ -82,7 +90,7 @@ class State {
             }
         }
         // check rows
-        for (uint_fast8_t i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
             if (pos_filled(i * 3) && pos_filled(i * 3 + 1) && pos_filled(i * 3 + 2)) {
                 if (player_at(i * 3) == player_at(i * 3 + 1) && player_at(i * 3 + 1) == player_at(i * 3 + 2)) {
                     if (player_at(i * 3))
@@ -93,7 +101,7 @@ class State {
             }
         }
         // check columns
-        for (uint_fast8_t i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
             if (pos_filled(i) && pos_filled(i + 3) && pos_filled(i + 6)) {
                 if (player_at(i) == player_at(i + 3) && player_at(i + 3) == player_at(i + 6)) {
                     if (player_at(i))
@@ -118,8 +126,8 @@ class State {
     }
 
     void show() const {
-        for (uint_fast8_t x = 0; x < 3; x++) {
-            for (uint_fast8_t y = 0; y < 3; y++) {
+        for (int x = 0; x < 3; x++) {
+            for (int y = 0; y < 3; y++) {
                 if (pos_filled(x * 3 + y)) {
                     if (player_at(x * 3 + y))
                         std::cout << "X ";
@@ -161,21 +169,25 @@ class State {
         return 0;
     }
 
-    auto get_player_move() -> Move {
-        const std::vector<Move> legals = legal_moves();
+    void show_legal_moves() const {
+        std::vector<Move> legals = legal_moves();
         std::vector<Move> shiftedLegals;
         std::transform(legals.begin(), legals.end(), std::back_inserter(shiftedLegals), [](Move n) { return n + 1; });
         std::cout << "Your legal moves are: ";
         showvec(shiftedLegals);
+    }
+
+    auto get_player_move() const -> Move {
+        show_legal_moves();
         std::cout << "\n--> ";
-        int pos;
-        std::cin >> pos;
-        while (std::none_of(legals.begin(), legals.end(), [pos](Move m) { return m == (pos - 1); })) {
+        int move;
+        std::cin >> move;
+        while (!is_legal(move - 1)) {
             std::cout << "invalid move.\n";
             show();
-            std::cin >> pos;
+            std::cin >> move;
         }
-        return pos - 1;
+        return move - 1;
     }
 };
 

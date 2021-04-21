@@ -244,17 +244,16 @@ class State {
         }
     }
 
-    auto get_player_move() -> Move {
+    auto get_player_move() const -> Move {
         const std::vector<Move> legals = legal_moves();
         std::vector<Move> shiftedLegals;
         std::transform(legals.begin(), legals.end(), std::back_inserter(shiftedLegals), [](Move n) { return n + 1; });
         std::vector<Move> rows, cols;
-        for (auto m : legals)
-        {
+        for (auto m : legals) {
             rows.push_back(m / WIDTH + 1);
             cols.push_back(m % WIDTH + 1);
         }
-        
+
         std::cout << "Your legal moves are: " << zipstring(rows, cols) << "\n";
         Move row, col, pos;
         std::cout << "Enter row: ";

@@ -24,8 +24,8 @@ class MCTS {
     // flags
     bool readout = true;
     bool debug = true;
-    bool use_rollout_limit;
-    bool use_time_limit;
+    bool limit_by_rollouts;
+    bool limit_by_time;
 
     // recorded search data
     // the win / loss ratio of the most recently played move
@@ -33,8 +33,8 @@ class MCTS {
     int node_count;
 
     // dictates whether we preserve a part of the tree across moves
-    bool memsafe = true;
-    Node<State>* preservedNode = nullptr;
+    // bool memsafe = true;
+    // Node<State>* preservedNode = nullptr;
 
    public:
     MCTS() {
@@ -44,16 +44,16 @@ class MCTS {
         srand(time(NULL));
         time_limit = strength;
         side = player;
-        use_rollout_limit = false;
-        use_time_limit = true;
+        limit_by_rollouts = false;
+        limit_by_time = true;
         last_winloss = 5;
         node_count = 0;
     }
-    MCTS(int player, long long strength, bool use_rollout_limit) {
+    MCTS(int player, long long strength, bool limiter_type) {
         srand(time(NULL));
-        this->use_rollout_limit = use_rollout_limit;
-        this->use_time_limit = !use_rollout_limit;
-        if (use_rollout_limit) {
+        this->limit_by_rollouts = limiter_type;
+        this->limit_by_time = !limiter_type;
+        if (limiter_type) {
             rollout_limit = strength;
         } else {
             time_limit = strength;
@@ -66,20 +66,20 @@ class MCTS {
         srand(time(NULL));
         time_limit = 1000;
         side = 1;
-        use_rollout_limit = url;
-        use_time_limit = !url;
+        limit_by_rollouts = url;
+        limit_by_time = !url;
         last_winloss = 5;
         node_count = 0;
     }
 
-    void choose_rollout_limit() {
-        use_rollout_limit = true;
-        use_time_limit = false;
+    void use_rollout_limit(bool x) {
+        limit_by_rollouts = x;
+        limit_by_time = !x;
     }
 
-    void choose_time_limit() {
-        use_rollout_limit = false;
-        use_time_limit = true;
+    void use_time_limit(bool x) {
+        limit_by_time = x;
+        limit_by_rollouts = !x;
     }
 
     // SETTERS
@@ -136,7 +136,7 @@ class MCTS {
     //     return out;
     // }
 
-    void show_debug(Node<State>* root_node) {
+    void show_debug(Node<State>* root_node) const {
         if (debug && (node_count & 0b111111111111111) == 0b111111111111111) {
             root_node->show_child_visitrates();
             std::cout << "| ";
@@ -168,8 +168,8 @@ class MCTS {
             node_count++;
             show_debug(root_node);
         } while (
-            (!use_time_limit || std::chrono::steady_clock::now() < end) 
-            && (!use_rollout_limit || node_count < rollout_limit));
+            (!limit_by_time || std::chrono::steady_clock::now() < end) 
+            && (!limit_by_rollouts || node_count < rollout_limit));
 
         State out = root_node->best_child()->get_state();
         
@@ -199,7 +199,7 @@ class MCTS {
         do {
             select_expand_simulate_backpropagate(root_node);
             node_count++;
-        } while ((!use_time_limit || std::chrono::steady_clock::now() < end) && (!use_rollout_limit || node_count < rollout_limit));
+        } while ((!limit_by_time || std::chrono::steady_clock::now() < end) && (!limit_by_rollouts || node_count < rollout_limit));
 
         if (readout) {
             auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
@@ -291,21 +291,16 @@ public:
     Zero() {
         Zero(99);
     }
-    Zero(const long long str) {
-        search_driver.set_time_limit(str);
+    Zero(const long long strength) {
+        search_driver.set_time_limit(strength);
     }
 
+    // SETTERS
     void set_time_limit(long long x) {
         search_driver.set_time_limit(x);
     }
-    void choose_time_limit() {
-        search_driver.choose_time_limit();
-    }
     void set_rollout_limit(long long x) {
         search_driver.set_rollout_limit(x);
-    }
-    void choose_rollout_limit() {
-        search_driver.choose_rollout_limit();
     }
     void set_readout(bool b) {
         search_driver.set_readout(b);
@@ -313,45 +308,50 @@ public:
     void set_debug(bool b) {
         search_driver.set_debug(b);
     }
-
-    inline void print(const std::string input, const std::string end = "\n") {
-        std::cout << input << end;
-    }
-
-    auto get_player_move() {
-        return node.get_player_move();
-    }
-
-    auto get_node() const -> const State& {
-        return node;
-    }
-
-    auto turn_modifier() {
-        return node.get_turn();
-    }
-
     void set_node(State n) {
         node = n;
     }
-
-    void reset_node() {
-        node.reset();
+    void use_time_limit(bool x) {
+        search_driver.use_time_limit(x);
+    }
+    void use_rollout_limit(bool x) {
+        search_driver.use_rollout_limit(x);
     }
 
-    void show_node() {
-        node.show();
+    // GETTERS
+    auto get_player_move() const {
+        return node.get_player_move();
     }
 
-    auto node_eval() {
+    auto get_node() -> State& {
+        return node;
+    }
+
+    auto get_turn_modifier() const {
+        return node.get_turn();
+    }
+
+    auto get_node_eval() const {
         return node.evaluate();
     }
 
-    auto is_game_over() {
+    auto get_node_count() const {
+        return search_driver.get_nodes();
+    }
+
+    auto get_win_prediction() const -> double {  
+        // multiplies by 10 to get a weighted win-per-node percentage
+        return 10 * search_driver.get_most_recent_winrate();
+    }
+
+    // PREDICATES
+    auto is_game_over() const -> bool {
         return node.is_game_over();
     }
 
-    auto get_node_count() {
-        return search_driver.get_nodes();
+    // STATE INTERACTIONS
+    void reset_node() {
+        node.reset();
     }
 
     void engine_move() {
@@ -368,11 +368,6 @@ public:
         return out;
     }
 
-    auto get_win_prediction() -> double {  
-        // multiplies by 10 to get a weighted win-per-node percentage
-        return 10 * search_driver.get_most_recent_winrate();
-    }
-
     auto make_sample_move(std::vector<int> dist, State model) {
         int mod = std::accumulate(dist.begin(), dist.end(), 0);
         assert(mod != 0);
@@ -385,6 +380,15 @@ public:
             }
         }
         return model;
+    }
+
+    // I/O
+    void print(const std::string input, const std::string end = "\n") {
+        std::cout << input << end;
+    }
+    
+    void show_node() {
+        node.show();
     }
 
     void show_result() const {
