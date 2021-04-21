@@ -86,35 +86,35 @@ int main(int argc, char const *argv[]) {
     std::vector<int> game_lengths(num_games);
     std::vector<int> game_results(num_games);
 
-    auto agent = Zero<Connect4::State, 6>();
-    agent.choose_rollout_limit();
-    agent.set_rollout_limit(rollouts);
-    agent.set_readout(false);
+    auto engine = Zero<Connect4::State, 8>();
+    engine.choose_rollout_limit();
+    engine.set_rollout_limit(rollouts);
+    engine.set_readout(false);
 
     for (int game = 0; game < num_games; game++) {
-        agent.reset_node();
+        engine.reset_node();
 
         int move = 0;
-        while (!agent.is_game_over()) {
+        while (!engine.is_game_over()) {
             // store the current board
-            game_states[game][move] = agent.get_node().vectorise_board();
+            game_states[game][move] = engine.get_node().vectorise_board();
 
             // get the ratings for moves from this position from the AI
             // and store them
-            move_predictions[game][move] = agent.rollout_vector(agent.get_node());
+            move_predictions[game][move] = engine.rollout_vector(engine.get_node());
 
             // get the rating for the current board and store it.
-            state_ratings[game][move] = agent.turn_modifier() == 1 ? agent.get_win_prediction() : 100 - agent.get_win_prediction();
+            state_ratings[game][move] = engine.turn_modifier() == 1 ? engine.get_win_prediction() : 100 - engine.get_win_prediction();
 
             // make a move at random, weighted by how good the moves are.
-            agent.set_node(agent.make_sample_move(
+            engine.set_node(engine.make_sample_move(
                 move_predictions[game][move],
-                agent.get_node()));
+                engine.get_node()));
 
             move++;
         }
-        game_lengths[game] = agent.get_node().get_move_count();
-        game_results[game] = agent.get_node().evaluate();
+        game_lengths[game] = engine.get_node().get_move_count();
+        game_results[game] = engine.get_node().evaluate();
         if (num_games > 100 && game % (num_games / 100) == 0) {
             std::cout << ((int)(game / ((double)num_games / 100))) << "\% done!\r";
         }

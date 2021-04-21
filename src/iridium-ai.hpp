@@ -1,6 +1,3 @@
-#pragma GCC optimize("Ofast", "unroll-loops", "inline")
-#pragma GCC target("avx")
-
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -29,61 +26,62 @@ auto get_first_player() -> bool {
 }
 
 template <class GameType>
-inline void run_negamax_engine(const long long TL) {
+void run_negamax_engine(const long long TL) {
     Istus<GameType> engine = Istus<GameType>(TL);
     typename GameType::Move i;
-    engine.get_node()->show();
+    engine.get_node().show();
     if (get_first_player()) {
         i = engine.get_player_move();
-        engine.get_node()->play(i);
-        engine.get_node()->show();
+        engine.get_node().play(i);
+        engine.get_node().show();
     }
-    while (!engine.get_node()->is_game_over()) {
+    while (!engine.get_node().is_game_over()) {
         engine.engine_move();
-        engine.get_node()->show();
-        if (engine.get_node()->is_game_over())
+        engine.get_node().show();
+        if (engine.get_node().is_game_over())
             break;
         i = engine.get_player_move();
-        engine.get_node()->play(i);
-        engine.get_node()->show();
+        engine.get_node().play(i);
+        engine.get_node().show();
     }
     engine.show_result();
 }
 
 template <class GameType, int UCT_EXP_FACTOR>
-inline void run_mcts_engine(const long long TL) {
-    Zero engine = Zero<GameType, UCT_EXP_FACTOR>(TL);
+void run_mcts_engine(const long long TL) {
+    Zero<GameType, UCT_EXP_FACTOR> engine = Zero<GameType, UCT_EXP_FACTOR>(TL);
+    engine.set_debug(false);
     engine.choose_time_limit();
     engine.set_time_limit(TL);
     typename GameType::Move i;
-    engine.get_node()->show();
+    engine.get_node().show();
     if (get_first_player()) {
         i = engine.get_player_move();
-        engine.get_node()->play(i);
-        engine.get_node()->show();
+        engine.get_node().play(i);
+        engine.get_node().show();
     }
-    while (!engine.get_node()->is_game_over()) {
+    while (!engine.get_node().is_game_over()) {
         engine.engine_move();
-        engine.get_node()->show();
-        if (engine.get_node()->is_game_over())
+        engine.get_node().show();
+        if (engine.get_node().is_game_over())
             break;
         i = engine.get_player_move();
         if (i == -1) {
-            engine.get_node()->unplay();
-            engine.get_node()->unplay();
+            engine.get_node().unplay();
+            engine.get_node().unplay();
             i = engine.get_player_move();
-            engine.get_node()->play(i);
-            engine.get_node()->show();
+            engine.get_node().play(i);
+            engine.get_node().show();
         } else {
-            engine.get_node()->play(i);
-            engine.get_node()->show();
+            engine.get_node().play(i);
+            engine.get_node().show();
         }
     }
     engine.show_result();
 }
 
 template <class GameType>
-inline auto selfplay(const long long TL) -> int {
+auto selfplay(const long long TL) -> int {
     auto engine1 = Zero<GameType, 10>(TL);
     auto engine2 = Zero<GameType, 8>(TL);
     engine1.choose_rollout_limit();
@@ -115,10 +113,10 @@ inline auto selfplay(const long long TL) -> int {
             // engine1.show_node();
             if (engine_turn == -1) {
                 engine1.engine_move();
-                engine2.set_node(*engine1.get_node());
+                engine2.set_node(engine1.get_node());
             } else {
                 engine2.engine_move();
-                engine1.set_node(*engine2.get_node());
+                engine1.set_node(engine2.get_node());
             }
             engine_turn = -engine_turn;
         }
@@ -134,45 +132,45 @@ inline auto selfplay(const long long TL) -> int {
 }
 
 template <class GameType>
-inline void userplay() {
+void userplay() {
     Zero<GameType, 8> engine = Zero<GameType, 8>();
-    engine.get_node()->show();
-    while (!engine.get_node()->is_game_over() && !engine.get_node()->is_game_over()) {
+    engine.get_node().show();
+    while (!engine.get_node().is_game_over() && !engine.get_node().is_game_over()) {
         int i;
         i = engine.get_player_move();
-        engine.get_node()->play(i);
-        engine.get_node()->show();
+        engine.get_node().play(i);
+        engine.get_node().show();
     }
-    engine.get_node()->show();
+    engine.get_node().show();
     engine.show_result();
 }
 
 template <class GameType>
-inline void testsuite() {
+void testsuite() {
     Zero<GameType, 8> engine = Zero<GameType, 8>();
-    while (!engine.get_node()->is_game_over()) {
-        engine.get_node()->show();
+    while (!engine.get_node().is_game_over()) {
+        engine.get_node().show();
         std::cout << "\nforcing board: "
-                  //<< (int)engine.get_node()->forcingBoard
+                  //<< (int)engine.get_node().forcingBoard
                   << "\nposition legal moves: "
-                  << engine.get_node()->legal_moves().size()
+                  << engine.get_node().legal_moves().size()
                   << "\nfast move counter: "
-                  << (int)engine.get_node()->num_legal_moves()
+                  << (int)engine.get_node().num_legal_moves()
                   << "\nforcing board after movegen: "
-                  //<< (int)engine.get_node()->forcingBoard
+                  //<< (int)engine.get_node().forcingBoard
                   << "\nactual list of moves: ";
-        showvec(engine.get_node()->legal_moves());
+        showvec(engine.get_node().legal_moves());
         std::cout << "\nstate of play (is engine over?): "
-                  << engine.get_node()->is_game_over()
+                  << engine.get_node().is_game_over()
                   << '\n';
-        // assert(engine.get_node()->evaluate() == engine.get_node()->evaluateOLD());
-        assert(engine.get_node()->legal_moves().size() == engine.get_node()->num_legal_moves());
-        engine.get_node()->random_play();
+        // assert(engine.get_node().evaluate() == engine.get_node().evaluateOLD());
+        assert(engine.get_node().legal_moves().size() == engine.get_node().num_legal_moves());
+        engine.get_node().random_play();
     }
 }
 
 template <class GameType>
-inline void benchmark() {
+void benchmark() {
     const int len = 30;
     const int width = 50;
     std::array<int, len* width> nodecounts = {0};
@@ -182,7 +180,7 @@ inline void benchmark() {
             engine.engine_move();
             nodecounts[i * len + j] = engine.get_node_count();
         }
-        if (engine.get_node()->is_game_over()) {
+        if (engine.get_node().is_game_over()) {
             break;
         }
         std::cout << i << " ";

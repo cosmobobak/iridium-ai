@@ -156,7 +156,7 @@ class Istus {
         searchDriver.set_time_limit(strength);
     }
 
-    inline void print(const std::string input, const std::string end = "\n") {
+    void print(const std::string input, const std::string end = "\n") {
         std::cout << input << end;
     }
 
@@ -164,8 +164,8 @@ class Istus {
         return node.get_player_move();
     }
 
-    auto get_node() {
-        return &node;
+    auto get_node() -> StateType& {
+        return node;
     }
 
     void engine_move() {

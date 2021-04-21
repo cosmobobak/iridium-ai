@@ -1,11 +1,12 @@
-#include <iostream>
 #include <chrono>
+#include <iostream>
 #include <limits>
+
+#include "UTTT.hpp"
 #include "MCSearch.hpp"
-#include "Connect4.hpp"
 
 int main(int argc, char const *argv[]) {
-    auto test = MCSearch::Zero<Connect4::State, 6>();
+    auto test = MCSearch::Zero<UTTT::State, 6>();
     test.choose_rollout_limit();
     test.set_readout(false);
     test.set_debug(false);
@@ -21,7 +22,7 @@ int main(int argc, char const *argv[]) {
     int iterations = atoi(argv[2]);
 
     std::cout << rollouts << " " << iterations << "\n";
-    
+
     test.set_rollout_limit(rollouts);
 
     long long total_time = 0;
@@ -37,8 +38,8 @@ int main(int argc, char const *argv[]) {
         total_time += time_taken;
     }
 
-    std::cout << "Min time: " << min_time                << "ms\n";
-    std::cout << "Max time: " << max_time                << "ms\n";
+    std::cout << "Min time: " << min_time << "ms\n";
+    std::cout << "Max time: " << max_time << "ms\n";
     std::cout << "Avg time: " << total_time / iterations << "ms\n";
 
     return 0;

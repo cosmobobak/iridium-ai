@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <limits>
 
 #include "TreeNode.hpp"
 #include "UCT.hpp"
@@ -135,8 +136,21 @@ class MCTS {
     //     return out;
     // }
 
+    void show_debug(Node<State>* root_node) {
+        if (debug && (node_count & 0b111111111111111) == 0b111111111111111) {
+            root_node->show_child_visitrates();
+            std::cout << "| ";
+            root_node->show_child_winrates();
+            std::cout << "| ";
+            for (auto child : root_node->get_children()) {
+                std::cout << UCT<Node<State>, UCT_EXP_FACTOR>::compute_uct(child) << " ";
+            }
+            std::cout << "\n";
+        }
+    }
+
     auto find_best_next_board(const State board) -> State {
-        // board is immediately copied        ^^^
+        // board is immediately copied    ^^^
 
         node_count = 0;
         side = board.get_turn();
@@ -152,17 +166,7 @@ class MCTS {
         do {
             select_expand_simulate_backpropagate(root_node);
             node_count++;
-            if (debug && (node_count & 0b111111111111111) == 0b111111111111111) {
-                root_node->show_child_visitrates();
-                std::cout << "| ";
-                root_node->show_child_winrates();
-                std::cout << "| ";
-                for (auto child : root_node->get_children()) {
-                    std::cout << UCT<Node<State>, UCT_EXP_FACTOR>::compute_uct(child) << " ";
-                }
-                std::cout << "\n";
-            }
-
+            show_debug(root_node);
         } while (
             (!use_time_limit || std::chrono::steady_clock::now() < end) 
             && (!use_rollout_limit || node_count < rollout_limit));
@@ -179,7 +183,7 @@ class MCTS {
     }
 
     auto get_rollout_counts(const State board) -> std::vector<int> {
-        // board is immediately copied      ^^^
+        // board is immediately copied  ^^^
 
         node_count = 0;
         side = board.get_turn();
@@ -254,13 +258,13 @@ class MCTS {
     }
 
     inline auto simulate_playout(Node<State>* node) -> int {
-        State playout_board = node->get_state();
+        State playout_board = node->copy_state();
         playout_board.mem_setup();
         int status = playout_board.evaluate();
         if (status == -side) {
             // tests for an immediate loss in the position and sets to MIN_VALUE
             // if there is one.
-            node->get_parent()->set_win_score(INT_MIN);
+            node->get_parent()->set_win_score(std::numeric_limits<int>::lowest());
             return status;
         }
         while (!playout_board.is_game_over()) {
@@ -318,8 +322,8 @@ public:
         return node.get_player_move();
     }
 
-    auto get_node() -> State* {
-        return &node;
+    auto get_node() const -> const State& {
+        return node;
     }
 
     auto turn_modifier() {

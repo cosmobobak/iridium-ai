@@ -35,15 +35,29 @@ class State {
         move_count = 0;
     }
 
-    // STATE INTERACTIONS
-    void reset() {
-        std::fill(node[0].begin(), node[0].end(), 0);
-        std::fill(node[1].begin(), node[1].end(), 0);
-        std::fill(move_stack.begin(), move_stack.end(), 0);
-        move_count = 0;
+    // GETTERS
+    auto get_turn() const -> int_fast8_t {
+        return (move_count & 1) ? -1 : 1;
     }
 
-    auto is_move_valid(Move move) {
+    auto get_move_count() const {
+        return move_count;
+    }
+
+    auto get_turn_index() const {
+        return move_count & 1;
+    }
+
+    // PREDICATES
+    auto is_full() const -> bool {
+        return move_count == 42;
+    }
+
+    auto is_game_over() const -> bool {
+        return (is_full() || evaluate());
+    }
+
+    auto is_legal(Move move) const -> bool {
         auto legals = legal_moves();
         return std::any_of(
             legals.begin(),
@@ -51,11 +65,37 @@ class State {
             [move](Move i) { return i == move; });
     }
 
-    void mem_setup() {
-        // movestack.reserve(7 * 6);
+    // MOVE GENERATION
+    auto num_legal_moves() const -> int {
+        // this is a fast function to determine the number
+        // of empty spaces on the top row
+        return NUM_COLS - __builtin_popcount(union_bitboard(0));
     }
 
-    inline auto union_bitboard(int r) const -> Bitrow {
+    auto legal_moves() const -> std::vector<Move> {
+        // a vector to hold the generated moves
+        std::vector<Move> moves(num_legal_moves());
+
+        // this line creates an inverted occupancy for
+        // the top row (0b0011000 -> 0b1100111)
+        Bitrow bb = ~union_bitboard(0) & BB_ALL;
+
+        int counter = 0;
+
+        // the following loop runs until all the occupied
+        // spaces have had moves generated
+        while (bb) {
+            moves[counter++] = __builtin_ctz(bb);
+            // clear the least significant bit set
+            bb &= bb - 1;
+        }
+        // should be [0, 1, 2, 3, 4, 5, 6]
+        // for move 1 on a 7-wide board
+        return moves;
+    }
+
+    // DATA VIEWS
+    auto union_bitboard(int r) const -> Bitrow {
         // this function provides an occupancy number for a given row r, counting
         // downward, indexed from 0
         //
@@ -70,8 +110,49 @@ class State {
         return node[0][r] | node[1][r];
     }
 
-    inline auto is_full() const -> bool {
-        return move_count == 42;
+    auto pos_filled(int row, int col) const -> bool {
+        // tests if a given location is filled, indexed by the row and column
+        // this is done by indexing the row in the 2D array, then performing shifts
+        // to produce a mask with only the desired bit. This mask is then AND-ed with
+        // the row values to test for occupancy, as 0 = false and any other value =
+        // true.
+        return node[0][row] & (1 << col) || node[1][row] & (1 << col);
+    }
+
+    auto player_at(int row, int col) const -> bool {
+        // only valid to use if posFilled returns true
+        // this function essentially performs the same job as posFilled
+        // except it only checks against the first half of the array
+        // and assumes that the space is filled
+        return (node[0][row] & (1 << col));
+        // true = X, false = O
+    }
+
+    auto probe_spot(int row, int col) const -> bool {
+        // tests the bit of the most recently played side
+        return (node[(move_count + 1) & 1][row] & (1 << col));
+    }
+
+    // STATE INTERACTIONS
+    void mem_setup() {
+        // movestack.reserve(7 * 6);
+    }
+
+    void pass_turn() {
+        move_count++;
+    }
+
+    void reset() {
+        std::fill(node[0].begin(), node[0].end(), 0);
+        std::fill(node[1].begin(), node[1].end(), 0);
+        std::fill(move_stack.begin(), move_stack.end(), 0);
+        move_count = 0;
+    }
+
+    void random_play() {
+        // consider inlining and stopping halfway through movegen
+        std::vector<Move> moves = legal_moves();
+        play(moves[rand() % moves.size()]);
     }
 
     void play(const Move col) {
@@ -115,84 +196,7 @@ class State {
         }
     }
 
-    void show() const {
-        int row, col;
-        for (row = 0; row < NUM_ROWS; ++row) {
-            for (col = 0; col < NUM_COLS; ++col) {
-                if (pos_filled(row, col)) {
-                    if (player_at(row, col))
-                        std::cout << "X ";
-                    else
-                        std::cout << "O ";
-                } else
-                    std::cout << ". ";
-            }
-            std::cout << '\n';
-        }
-        std::cout << '\n';
-    }
-
-    auto pos_filled(int row, int col) const -> bool {
-        // tests if a given location is filled, indexed by the row and column
-        // this is done by indexing the row in the 2D array, then performing shifts
-        // to produce a mask with only the desired bit. This mask is then AND-ed with
-        // the row values to test for occupancy, as 0 = false and any other value =
-        // true.
-        return node[0][row] & (1 << col) || node[1][row] & (1 << col);
-    }
-
-    auto player_at(int row, int col) const -> bool {
-        // only valid to use if posFilled returns true
-        // this function essentially performs the same job as posFilled
-        // except it only checks against the first half of the array
-        // and assumes that the space is filled
-        return (node[0][row] & (1 << col));
-        // true = X, false = O
-    }
-
-    auto probe_spot(int row, int col) const -> bool {
-        // tests the bit of the most recently played side
-        return (node[(move_count + 1) & 1][row] & (1 << col));
-    }
-
-    inline auto num_legal_moves() const -> int {
-        // this is a fast function to determine the number
-        // of empty spaces on the top row
-        return NUM_COLS - __builtin_popcount(union_bitboard(0));
-    }
-
-    auto legal_moves() const -> std::vector<Move> {
-        // a vector to hold the generated moves
-        std::vector<Move> moves(num_legal_moves());
-
-        // this line creates an inverted occupancy for
-        // the top row (0b0011000 -> 0b1100111)
-        Bitrow bb = ~union_bitboard(0) & BB_ALL;
-
-        int counter = 0;
-
-        // the following loop runs until all the occupied
-        // spaces have had moves generated
-        while (bb) {
-            moves[counter++] = __builtin_ctz(bb);
-            // clear the least significant bit set
-            bb &= bb - 1;
-        }
-        // should be [0, 1, 2, 3, 4, 5, 6]
-        // for move 1 on a 7-wide board
-        return moves;
-    }
-
-    void random_play() {
-        // consider inlining and stopping halfway through movegen
-        std::vector<Move> moves = legal_moves();
-        play(moves[rand() % moves.size()]);
-    }
-
-    inline void pass_turn() {
-        move_count++;
-    }
-
+    // EVALUATION
     auto horizontal_term() const -> int_fast8_t {
         // check all the rows for horizontal 4-in-a-rows
         for (int row = 0; row < NUM_ROWS; row++) {
@@ -261,23 +265,7 @@ class State {
         return diagdown_term();
     }
 
-    void show_result() const {
-        int r;
-        r = evaluate();
-        if (r == 0) {
-            std::cout << "1/2-1/2" << '\n';
-        } else if (r > 0) {
-            std::cout << "1-0" << '\n';
-        } else {
-            std::cout << "0-1" << '\n';
-        }
-    }
-
-    auto is_game_over() const -> bool {
-        return (is_full() || evaluate());
-    }
-
-    auto heuristic_value() -> int {
+    auto heuristic_value() const -> int {
         int val = 0;
         for (int row = 0; row < NUM_ROWS; row++) {
             for (int i = 0; i < NUM_COLS; i++) {
@@ -287,45 +275,21 @@ class State {
         return val;  // use some sort of central weighting approach
     }
 
-    auto get_player_move() -> Move {
-        const std::vector<Move> legals = legal_moves();
-        std::vector<Move> shiftedLegals;
-        std::transform(legals.begin(), legals.end(), std::back_inserter(shiftedLegals), [](Move n) { return n + 1; });
-        std::cout << "Your legal moves are: ";
-        showvec(shiftedLegals);
-        std::cout << "\n--> ";
-        int pos;
-        std::cin >> pos;
-        while (std::none_of(legals.begin(), legals.end(), [pos](Move m) { return m == (pos - 1); })) {
-            std::cout << "invalid move.\n";
-            show();
-            std::cin >> pos;
-        }
-        return pos - 1;
-    }
-
-    auto get_turn() const -> int_fast8_t {
-        return (move_count & 1) ? -1 : 1;
-    }
-
-    auto get_move_count() {
-        return move_count;
-    }
-
-    auto get_turn_index() {
-        return move_count & 1;
-    }
-
-    auto game_running() {
+    // DATA GENERATION
+    auto game_running() const -> bool {
         // the game is over if the board is filled up or someone has 4-in-a-row
         return (!is_full() && evaluate() == 0);
     }
 
-    int game_result() {
+    auto game_result() const -> int {
+        if (!is_game_over()) {
+            std::cerr << "game_result() called on in-progress game.\n";
+            return -2;
+        }
         return evaluate();
     }
 
-    int get_position_contents(int row, int col) {
+    auto get_position_contents(int row, int col) const -> int {
         if (pos_filled(row, col)) {
             if (player_at(row, col)) {
                 return 1;
@@ -337,7 +301,7 @@ class State {
         }
     }
 
-    auto vectorise_board() {
+    auto vectorise_board() const {
         std::vector<int> out(NUM_ROWS * NUM_COLS);
         for (int row = 0; row < NUM_ROWS; row++) {
             for (int col = 0; col < NUM_COLS; col++) {
@@ -347,13 +311,56 @@ class State {
         return out;
     }
 
-    // struct HashFunction {
-    //     auto operator()(const State& pos) const -> size_t {
-    //         size_t rowHash = std::hash<decltype(pos.bbnode[0])>()(pos.bbnode[0]);
-    //         size_t colHash = std::hash<decltype(pos.bbnode[1])>()(pos.bbnode[1]) << 1;
-    //         return rowHash ^ colHash;
-    //     }
-    // };
+    // I/O
+    void show() const {
+        int row, col;
+        for (row = 0; row < NUM_ROWS; ++row) {
+            for (col = 0; col < NUM_COLS; ++col) {
+                if (pos_filled(row, col)) {
+                    if (player_at(row, col))
+                        std::cout << "X ";
+                    else
+                        std::cout << "O ";
+                } else
+                    std::cout << ". ";
+            }
+            std::cout << '\n';
+        }
+        std::cout << '\n';
+    }
+
+    void show_legal_moves() const {
+        std::vector<Move> legals = legal_moves();
+        std::vector<Move> shiftedLegals;
+        std::transform(legals.begin(), legals.end(), std::back_inserter(shiftedLegals), [](Move n) { return n + 1; });
+        std::cout << "Your legal moves are: ";
+        showvec(shiftedLegals);
+    }
+
+    auto get_player_move() const -> Move {
+        show_legal_moves();
+        std::cout << "\n--> ";
+        int move;
+        std::cin >> move;
+        while (!is_legal(move - 1)) {
+            std::cout << "invalid move.\n";
+            show();
+            std::cin >> move;
+        }
+        return move - 1;
+    }
+
+    void show_result() const {
+        int r;
+        r = evaluate();
+        if (r == 0) {
+            std::cout << "1/2-1/2" << '\n';
+        } else if (r > 0) {
+            std::cout << "1-0" << '\n';
+        } else {
+            std::cout << "0-1" << '\n';
+        }
+    }
 };
 
 bool operator==(State a, State b) {
