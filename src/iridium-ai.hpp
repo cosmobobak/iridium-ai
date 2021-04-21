@@ -173,15 +173,14 @@ template <class GameType>
 void benchmark() {
     const int len = 30;
     const int width = 50;
-    std::array<int, len* width> nodecounts = {0};
+    std::vector<int> nodecounts(len * width);
     for (int i = 0; i < width; i++) {
         Zero<GameType, 8> engine = Zero<GameType, 8>(99);
-        for (int j = 0; j < len; j++) {
+        engine.set_debug(false);
+        engine.set_readout(false);
+        for (int j = 0; j < len && !engine.get_node().is_game_over(); j++) {
             engine.engine_move();
             nodecounts[i * len + j] = engine.get_node_count();
-        }
-        if (engine.get_node().is_game_over()) {
-            break;
         }
         std::cout << i << " ";
     }

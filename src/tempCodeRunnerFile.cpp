@@ -1,1 +1,1 @@
-g
+main_template

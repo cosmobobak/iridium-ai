@@ -54,7 +54,7 @@ class State {
     }
 
     auto is_game_over() const -> bool {
-        return (is_full() || evaluate());
+        return is_full() || evaluate();
     }
 
     auto is_legal(Move move) const -> bool {
@@ -73,12 +73,13 @@ class State {
     }
 
     auto legal_moves() const -> std::vector<Move> {
+        int bb = node[0][0] | node[1][0];
         // a vector to hold the generated moves
-        std::vector<Move> moves(num_legal_moves());
+        std::vector<Move> moves(NUM_COLS - __builtin_popcount(bb));
 
         // this line creates an inverted occupancy for
         // the top row (0b0011000 -> 0b1100111)
-        Bitrow bb = ~union_bitboard(0) & BB_ALL;
+        bb = ~bb & BB_ALL;
 
         int counter = 0;
 
@@ -150,9 +151,25 @@ class State {
     }
 
     void random_play() {
-        // consider inlining and stopping halfway through movegen
-        std::vector<Move> moves = legal_moves();
-        play(moves[rand() % moves.size()]);
+        // the union of the top rows
+        int bb = node[0][0] | node[1][0];
+        int num_moves = NUM_COLS - __builtin_popcount(bb);
+
+        // the chosen move
+        int choice = rand() % num_moves;
+
+        // this line creates an inverted occupancy for
+        // the top row (0b0011000 -> 0b1100111)
+        bb = ~bb & BB_ALL;
+
+        // the loop runs until 
+        // we hit the chosen move
+        do {
+            // clear the least significant bit set
+            bb &= bb - 1;
+        } while (choice--);
+
+        play(__builtin_ctz(bb));
     }
 
     void play(const Move col) {

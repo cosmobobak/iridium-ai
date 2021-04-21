@@ -270,8 +270,8 @@ class MCTS {
         while (!playout_board.is_game_over()) {
             playout_board.random_play();
         }
-        status = playout_board.evaluate();
-        return status;
+        
+        return playout_board.evaluate();
     }
 };
 } // namespace SearchDriver
@@ -299,21 +299,27 @@ public:
     void set_time_limit(long long x) {
         search_driver.set_time_limit(x);
     }
+
     void set_rollout_limit(long long x) {
         search_driver.set_rollout_limit(x);
     }
+
     void set_readout(bool b) {
         search_driver.set_readout(b);
     }
+
     void set_debug(bool b) {
         search_driver.set_debug(b);
     }
+
     void set_node(State n) {
         node = n;
     }
+
     void use_time_limit(bool x) {
         search_driver.use_time_limit(x);
     }
+
     void use_rollout_limit(bool x) {
         search_driver.use_rollout_limit(x);
     }
