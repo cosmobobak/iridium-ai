@@ -25,7 +25,7 @@ class State {
     using Move = uint_fast8_t;
 
    private:
-    std::array<Move, NUM_ROWS * NUM_COLS> move_stack = {0};
+    std::array<Move, NUM_ROWS* NUM_COLS> move_stack = {0};
     int8_t move_count;
     // Bitboard node[2] = {0};
 
@@ -162,7 +162,7 @@ class State {
         // the top row (0b0011000 -> 0b1100111)
         bb = ~bb & BB_ALL;
 
-        // the loop runs until 
+        // the loop runs until
         // we hit the chosen move
         do {
             // clear the least significant bit set
@@ -175,13 +175,12 @@ class State {
     void play(const Move col) {
         // we assume play is not called on a filled column
         // iterate upward and break at the first empty position
-        for (int row = NUM_ROWS; row; row--) {
-            if (!pos_filled(row - 1, col)) {
-                // moveCount acts to determine which colour is played
-                node[move_count & 1][row - 1] ^= (1 << col);
-                break;
-            }
+        int row = NUM_ROWS;
+        while(pos_filled(row - 1, col)) {
+            row--;
         }
+        // moveCount acts to determine which colour is played
+        node[move_count & 1][row - 1] ^= (1 << col);
         // store the made move in the stack
         move_stack[move_count++] = col;
     }
@@ -190,13 +189,12 @@ class State {
         // decrement move counter and get the most recently played move
         Move col = move_stack[--move_count];
         // iterate downward and break at the first filled position
-        for (uint_fast8_t row = 0; row < NUM_ROWS; row++) {
-            if (pos_filled(row, col)) {
-                // a bit is removed by XOR
-                node[move_count & 1][row] ^= (1 << col);
-                break;
-            }
+        int row = 0;
+        while(!pos_filled(row, col)) {
+            row++;
         }
+        // a bit is removed by XOR
+        node[move_count & 1][row] ^= (1 << col);
     }
 
     void unplay(Move col) {
@@ -204,13 +202,12 @@ class State {
         // decrement move counter
         move_count--;
         // iterate downward and break at the first filled position
-        for (int row = 0; row < NUM_ROWS; row++) {
-            if (pos_filled(row, col)) {
-                // a bit is removed by XOR
-                node[move_count & 1][row] ^= (1 << col);
-                break;
-            }
+        int row = 0;
+        while(!pos_filled(row, col)) {
+            row++;
         }
+        // a bit is removed by XOR
+        node[move_count & 1][row] ^= (1 << col);
     }
 
     // EVALUATION

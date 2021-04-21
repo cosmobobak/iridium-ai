@@ -2,54 +2,80 @@
 
 #include <chrono>
 
-namespace SearchDriver {
-
-template <class StateType>
+template <class State>
 class Negamax {
-    uint_fast32_t nodes;
-    long long timeLimit;
+    // limiter on search time
+    long long time_limit;
+    // limiter on depth
+    long long depth_limit;
     // TT transpositionTable;
+
+    // flags
+    bool readout = true;
+    bool debug = true;
+    bool limit_by_depth;
+    bool limit_by_time;
+
+    // recorded search data
+    int node_count;
 
    public:
     Negamax() {
         Negamax(99);
     }
-    Negamax(const long long TL) {
-        timeLimit = TL;
+    Negamax(long long strength) {
+        time_limit = strength;
+        limit_by_depth = false;
+        limit_by_time = true;
+        node_count = 0;
     }
 
+    void use_depth_limit(bool x) {
+        limit_by_depth = x;
+        limit_by_time = !x;
+    }
+
+    void use_time_limit(bool x) {
+        limit_by_time = x;
+        limit_by_depth = !x;
+    }
+
+    // SETTERS
     void set_time_limit(long long tl) {
-        timeLimit = tl;
+        time_limit = tl;
     }
 
-    void set_nodes(int_fast32_t n) {
-        nodes = n;
+    void set_readout(bool b) {
+        readout = b;
     }
 
-    auto get_nodes() -> int_fast32_t {
-        return nodes;
+    void set_debug(bool b) {
+        debug = b;
     }
 
-    auto negamax(
-        StateType& node,
-        uint_fast8_t depth = 10,
-        uint_fast8_t colour = 1,
-        int_fast16_t a = -20000,
-        int_fast16_t b = 20000) -> int_fast16_t  //WORKING
-    {
+    void set_depth_limit(long long dl) {
+        depth_limit = dl;
+    }
+
+    // GETTERS
+    auto get_nodes() -> int {
+        return node_count;
+    }
+
+    auto negamax(State& node, int depth = 10, int colour = 1, int a = -20000, int b = 20000) -> int {
         assert(colour != 0);
 
         if (depth < 1) {
-            nodes++;
+            node_count++;
             return colour * node.evaluate();
         }
 
         if (node.is_game_over()) {
-            nodes++;
+            node_count++;
             return colour * node.evaluate() * (depth + 1);
         }
 
-        int_fast16_t score;
+        int score;
 
         for (auto move : node.legal_moves()) {
             node.play(move);
@@ -64,44 +90,39 @@ class Negamax {
         return a;
     }
 
-    auto dnegamax(
-        StateType& node,
-        uint_fast8_t colour = 1,
-        int_fast16_t a = -20000,
-        int_fast16_t b = 20000) -> int_fast16_t  //WORKING
-    {
+    auto dnegamax(State& node, int colour = 1, int a = -20000, int b = 20000) -> int {
         if (node.is_game_over()) {
-            nodes++;
+            node_count++;
             return colour * node.evaluate();
         }
-        int_fast16_t score;
+
+        int score;
 
         for (auto move : node.legal_moves()) {
             node.play(move);
-            nodes += 1;
+            node_count += 1;
             score = -dnegamax(node, -colour, -b, -a);
             node.unplay();
 
             if (score >= b)
                 return b;
-            if (score > a)
-                a = score;
+            score = std::max(a, score);
         }
 
         return a;
     }
 
-    auto find_best_next_board(StateType node) -> StateType {
+    auto find_best_next_board(State node) -> State {
         reset_nodes();
-        auto bestmove = -1;
-        int_fast16_t bestcase = -40;
-        int_fast16_t score = -40;
-        nodes = 0;
+        int bestmove = -1;
+        int bestcase = -40;
+        int score = -40;
 
         auto end = std::chrono::steady_clock::now();
-        end += std::chrono::milliseconds(timeLimit);
+        end += std::chrono::milliseconds(time_limit);
 
-        if (false) {  //StateType::GAME_SOLVABLE
+        if (false) {
+            //StateType::GAME_SOLVABLE
             for (const auto& move : node.legal_moves()) {
                 node.play(move);
                 score = -dnegamax(node, node.get_turn());
@@ -112,7 +133,7 @@ class Negamax {
                 }
             }
         } else {
-            uint_fast8_t depth = 1;
+            int depth = 1;
             while (std::chrono::steady_clock::now() < end && depth < 22) {
                 auto start = std::chrono::steady_clock::now();
                 for (const auto move : node.legal_moves()) {
@@ -129,58 +150,13 @@ class Negamax {
             }
         }
         std::cout << "ISTUS:\n";
-        std::cout << nodes << " nodes processed.\n";
+        std::cout << node_count << " nodes processed.\n";
         std::cout << "Istus win prediction: " << (int)((1 + bestcase) * (50)) << "%\n";
         node.play(bestmove);
         return node;
     }
 
     void reset_nodes() {
-        nodes = 0;
+        node_count = 0;
     }
 };
-}  // namespace SearchDriver
-
-namespace NMSearch {
-
-template <class StateType>
-class Istus {
-   public:
-    SearchDriver::Negamax<StateType> searchDriver = SearchDriver::Negamax<StateType>();
-    StateType node = StateType();
-
-    Istus() {
-        Istus(99);
-    }
-    Istus(const long long strength) {
-        searchDriver.set_time_limit(strength);
-    }
-
-    void print(const std::string input, const std::string end = "\n") {
-        std::cout << input << end;
-    }
-
-    auto get_player_move() {
-        return node.get_player_move();
-    }
-
-    auto get_node() -> StateType& {
-        return node;
-    }
-
-    void engine_move() {
-        node = searchDriver.find_best_next_board(node);
-    }
-
-    void show_result() const {
-        int r;
-        r = node.evaluate();
-        if (r == 0)
-            std::cout << "1/2-1/2" << '\n';
-        else if (r == 1)
-            std::cout << "1-0" << '\n';
-        else
-            std::cout << "0-1" << '\n';
-    }
-};
-}  // namespace NMSearch

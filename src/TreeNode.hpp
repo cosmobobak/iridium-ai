@@ -14,13 +14,14 @@ class Node {
     State board;
     std::vector<Node*> children;
     Node* parent = nullptr;
-    int_fast32_t win_count = 0;
-    uint_fast32_t visits = 0;
+    int win_count = 0;
+    int visits = 0;
     int_fast8_t turn;
 
     Node(const State& board) {
         this->board = board;
     }
+    Node(const Node&) = delete;
     ~Node() {
         for (Node* child : children) {
             delete child;
@@ -41,7 +42,7 @@ class Node {
         this->turn = turn;
     }
 
-    void set_win_score(const int_fast32_t s) {
+    void set_win_score(const int s) {
         win_count = s;
     }
 
@@ -70,11 +71,11 @@ class Node {
         return -turn;
     }
 
-    auto get_win_score() const -> int_fast32_t {
+    auto get_win_score() const -> int {
         return win_count;
     }
 
-    auto get_visit_count() const -> int_fast32_t {
+    auto get_visit_count() const -> int {
         return visits;
     }
 
@@ -82,12 +83,12 @@ class Node {
         return (double)win_count / (double)visits;
     }
 
-    auto get_parent_visits() const -> int_fast32_t {
+    auto get_parent_visits() const -> int {
         return parent->get_visit_count();
     }
 
     // INTERACTIONS
-    void add_score(const int_fast32_t s) {
+    void add_score(int s) {
         win_count += s;
     }
 

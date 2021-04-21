@@ -10,11 +10,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "MCSearch.hpp"
-#include "NMSearch.hpp"
-
-using namespace MCSearch;
-using namespace NMSearch;
+#include "Zero.hpp"
+#include "Istus.hpp"
 
 namespace Iridium {
 auto get_first_player() -> bool {
@@ -25,10 +22,10 @@ auto get_first_player() -> bool {
     return player;
 }
 
-template <class GameType>
+template <class State>
 void run_negamax_engine(const long long TL) {
-    Istus<GameType> engine = Istus<GameType>(TL);
-    typename GameType::Move i;
+    Istus<State> engine = Istus<State>(TL);
+    typename State::Move i;
     engine.get_node().show();
     if (get_first_player()) {
         i = engine.get_player_move();
@@ -47,13 +44,13 @@ void run_negamax_engine(const long long TL) {
     engine.show_result();
 }
 
-template <class GameType, int UCT_EXP_FACTOR>
+template <class State, int UCT_EXP_FACTOR>
 void run_mcts_engine(const long long TL) {
-    Zero<GameType, UCT_EXP_FACTOR> engine = Zero<GameType, UCT_EXP_FACTOR>(TL);
+    Zero<State, UCT_EXP_FACTOR> engine = Zero<State, UCT_EXP_FACTOR>(TL);
     engine.set_debug(false);
     engine.use_time_limit(true);
     engine.set_time_limit(TL);
-    typename GameType::Move i;
+    typename State::Move i;
     engine.get_node().show();
     if (get_first_player()) {
         i = engine.get_player_move();
@@ -80,10 +77,10 @@ void run_mcts_engine(const long long TL) {
     engine.show_result();
 }
 
-template <class GameType>
+template <class State>
 auto selfplay(const long long TL) -> int {
-    auto engine1 = Zero<GameType, 10>(TL);
-    auto engine2 = Zero<GameType, 8>(TL);
+    auto engine1 = Zero<State, 10>(TL);
+    auto engine2 = Zero<State, 8>(TL);
     engine1.use_rollout_limit(true);
     engine2.use_rollout_limit(true);
     engine1.set_readout(false);
@@ -105,8 +102,8 @@ auto selfplay(const long long TL) -> int {
 
     std::vector<int> results(rounds);
     for (size_t i = 0; i < rounds; i++) {
-        engine1.set_node(GameType());
-        engine2.set_node(GameType());
+        engine1.set_node(State());
+        engine2.set_node(State());
         /* code */
         int engine_turn = 1;
         while (!engine1.is_game_over() && !engine2.is_game_over()) {
@@ -131,9 +128,9 @@ auto selfplay(const long long TL) -> int {
     return 1;
 }
 
-template <class GameType>
+template <class State>
 void userplay() {
-    Zero<GameType, 8> engine = Zero<GameType, 8>();
+    Zero<State, 8> engine = Zero<State, 8>();
     engine.get_node().show();
     while (!engine.get_node().is_game_over() && !engine.get_node().is_game_over()) {
         int i;
@@ -145,9 +142,9 @@ void userplay() {
     engine.show_result();
 }
 
-template <class GameType>
+template <class State>
 void testsuite() {
-    Zero<GameType, 8> engine = Zero<GameType, 8>();
+    Zero<State, 8> engine = Zero<State, 8>();
     while (!engine.get_node().is_game_over()) {
         engine.get_node().show();
         std::cout << "\nforcing board: "
@@ -169,13 +166,13 @@ void testsuite() {
     }
 }
 
-template <class GameType>
+template <class State>
 void benchmark() {
     const int len = 30;
     const int width = 50;
     std::vector<int> nodecounts(len * width);
     for (int i = 0; i < width; i++) {
-        Zero<GameType, 8> engine = Zero<GameType, 8>(99);
+        Zero<State, 8> engine = Zero<State, 8>(99);
         engine.set_debug(false);
         engine.set_readout(false);
         for (int j = 0; j < len && !engine.get_node().is_game_over(); j++) {
@@ -191,7 +188,7 @@ void benchmark() {
     std::cout << "\naverage nodecount: " << (double)sum / (50.0 * 50.0) << "\n";
 }
 
-template <class GameType, int UCT_EXP_FACTOR>
+template <class State, int UCT_EXP_FACTOR>
 void main_template() {
     std::cout << "Play against Zero [0] | Play against Istus [1] | Watch a self-play engine [2] | Play with a friend [3] | Run tests [4] | Benchmark [5]\n--> ";
     int ans;
@@ -203,22 +200,22 @@ void main_template() {
     }
     switch (ans) {
         case 0:
-            run_mcts_engine<GameType, UCT_EXP_FACTOR>(TL);
+            run_mcts_engine<State, UCT_EXP_FACTOR>(TL);
             break;
         case 1:
-            run_negamax_engine<GameType>(TL);
+            run_negamax_engine<State>(TL);
             break;
         case 2:
-            selfplay<GameType>(TL);
+            selfplay<State>(TL);
             break;
         case 3:
-            userplay<GameType>();
+            userplay<State>();
             break;
         case 4:
-            testsuite<GameType>();
+            testsuite<State>();
             break;
         case 5:
-            benchmark<GameType>();
+            benchmark<State>();
             break;
         default:
             break;
