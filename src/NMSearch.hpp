@@ -1,9 +1,17 @@
 #pragma once
 
 #include <chrono>
+#include <limits>
+#include <vector>
 
 template <class State>
 class Negamax {
+   public:
+    static constexpr auto MATE_SCORE = 100000;
+    static constexpr auto INF = std::numeric_limits<int>::max();
+    static constexpr auto N_INF = std::numeric_limits<int>::lowest() + 1;
+   private:
+    using typename State::Move;
     // limiter on search time
     long long time_limit;
     // limiter on depth
@@ -18,6 +26,7 @@ class Negamax {
 
     // recorded search data
     int node_count;
+    std::vector<Move> principal_variation;
 
    public:
     Negamax() {
@@ -62,71 +71,80 @@ class Negamax {
         return node_count;
     }
 
-    auto negamax(State& node, int depth = 10, int colour = 1, int a = -20000, int b = 20000) -> int {
-        assert(colour != 0);
+    auto negamax(State& node, int depth, int colour, int a, int b, int principal_variation) -> int {
+        assert(colour == 1 || colour == -1);
+        assert(depth >= 0);
 
-        if (depth < 1) {
+        if (depth == 0) {
             node_count++;
-            return colour * node.evaluate();
+            return colour * (node.evaluate() * MATE_SCORE + node.heuristic_value());
         }
 
         if (node.is_game_over()) {
             node_count++;
-            return colour * node.evaluate() * (depth + 1);
+            return colour * node.evaluate() * MATE_SCORE * (depth + 1);
         }
 
         int score;
-
         for (auto move : node.legal_moves()) {
             node.play(move);
-            score = -negamax(node, depth - 1, -colour, -b, -a);
+            score = -negamax(node, depth - 1, -colour, -b, -a, &line);
             node.unplay();
 
-            if (score >= b)
+            if (score >= b) {
+                // beta cutoff
                 return b;
-            if (score > a)
+            }
+            if (score > a) {
+                // move that raises alpha
                 a = score;
+            }
         }
         return a;
     }
 
-    auto dnegamax(State& node, int colour = 1, int a = -20000, int b = 20000) -> int {
+    auto dnegamax(State& node, int colour, int a = N_INF, int b = INF) -> int {
+        assert(colour == 1 || colour == -1);
+
         if (node.is_game_over()) {
             node_count++;
             return colour * node.evaluate();
         }
 
-        int score;
-
         for (auto move : node.legal_moves()) {
             node.play(move);
-            node_count += 1;
-            score = -dnegamax(node, -colour, -b, -a);
+            int score = -dnegamax(node, -colour, -b, -a);
             node.unplay();
+            // std::cout << "score for move " << (int)move << ": " << score << "\n";
 
-            if (score >= b)
+            if (score >= b) {
                 return b;
-            score = std::max(a, score);
+            }
+            a = std::max(a, score);
         }
 
         return a;
+    }
+
+    static void movcpy(Move* pTarget, const Move* pSource, int n) {
+        while (n-- && (*pTarget++ = *pSource++))
+            ;
     }
 
     auto find_best_next_board(State node) -> State {
         reset_nodes();
         int bestmove = -1;
-        int bestcase = -40;
-        int score = -40;
+        int bestcase = N_INF;
 
         auto end = std::chrono::steady_clock::now();
         end += std::chrono::milliseconds(time_limit);
-
-        if (false) {
-            //StateType::GAME_SOLVABLE
-            for (const auto& move : node.legal_moves()) {
+        Line<typename State::Move> principal_variation;
+        if (State::GAME_SOLVABLE) {
+            for (auto move : node.legal_moves()) {
                 node.play(move);
-                score = -dnegamax(node, node.get_turn());
+                int score = -dnegamax(node, node.get_turn());
                 node.unplay();
+                std::cout << "score for move " << (int)move << ": " << score << "\n";
                 if (bestcase < score) {
                     bestcase = score;
                     bestmove = move;
@@ -136,9 +154,9 @@ class Negamax {
             int depth = 1;
             while (std::chrono::steady_clock::now() < end && depth < 22) {
                 auto start = std::chrono::steady_clock::now();
-                for (const auto move : node.legal_moves()) {
+                for (auto move : node.legal_moves()) {
                     node.play(move);
-                    score = -negamax(node, depth, -node.get_turn());
+                    int score = -negamax(node, depth, node.get_turn(), N_INF, INF, &principal_variation);
                     node.unplay();
                     if (bestcase < score) {
                         bestcase = score;
@@ -151,6 +169,10 @@ class Negamax {
         }
         std::cout << "ISTUS:\n";
         std::cout << node_count << " nodes processed.\n";
+        std::cout << "Best move found: " << bestmove << "\n";
+        std::cout << "PV: ";
+        for (int i = 0; i < principal_variation.length; i++) std::cout << (int)(principal_variation.moves[i] + 1) << " ";
+        std::cout << "\n";
         std::cout << "Istus win prediction: " << (int)((1 + bestcase) * (50)) << "%\n";
         node.play(bestmove);
         return node;

@@ -12,31 +12,31 @@ namespace Connect4 {
 using Bitrow = uint_fast8_t;
 using Bitboard = unsigned long long;
 
-constexpr auto GAME_SOLVABLE = false;
-constexpr auto NUM_ROWS = 6;
-constexpr auto NUM_COLS = 7;
-constexpr auto GAME_EXP_FACTOR = 7.05;  // 1.41 * 5;
-constexpr Bitrow BB_ALL = 0b1111111;
-// constexpr Bitboard BB_ALL = (1 << (6 * 7)) - 1;
-constexpr std::array<uint_fast8_t, NUM_COLS> weights = {1, 2, 3, 4, 3, 2, 1};
 
 class State {
    public:
     using Move = uint_fast8_t;
+    static constexpr auto GAME_SOLVABLE = false;
+    static constexpr auto NUM_ROWS = 6;
+    static constexpr auto NUM_COLS = 7;
+    static constexpr auto GAME_EXP_FACTOR = 7.05;  // 1.41 * 5;
+    static constexpr Bitrow BB_ALL = 0b1111111;
+    // constexpr Bitboard BB_ALL = (1 << (6 * 7)) - 1;
+    static constexpr std::array<int, NUM_COLS> weights = {1, 2, 3, 4, 3, 2, 1};
 
    private:
+    std::array<std::array<Bitrow, NUM_COLS>, 2> node = {0};
     std::array<Move, NUM_ROWS* NUM_COLS> move_stack = {0};
-    int8_t move_count;
+    int move_count;
     // Bitboard node[2] = {0};
 
    public:
-    std::array<std::array<Bitrow, NUM_COLS>, 2> node = {0};
     State() {
         move_count = 0;
     }
 
     // GETTERS
-    auto get_turn() const -> int_fast8_t {
+    auto get_turn() const -> int {
         return (move_count & 1) ? -1 : 1;
     }
 
@@ -48,9 +48,13 @@ class State {
         return move_count & 1;
     }
 
+    auto get_node() const -> const std::array<std::array<Bitrow, NUM_COLS>, 2>& {
+        return node;
+    }
+
     // PREDICATES
     auto is_full() const -> bool {
-        return move_count == 42;
+        return move_count == NUM_COLS * NUM_ROWS;
     }
 
     auto is_game_over() const -> bool {
@@ -95,6 +99,28 @@ class State {
         return moves;
     }
 
+    void random_play() {
+        // the union of the top rows
+        int bb = node[0][0] | node[1][0];
+        int num_moves = NUM_COLS - __builtin_popcount(bb);
+
+        // the chosen move
+        int choice = rand() % num_moves;
+
+        // this line creates an inverted occupancy for
+        // the top row (0b0011000 -> 0b1100111)
+        bb = ~bb & BB_ALL;
+
+        // the loop runs until
+        // we hit the chosen move
+        do {
+            // clear the least significant bit set
+            bb &= bb - 1;
+        } while (choice--);
+
+        play(__builtin_ctz(bb));
+    }
+
     // DATA VIEWS
     auto union_bitboard(int r) const -> Bitrow {
         // this function provides an occupancy number for a given row r, counting
@@ -125,13 +151,13 @@ class State {
         // this function essentially performs the same job as posFilled
         // except it only checks against the first half of the array
         // and assumes that the space is filled
-        return (node[0][row] & (1 << col));
+        return node[0][row] & (1 << col);
         // true = X, false = O
     }
 
     auto probe_spot(int row, int col) const -> bool {
         // tests the bit of the most recently played side
-        return (node[(move_count + 1) & 1][row] & (1 << col));
+        return node[(move_count + 1) & 1][row] & (1 << col);
     }
 
     // STATE INTERACTIONS
@@ -150,29 +176,7 @@ class State {
         move_count = 0;
     }
 
-    void random_play() {
-        // the union of the top rows
-        int bb = node[0][0] | node[1][0];
-        int num_moves = NUM_COLS - __builtin_popcount(bb);
-
-        // the chosen move
-        int choice = rand() % num_moves;
-
-        // this line creates an inverted occupancy for
-        // the top row (0b0011000 -> 0b1100111)
-        bb = ~bb & BB_ALL;
-
-        // the loop runs until
-        // we hit the chosen move
-        do {
-            // clear the least significant bit set
-            bb &= bb - 1;
-        } while (choice--);
-
-        play(__builtin_ctz(bb));
-    }
-
-    void play(const Move col) {
+    void play(Move col) {
         // we assume play is not called on a filled column
         // iterate upward and break at the first empty position
         int row = NUM_ROWS;
@@ -378,6 +382,6 @@ class State {
 };
 
 bool operator==(State a, State b) {
-    return !(a.node[0] != b.node[0] || a.node[1] != b.node[1]);
+    return !(a.get_node()[0] != b.get_node()[0] || a.get_node()[1] != b.get_node()[1]);
 }
 }  // namespace Connect4

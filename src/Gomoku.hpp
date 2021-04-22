@@ -9,18 +9,19 @@
 
 namespace Gomoku {
 
-constexpr auto GAME_SOLVABLE = false;
-constexpr auto GAME_EXP_FACTOR = 1.41 * 5;
-constexpr auto WIDTH = 8;
-constexpr auto HEIGHT = 8;
-constexpr std::array<char, 2> players = {'X', 'O'};
-
 class State {
    public:
     using Move = uint_fast16_t;
+    static constexpr auto GAME_SOLVABLE = false;
+    static constexpr auto GAME_EXP_FACTOR = 1.41 * 5;
+    static constexpr auto WIDTH = 8;
+    static constexpr auto HEIGHT = 8;
+    static constexpr std::array<char, 2> players = {'X', 'O'};
+   private:
     std::array<std::bitset<WIDTH * HEIGHT>, 2> node;
     uint_fast8_t turn = 1;
     std::vector<Move> movestack;
+   public:
 
     inline void show() const {
         int row, col;
@@ -45,6 +46,10 @@ class State {
 
     inline auto get_turn() const -> uint_fast8_t {
         return turn;
+    }
+
+    auto get_node() const -> const std::array<std::bitset<WIDTH * HEIGHT>, 2>& {
+        return node;
     }
 
     inline auto player_at(const Move i) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
@@ -278,10 +283,6 @@ class State {
 };
 
 bool operator==(const State a, const State b) {
-    if (a.turn != b.turn)
-        return false;
-    if (a.node != b.node)
-        return false;
-    return true;
+    return a.get_node() == b.get_node();
 }
 }  // namespace Gomoku
