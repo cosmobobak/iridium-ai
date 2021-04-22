@@ -20,7 +20,7 @@ class State {
 
    public:
     static constexpr auto GAME_SOLVABLE = true;
-    static constexpr auto GAME_EXP_FACTOR = 1.41 * 5;
+    static constexpr auto GAME_EXP_FACTOR = 6;
     static constexpr auto BB_ALL = 0b111111111;
 
     // GETTERS

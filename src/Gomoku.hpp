@@ -13,7 +13,7 @@ class State {
    public:
     using Move = uint_fast16_t;
     static constexpr auto GAME_SOLVABLE = false;
-    static constexpr auto GAME_EXP_FACTOR = 1.41 * 5;
+    static constexpr auto GAME_EXP_FACTOR = 8;
     static constexpr auto WIDTH = 8;
     static constexpr auto HEIGHT = 8;
     static constexpr std::array<char, 2> players = {'X', 'O'};

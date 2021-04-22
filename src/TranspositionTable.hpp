@@ -16,11 +16,11 @@ struct TTEntry {
 };
 
 namespace TranspositionTable {
-class TT {
+class __attribute__((unused)) TT {
     std::unordered_map<unsigned long long, TTEntry> hashtable;
 
    public:
-    void record_hash(State target, uint_fast8_t depth, uint_fast16_t a, int hashDataType) {
+    void record_hash(const State& target, int depth, int a, int hashDataType) {
         unsigned long long key = target.generateKey();
         if (hashtable.contains(key)) {
             TTEntry entry = hashtable[key];
@@ -32,7 +32,7 @@ class TT {
         }
     }
 
-    auto probe_hash(State target) -> std::optional<TTEntry> {
+    auto probe_hash(const State& target) -> std::optional<TTEntry> {
         unsigned long long key = target.generateKey();
         if (hashtable.contains(key)) {
             return hashtable[key];
@@ -41,7 +41,7 @@ class TT {
         }
     }
 
-    auto probe_hash_value(State target, int depth, int a, int b, bool &validityFlag) -> int {
+    auto probe_hash_value(const State& target, int depth, int a, int b, bool &validityFlag) -> int {
         unsigned long long key = target.generateKey();
         TTEntry entry = hashtable[key];
         if (entry.depth >= depth) {

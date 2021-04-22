@@ -12,7 +12,7 @@ namespace RawTree {
 class State {
    public:
     static constexpr auto GAME_SOLVABLE = true;
-    static constexpr auto GAME_EXP_FACTOR = 1.41 * 5;
+    static constexpr auto GAME_EXP_FACTOR = 8;
     static constexpr std::array<int, 12> HEURISTIC_VALUES = {8, 8, 7, 8, 5, 6, 7, 5, 8, 48, 1, 7};
     static constexpr std::array<int, 12> EVALS = {0, 0, 0, 0, 1, 0, 0, -1, 1, 1, -1, -1};
     static constexpr std::array<int, 12> CHILD_COUNT = {2, 1, 3, 2, 0, 2, 1, 0, 0, 0, 0, 0};

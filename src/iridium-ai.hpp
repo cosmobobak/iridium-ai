@@ -44,9 +44,9 @@ void run_negamax_engine(const long long TL) {
     engine.show_result();
 }
 
-template <class State, int UCT_EXP_FACTOR>
+template <class State>
 void run_mcts_engine(const long long TL) {
-    Zero<State, UCT_EXP_FACTOR> engine = Zero<State, UCT_EXP_FACTOR>(TL);
+    Zero<State> engine = Zero<State>(TL);
     engine.set_debug(false);
     engine.use_time_limit(true);
     engine.set_time_limit(TL);
@@ -188,7 +188,7 @@ void benchmark() {
     std::cout << "\naverage nodecount: " << (double)sum / (50.0 * 50.0) << "\n";
 }
 
-template <class State, int UCT_EXP_FACTOR>
+template <class State>
 void main_template() {
     std::cout << "Play against Zero [0] | Play against Istus [1] | Watch a self-play engine [2] | Play with a friend [3] | Run tests [4] | Benchmark [5]\n--> ";
     int ans;
@@ -200,7 +200,7 @@ void main_template() {
     }
     switch (ans) {
         case 0:
-            run_mcts_engine<State, UCT_EXP_FACTOR>(TL);
+            run_mcts_engine<State>(TL);
             break;
         case 1:
             run_negamax_engine<State>(TL);

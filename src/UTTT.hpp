@@ -138,7 +138,7 @@ namespace UTTT {
 class State {
    public:
     static constexpr auto GAME_SOLVABLE = false;
-    static constexpr auto GAME_EXP_FACTOR = 1.41 * 5;
+    static constexpr auto GAME_EXP_FACTOR = 8;
     using Move = uint_fast16_t;
     using Bitboard = uint_fast16_t;
    private:

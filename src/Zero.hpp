@@ -8,9 +8,9 @@
 // The RAVE approach makes this heuristic value = some sort of aggregate score of the move on parent nodes.
 // UCT becomes (simulation value / rollouts) + (heuristic value / rollouts) + (exploration factor)
 
-template <class State, int EXP_FACTOR>
+template <class State>
 class Zero {
-    MCTS<State, EXP_FACTOR> search_driver = MCTS<State, EXP_FACTOR>();
+    MCTS<State> search_driver = MCTS<State>();
     State node = State();
 
    public:

@@ -19,8 +19,8 @@ class State {
     static constexpr auto GAME_SOLVABLE = false;
     static constexpr auto NUM_ROWS = 6;
     static constexpr auto NUM_COLS = 7;
-    static constexpr auto GAME_EXP_FACTOR = 7.05;  // 1.41 * 5;
-    static constexpr Bitrow BB_ALL = 0b1111111;
+    static constexpr auto GAME_EXP_FACTOR = 10;  // 1.41 * 5;
+    static constexpr int BB_ALL = 0b1111111;
     // constexpr Bitboard BB_ALL = (1 << (6 * 7)) - 1;
     static constexpr std::array<int, NUM_COLS> weights = {1, 2, 3, 4, 3, 2, 1};
 
@@ -162,7 +162,7 @@ class State {
 
     // STATE INTERACTIONS
     void mem_setup() {
-        // movestack.reserve(7 * 6);
+        // move_stack.reserve(7 * 6);
     }
 
     void pass_turn() {

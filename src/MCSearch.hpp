@@ -6,10 +6,10 @@
 #include "TreeNode.hpp"
 #include "UCT.hpp"
 
-using TreeNode::Node;
 
-template <class State, int UCT_EXP_FACTOR>
+template <class State>
 class MCTS {
+    using Node = TreeNode::Node<State>;
     static constexpr int REWARD = 10;
     // limiter on search time
     long long time_limit;
@@ -32,7 +32,7 @@ class MCTS {
 
     // dictates whether we preserve a part of the tree across moves
     // bool memsafe = true;
-    // Node<State>* preservedNode = nullptr;
+    // Node* preservedNode = nullptr;
 
    public:
     MCTS() {
@@ -114,10 +114,10 @@ class MCTS {
         return last_winloss;
     }
 
-    // auto prune(Node<State>* parent, const State& target) -> Node<State>* {
-    //     Node<State>* out = nullptr;
+    // auto prune(Node* parent, const State& target) -> Node* {
+    //     Node* out = nullptr;
     //     bool found = false;
-    //     for (Node<State>* child : parent->children) {
+    //     for (Node* child : parent->children) {
     //         if (!found && child->get_state() == target) {
     //             out = child;
     //             found = true;
@@ -140,7 +140,7 @@ class MCTS {
         auto start = std::chrono::steady_clock::now();
         auto end = start + std::chrono::milliseconds(time_limit);
 
-        Node<State>* root_node = new Node<State>(board);
+        Node* root_node = new Node(board);
         root_node->set_state(board);
         root_node->set_player_no(-side);
 
@@ -173,7 +173,7 @@ class MCTS {
         auto start = std::chrono::steady_clock::now(); 
         auto end = start + std::chrono::milliseconds(time_limit);
 
-        Node<State>* root_node = new Node<State>(board);
+        Node* root_node = new Node(board);
         root_node->set_state(board);
         root_node->set_player_no(-side);
 
@@ -200,18 +200,18 @@ class MCTS {
         return out;
     }
 
-    inline void select_expand_simulate_backpropagate(Node<State>* root_node) {
+    inline void select_expand_simulate_backpropagate(Node* root_node) {
         int result;
         // SELECTION
-        Node<State>* promisingNode = select_promising_node(root_node);
+        Node* promisingNode = select_promising_node(root_node);
 
         // EXPANSION
-        if (!promisingNode->board.is_game_over())
+        if (!promisingNode->get_state().is_game_over())
             promisingNode->expand();
 
-        Node<State>* nodeToExplore = promisingNode;
+        Node* nodeToExplore = promisingNode;
 
-        if (promisingNode->children.size() != 0)
+        if (promisingNode->get_children().size() != 0)
             nodeToExplore = promisingNode->random_child();
 
         // SIMULATION
@@ -220,15 +220,15 @@ class MCTS {
         backprop(nodeToExplore, result);
     }
 
-    inline auto select_promising_node(Node<State>* root_node) const -> Node<State>* {
-        Node<State>* node = root_node;
-        while (node->children.size())
-            node = UCT<Node<State>, UCT_EXP_FACTOR>::best_node_uct(node);
+    inline auto select_promising_node(Node* root_node) const -> Node* {
+        Node* node = root_node;
+        while (node->get_children().size())
+            node = UCT<Node, State::GAME_EXP_FACTOR>::best_node_uct(node);
         return node;
     }
 
-    inline void backprop(Node<State>* nodeToExplore, int winner) {
-        Node<State>* propagator = nodeToExplore;
+    inline void backprop(Node* nodeToExplore, int winner) {
+        Node* propagator = nodeToExplore;
         while (propagator) {
             propagator->increment_visits();
             if (propagator->get_player_no() == winner) {
@@ -238,7 +238,7 @@ class MCTS {
         }
     }
 
-    inline auto simulate_playout(Node<State>* node) -> int {
+    inline auto simulate_playout(Node* node) -> int {
         State playout_board = node->copy_state();
         playout_board.mem_setup();
 
@@ -259,14 +259,14 @@ class MCTS {
     }
 
     // DEBUG
-    void show_debug(Node<State>* root_node) const {
+    void show_debug(Node* root_node) const {
         if (debug && (node_count & 0b111111111111111) == 0b111111111111111) {
             root_node->show_child_visitrates();
             std::cout << "| ";
             root_node->show_child_winrates();
             std::cout << "| ";
             for (auto child : root_node->get_children()) {
-                std::cout << UCT<Node<State>, UCT_EXP_FACTOR>::compute_uct(child) << " ";
+                std::cout << UCT<Node, State::GAME_EXP_FACTOR>::compute_uct(child) << " ";
             }
             std::cout << "\n";
         }

@@ -18,7 +18,7 @@ class State {
     static constexpr auto NUM_ROWS = 4;
     static constexpr auto NUM_COLS = 4;
     static constexpr auto GAME_EXP_FACTOR = 1.41 * 5;
-    static constexpr Bitrow BB_ALL = 0b1111;
+    static constexpr auto BB_ALL = 0b1111;
     static constexpr std::array<int, NUM_COLS> weights = {2, 1, 1, 2};
 
    private:

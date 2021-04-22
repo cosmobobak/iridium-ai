@@ -9,7 +9,7 @@
 #include <string>
 
 template <typename T>
-inline auto pop(std::vector<T> v) -> T {
+auto pop(std::vector<T> v) -> T {
     T result = v.back();
     v.pop_back();
     return result;

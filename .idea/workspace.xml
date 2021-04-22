@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated />
   </component>
@@ -10,10 +13,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca7627e0-797f-40ec-8b66-0331bbc9a875" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/customTargets.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeCache.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeCache.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Connect4-4x4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Connect4-4x4.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Connect4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Connect4.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/MCSearch.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/MCSearch.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/codingame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/codingame.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NMSearch.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/NMSearch.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/TranspositionTable.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/TranspositionTable.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/TreeNode.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/TreeNode.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/accelerations.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/accelerations.hpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,12 +56,13 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="RunOnceActivity.cidr.known.project.marker" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="cf.first.check.clang-format" value="false" />
     <property name="cidr.known.project.marker" value="true" />
     <property name="cmake.loaded.for.project" value="true" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.CommitDialog" />
+    <property name="settings.editor.selected.configurable" value="CPPToolchains" />
   </component>
   <component name="RunManager">
     <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
@@ -77,10 +88,27 @@
       <workItem from="1618593923399" duration="184000" />
       <workItem from="1618594325149" duration="425000" />
       <workItem from="1618595582363" duration="279000" />
+      <workItem from="1619101738782" duration="2162000" />
+      <workItem from="1619105035377" duration="2040000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

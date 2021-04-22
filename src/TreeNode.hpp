@@ -10,7 +10,6 @@
 namespace TreeNode {
 template <class State>
 class Node {
-   public:
     State board;
     std::vector<Node*> children;
     Node* parent = nullptr;
@@ -18,6 +17,7 @@ class Node {
     int visits = 0;
     int_fast8_t turn;
 
+public:
     Node(const State& board) {
         this->board = board;
     }
