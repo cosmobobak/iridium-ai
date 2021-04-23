@@ -1,3 +1,5 @@
+#pragma once
+
 #include <algorithm>
 #include <array>
 #include <vector>
@@ -102,7 +104,7 @@ class Zero {
 
     auto make_sample_move(std::vector<int> dist, State model) {
         int mod = std::accumulate(dist.begin(), dist.end(), 0);
-        assert(mod != 0);
+        // assert(mod != 0);
         int num = rand() % mod;
         for (auto i = 0; i < dist.size(); i++) {
             num -= dist[i];
@@ -124,7 +126,7 @@ class Zero {
     }
 
     void show_result() const {
-        // assert(node.evaluate() == node.evaluateOLD());
+        // // assert(node.evaluate() == node.evaluateOLD());
         switch (node.evaluate()) {
             case 0:
                 std::cout << "1/2-1/2" << '\n';

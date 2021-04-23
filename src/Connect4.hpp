@@ -11,26 +11,25 @@
 namespace Connect4 {
 using Bitrow = uint_fast8_t;
 using Bitboard = unsigned long long;
-
+constexpr std::array<int, 7> weights = {1, 2, 3, 4, 3, 2, 1};
 
 class State {
    public:
-    using Move = uint_fast8_t;
-    static constexpr auto GAME_SOLVABLE = false;
     static constexpr auto NUM_ROWS = 6;
     static constexpr auto NUM_COLS = 7;
-    static constexpr auto GAME_EXP_FACTOR = 10;  // 1.41 * 5;
-    static constexpr int BB_ALL = 0b1111111;
-    // constexpr Bitboard BB_ALL = (1 << (6 * 7)) - 1;
-    static constexpr std::array<int, NUM_COLS> weights = {1, 2, 3, 4, 3, 2, 1};
+    using Move = uint_fast8_t;
 
    private:
+    static constexpr auto MAX_GAME_LENGTH = NUM_ROWS * NUM_COLS;
     std::array<std::array<Bitrow, NUM_COLS>, 2> node = {0};
-    std::array<Move, NUM_ROWS* NUM_COLS> move_stack = {0};
+    std::array<Move, MAX_GAME_LENGTH> move_stack = {0};
     int move_count;
-    // Bitboard node[2] = {0};
 
    public:
+    static constexpr auto GAME_SOLVABLE = false;
+    static constexpr auto GAME_EXP_FACTOR = 10;  // 1.41 * 5;
+    static constexpr int BB_ALL = 0b1111111;
+
     State() {
         move_count = 0;
     }
@@ -40,11 +39,11 @@ class State {
         return (move_count & 1) ? -1 : 1;
     }
 
-    auto get_move_count() const {
+    auto get_move_count() const -> int {
         return move_count;
     }
 
-    auto get_turn_index() const {
+    auto get_turn_index() const -> int {
         return move_count & 1;
     }
 
@@ -54,7 +53,7 @@ class State {
 
     // PREDICATES
     auto is_full() const -> bool {
-        return move_count == NUM_COLS * NUM_ROWS;
+        return move_count == MAX_GAME_LENGTH;
     }
 
     auto is_game_over() const -> bool {
@@ -105,6 +104,7 @@ class State {
         int num_moves = NUM_COLS - __builtin_popcount(bb);
 
         // the chosen move
+        // assert(num_moves != 0);
         int choice = rand() % num_moves;
 
         // this line creates an inverted occupancy for
@@ -113,10 +113,10 @@ class State {
 
         // the loop runs until
         // we hit the chosen move
-        do {
+        while (choice--) {
             // clear the least significant bit set
             bb &= bb - 1;
-        } while (choice--);
+        }
 
         play(__builtin_ctz(bb));
     }
@@ -177,10 +177,11 @@ class State {
     }
 
     void play(Move col) {
+        // assert(!pos_filled(0, col));
         // we assume play is not called on a filled column
         // iterate upward and break at the first empty position
         int row = NUM_ROWS;
-        while(pos_filled(row - 1, col)) {
+        while (pos_filled(row - 1, col)) {
             row--;
         }
         // moveCount acts to determine which colour is played
@@ -192,9 +193,10 @@ class State {
     void unplay() {
         // decrement move counter and get the most recently played move
         Move col = move_stack[--move_count];
+        // assert(pos_filled(NUM_ROWS - 1, col));
         // iterate downward and break at the first filled position
         int row = 0;
-        while(!pos_filled(row, col)) {
+        while (!pos_filled(row, col)) {
             row++;
         }
         // a bit is removed by XOR
@@ -202,12 +204,13 @@ class State {
     }
 
     void unplay(Move col) {
+        // assert(pos_filled(NUM_ROWS - 1, col));
         // we assume pop is not called on an empty column
         // decrement move counter
         move_count--;
         // iterate downward and break at the first filled position
         int row = 0;
-        while(!pos_filled(row, col)) {
+        while (!pos_filled(row, col)) {
             row++;
         }
         // a bit is removed by XOR
@@ -215,7 +218,7 @@ class State {
     }
 
     // EVALUATION
-    auto horizontal_term() const -> int_fast8_t {
+    auto horizontal_term() const -> int {
         // check all the rows for horizontal 4-in-a-rows
         for (int row = 0; row < NUM_ROWS; row++) {
             for (int bitshift = 0; bitshift < NUM_COLS - 3; bitshift++) {
@@ -230,7 +233,7 @@ class State {
         return 0;  // no 4-in-a-rows found
     }
 
-    auto vertical_term() const -> int_fast8_t {
+    auto vertical_term() const -> int {
         // check all the columns for vertical 4-in-a-rows
         for (int row = 0; row < NUM_ROWS - 3; row++) {
             for (int col = 0; col < NUM_COLS; col++) {
@@ -243,7 +246,7 @@ class State {
         return 0;  // no 4-in-a-rows found
     }
 
-    auto diagup_term() const -> int_fast8_t {
+    auto diagup_term() const -> int {
         // check all the upward diagonals for 4-in-a-rows
         for (int row = 3; row < NUM_ROWS; row++) {
             for (int col = 0; col < NUM_COLS - 3; col++) {
@@ -256,7 +259,7 @@ class State {
         return 0;  // no 4-in-a-rows found
     }
 
-    auto diagdown_term() const -> int_fast8_t {
+    auto diagdown_term() const -> int {
         // check all the downward diagonals for 4-in-a-rows
         for (int row = 0; row < NUM_ROWS - 3; row++) {
             for (int col = 0; col < NUM_COLS - 3; col++) {
@@ -269,7 +272,7 @@ class State {
         return 0;  // no 4-in-a-rows found
     }
 
-    auto evaluate() const -> int_fast8_t {
+    auto evaluate() const -> int {
         int h = horizontal_term();
         if (h)
             return h;
@@ -367,21 +370,10 @@ class State {
         }
         return move - 1;
     }
-
-    void show_result() const {
-        int r;
-        r = evaluate();
-        if (r == 0) {
-            std::cout << "1/2-1/2" << '\n';
-        } else if (r > 0) {
-            std::cout << "1-0" << '\n';
-        } else {
-            std::cout << "0-1" << '\n';
-        }
-    }
 };
 
-bool operator==(State a, State b) {
-    return !(a.get_node()[0] != b.get_node()[0] || a.get_node()[1] != b.get_node()[1]);
+bool operator==(const State a, const State b) {
+    return a.get_node()[0] == b.get_node()[0] 
+    && a.get_node()[1] == b.get_node()[1];
 }
 }  // namespace Connect4

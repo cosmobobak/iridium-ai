@@ -9,21 +9,21 @@
 
 namespace TreeNode {
 template <class State>
-class Node {
+class TreeNode {
     State board;
-    std::vector<Node*> children;
-    Node* parent = nullptr;
+    std::vector<TreeNode*> children;
+    TreeNode* parent = nullptr;
     int win_count = 0;
     int visits = 0;
-    int_fast8_t turn;
+    int turn;
 
 public:
-    Node(const State& board) {
+    TreeNode(const State& board) {
         this->board = board;
     }
-    Node(const Node&) = delete;
-    ~Node() {
-        for (Node* child : children) {
+    TreeNode(const TreeNode&) = delete;
+    ~TreeNode() {
+        for (TreeNode* child : children) {
             delete child;
         }
     }
@@ -33,7 +33,7 @@ public:
         this->board = board;
     }
 
-    void set_parent(Node* parent) {
+    void set_parent(TreeNode* parent) {
         this->parent = parent;
     }
 
@@ -55,11 +55,11 @@ public:
         return board;
     }
 
-    auto get_children() const -> const std::vector<Node*>& {
+    auto get_children() const -> const std::vector<TreeNode*>& {
         return children;
     }
 
-    auto get_parent() const -> Node* {
+    auto get_parent() const -> TreeNode* {
         return parent;
     }
 
@@ -96,7 +96,8 @@ public:
         visits++;
     }
 
-    auto random_child() -> Node* {
+    auto random_child() -> TreeNode* {
+        assert(children.size() != 0);
         return children[rand() % children.size()];
     }
 
@@ -105,7 +106,7 @@ public:
         int x = 0;
         for (int move : board.legal_moves()) {
             board.play(move);
-            children[x] = new Node(board);
+            children[x] = new TreeNode(board);
             children[x]->set_parent(this);
             children[x]->set_player_no(get_opponent());
             board.unplay();
@@ -113,19 +114,17 @@ public:
         }
     }
 
-    auto best_child() -> Node* {
-        typename std::vector<Node*>::iterator result;
-        result = std::max_element(
+    auto best_child() -> TreeNode* {
+        return *std::max_element(
             children.begin(), children.end(),
-            [](Node* a, Node* b) { return (a->get_visit_count() < b->get_visit_count()); });
-        return *result;
+            [](TreeNode* a, TreeNode* b) { return (a->get_visit_count() < b->get_visit_count()); });
     }
 
     auto best_child_as_move() {
-        typename std::vector<Node*>::iterator result;
+        typename std::vector<TreeNode*>::iterator result;
         result = std::max_element(
             children.begin(), children.end(),
-            [](Node* a, Node* b) { return (a->get_visit_count() < b->get_visit_count()); });
+            [](TreeNode* a, TreeNode* b) { return (a->get_visit_count() < b->get_visit_count()); });
         // if (board.legal_moves().size() != children.size()) {
         //     std::cout << board.legal_moves().size() << " " << children.size() << '\n';
         //     board.show_debug();

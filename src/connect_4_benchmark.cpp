@@ -1,11 +1,11 @@
 #include <iostream>
 #include <chrono>
 #include <limits>
-#include "MCSearch.hpp"
+#include "Zero.hpp"
 #include "Connect4.hpp"
 
 int main(int argc, char const *argv[]) {
-    auto test = MCSearch::Zero<Connect4::State, 6>();
+    auto test = Zero<Connect4::State>();
     test.use_rollout_limit(true);
     test.set_readout(false);
     test.set_debug(false);

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "NMSearch.hpp"
 
 template <class State>

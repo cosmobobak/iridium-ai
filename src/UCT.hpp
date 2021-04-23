@@ -14,11 +14,11 @@
 template <class Node, int EXP_FACTOR>
 class UCT {
    public:
-    static auto ucb1_value(int parent_visits, double win_count, int visits) -> double {
+    static auto ucb1_value(int parent_visits, int win_count, int visits) -> double {
         if (visits == 0) {
             return std::numeric_limits<double>::max();
         }
-        return (win_count / (double)visits) + sqrt(log(parent_visits) / (double)visits) * EXP_FACTOR;
+        return (double)win_count / (double)visits + sqrt(log((double)parent_visits) / (double)visits) * EXP_FACTOR;
     }
 
     static auto compute_ucb1(const Node* a) -> double {

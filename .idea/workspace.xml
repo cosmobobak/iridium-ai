@@ -13,17 +13,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca7627e0-797f-40ec-8b66-0331bbc9a875" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/customTargets.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Connect4-4x4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Connect4-4x4.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Connect4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Connect4.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Istus.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Istus.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/MCSearch.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/MCSearch.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/NMSearch.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/NMSearch.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/TranspositionTable.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/TranspositionTable.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/TreeNode.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/TreeNode.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/accelerations.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/accelerations.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/UCT.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/UCT.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Zero.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Zero.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/connect_4_benchmark.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/connect_4_benchmark.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/connect_4_benchmark.exe" beforeDir="false" afterPath="$PROJECT_DIR$/src/connect_4_benchmark.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/iridium-ai.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/iridium-ai.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.exe" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.exe" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,6 +45,18 @@
       <filtered-out-file-type name="TAG" />
       <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
     </file-type-list>
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/src/NMSearch.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/TreeNode.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/Connect4-4x4.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/accelerations.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/Connect4.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/Zero.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/MCSearch.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/Istus.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/UTTT.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/UCT.hpp" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProblemsViewState">
     <option name="selectedIndex" value="2" />
@@ -65,9 +79,9 @@
     <property name="settings.editor.selected.configurable" value="CPPToolchains" />
   </component>
   <component name="RunManager">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
       </method>
     </configuration>
     <configuration default="true" type="GradleAppRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
@@ -90,6 +104,7 @@
       <workItem from="1618595582363" duration="279000" />
       <workItem from="1619101738782" duration="2162000" />
       <workItem from="1619105035377" duration="2040000" />
+      <workItem from="1619135617624" duration="490000" />
     </task>
     <servers />
   </component>
@@ -106,6 +121,7 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

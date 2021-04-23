@@ -1,3 +1,5 @@
+#pragma once
+
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -79,8 +81,8 @@ void run_mcts_engine(const long long TL) {
 
 template <class State>
 auto selfplay(const long long TL) -> int {
-    auto engine1 = Zero<State, 10>(TL);
-    auto engine2 = Zero<State, 8>(TL);
+    auto engine1 = Zero<State>(TL);
+    auto engine2 = Zero<State>(TL);
     engine1.use_rollout_limit(true);
     engine2.use_rollout_limit(true);
     engine1.set_readout(false);
@@ -130,7 +132,7 @@ auto selfplay(const long long TL) -> int {
 
 template <class State>
 void userplay() {
-    Zero<State, 8> engine = Zero<State, 8>();
+    Zero<State> engine = Zero<State>();
     engine.get_node().show();
     while (!engine.get_node().is_game_over() && !engine.get_node().is_game_over()) {
         int i;
@@ -144,7 +146,7 @@ void userplay() {
 
 template <class State>
 void testsuite() {
-    Zero<State, 8> engine = Zero<State, 8>();
+    Zero<State> engine = Zero<State>();
     while (!engine.get_node().is_game_over()) {
         engine.get_node().show();
         std::cout << "\nforcing board: "
@@ -172,7 +174,7 @@ void benchmark() {
     const int width = 50;
     std::vector<int> nodecounts(len * width);
     for (int i = 0; i < width; i++) {
-        Zero<State, 8> engine = Zero<State, 8>(99);
+        Zero<State> engine = Zero<State>(99);
         engine.set_debug(false);
         engine.set_readout(false);
         for (int j = 0; j < len && !engine.get_node().is_game_over(); j++) {

@@ -1,7 +1,9 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <iostream>
+#include <numeric>
 #include <vector>
 
 #include "accelerations.hpp"
@@ -28,11 +30,11 @@ class State {
         return (move_count & 1) ? -1 : 1;
     }
 
-    auto get_move_count() const {
+    auto get_move_count() const -> int {
         return move_count;
     }
 
-    auto get_turn_index() const {
+    auto get_turn_index() const -> int {
         return move_count & 1;
     }
 
@@ -88,10 +90,10 @@ class State {
 
         // the loop runs until
         // we hit the chosen move
-        do {
+        while (choice--) {
             // clear the least significant bit set
             bb &= bb - 1;
-        } while (choice--);
+        }
 
         play(__builtin_ctz(bb));
     }

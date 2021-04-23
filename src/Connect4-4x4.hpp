@@ -17,7 +17,7 @@ class State {
     static constexpr auto GAME_SOLVABLE = true;
     static constexpr auto NUM_ROWS = 4;
     static constexpr auto NUM_COLS = 4;
-    static constexpr auto GAME_EXP_FACTOR = 1.41 * 5;
+    static constexpr auto GAME_EXP_FACTOR = 8;
     static constexpr auto BB_ALL = 0b1111;
     static constexpr std::array<int, NUM_COLS> weights = {2, 1, 1, 2};
 
@@ -107,10 +107,10 @@ class State {
 
         // the loop runs until
         // we hit the chosen move
-        do {
+        while (choice--) {
             // clear the least significant bit set
             bb &= bb - 1;
-        } while (choice--);
+        }
 
         play(__builtin_ctz(bb));
     }
