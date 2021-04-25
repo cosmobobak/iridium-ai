@@ -10,10 +10,10 @@ class Negamax {
     static constexpr auto MATE_SCORE = 100000;
     static constexpr auto INF = std::numeric_limits<int>::max();
     static constexpr auto N_INF = std::numeric_limits<int>::lowest() + 1;
+    static constexpr auto MAX_DEPTH = 64;
 
    private:
     using Move = typename State::Move;
-    using Line = std::vector<Move>;
     // limiter on search time
     long long time_limit;
     // limiter on depth
@@ -28,7 +28,7 @@ class Negamax {
 
     // recorded search data
     int node_count;
-    Line principal_variation;
+    Move pv_array[(MAX_DEPTH * MAX_DEPTH + MAX_DEPTH) / 2];
 
    public:
     Negamax() {
@@ -73,26 +73,33 @@ class Negamax {
         return node_count;
     }
 
-    auto negamax(State &node, int depth, int colour, int a, int b, Line& principal_variation) -> int {
+    // SEARCH FUNCTIONS
+
+
+    auto negamax(State &node, int depth, int colour, int a, int b) -> int {
         // assert(colour == 1 || colour == -1);
         // assert(depth >= 0);
 
-        Line current_line;
-
-        if (depth == 0) {
+        if (depth <= 0 || node.is_game_over()) {
             node_count++;
             return colour * (node.evaluate() * MATE_SCORE + node.heuristic_value());
         }
-
-        if (node.is_game_over()) {
-            node_count++;
-            return colour * node.evaluate() * MATE_SCORE * (depth + 1);
-        }
-
         int score;
+
+        // // MAKE A NULL MOVE
+        // node.pass_turn();
+        // // PERFORM A LIMITED SEARCH
+        // score = -negamax(node, depth - 3, -colour, -b, -a);
+        // // UNMAKE NULL MOVE
+        // node.unpass_turn();
+        // a = std::max(a, score);
+        // if (a >= b) {
+        //     return a;
+        // }
+
         for (auto move : node.legal_moves()) {
             node.play(move);
-            score = -negamax(node, depth - 1, -colour, -b, -a, current_line);
+            score = -negamax(node, depth - 1, -colour, -b, -a);
             node.unplay();
 
             if (score >= b) {
@@ -135,23 +142,22 @@ class Negamax {
         Move bestmove = -1;
         int bestcase = N_INF;
 
-        Line principal_variation;
         if (State::GAME_SOLVABLE) {
             unlimited_depth_minimax(node);
         } else {
             iterative_deepening_minimax(node);
         }
-        show_search_result(bestmove, bestcase, principal_variation);
+        show_search_result(bestmove, bestcase);
         node.play(bestmove);
         return node;
     }
 
-    void show_search_result(Move bestmove, int bestcase, const Line& pv) const {
+    void show_search_result(Move bestmove, int bestcase) const {
         std::cout << "ISTUS:\n";
         std::cout << node_count << " nodes processed.\n";
         std::cout << "Best move found: " << bestmove << "\n";
         std::cout << "PV: ";
-        for (auto m : pv) std::cout << (int)(m + 1) << " ";
+        // for (auto m : pv) std::cout << (int)(m + 1) << " ";
         std::cout << "\n";
         std::cout << "Istus win prediction: " << (int)((1 + bestcase) * (50)) << "%\n";
     }
@@ -163,26 +169,27 @@ class Negamax {
             int depth = 1; 
             std::chrono::steady_clock::now() < end && depth < 22;
             depth++) {
-            principal_variation.clear();
-            principal_variation.reserve(256);
+            // principal_variation.clear();
+            // principal_variation.reserve(256);
             auto start = std::chrono::steady_clock::now();
             int score = negamax(
                 node, 
                 depth, 
                 node.get_turn(), 
                 N_INF, 
-                INF, 
-                principal_variation);
-            std::cout << "depth: " << depth << " best move: " << (int)principal_variation[0] << " score: " << score << " in " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "ms\n";
+                INF);
+            std::cout << "depth: " << depth << " best move: " /*<< (int)principal_variation[0]*/ << " score: " << score << " in " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "ms\n";
         }
-        return principal_variation[0];
+        // return principal_variation[0];
+        return 0;
     }
 
     auto unlimited_depth_minimax(State &node) -> Move {
-        principal_variation.clear();
-        principal_variation.reserve(256);
+        // principal_variation.clear();
+        // principal_variation.reserve(256);
         dnegamax(node, node.get_turn());
-        return principal_variation[0];
+        // return principal_variation[0];
+        return 0;
     }
 
     void reset_nodes() {

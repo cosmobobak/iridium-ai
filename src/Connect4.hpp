@@ -169,6 +169,10 @@ class State {
         move_count++;
     }
 
+    void unpass_turn() {
+        move_count--;
+    }
+
     void reset() {
         std::fill(node[0].begin(), node[0].end(), 0);
         std::fill(node[1].begin(), node[1].end(), 0);

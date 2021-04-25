@@ -296,6 +296,10 @@ class State {
         movecount++;
     }
 
+    void unpass_turn() {
+        movecount--;
+    }
+
     auto get_turn() const -> uint_fast8_t {
         if (movecount & 1)
             return -1;

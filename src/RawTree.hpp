@@ -104,6 +104,14 @@ class State {
         return node;
     }
 
+    void pass_turn() {
+        return;
+    }
+
+    void unpass_turn() {
+        return;
+    }
+
     auto get_player_move() const -> Move {
         const std::vector<Move> legals = legal_moves();
         std::cout << "Your legal moves are: " << string(legals) << "\n--> ";

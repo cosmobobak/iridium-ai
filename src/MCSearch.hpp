@@ -209,7 +209,7 @@ class MCTS {
         return out;
     }
 
-    inline void select_expand_simulate_backpropagate(Node* root_node) {
+    void select_expand_simulate_backpropagate(Node* root_node) {
         // SELECTION
         Node* promisingNode = select_promising_node(root_node);
 
@@ -230,7 +230,7 @@ class MCTS {
         backprop(nodeToExplore, result);
     }
 
-    inline auto select_promising_node(Node* root_node) const -> Node* {
+    auto select_promising_node(Node* root_node) const -> Node* {
         Node* node = root_node;
         while (node->get_children().size()) {
             node = UCT<Node, State::GAME_EXP_FACTOR>::best_child_ucb1(node);
@@ -238,7 +238,7 @@ class MCTS {
         return node;
     }
 
-    inline void backprop(Node* nodeToExplore, int winner) {
+    void backprop(Node* nodeToExplore, int winner) {
         Node* propagator = nodeToExplore;
         while (propagator) {
             propagator->increment_visits();
@@ -249,7 +249,7 @@ class MCTS {
         }
     }
 
-    inline auto simulate_playout(Node* node) -> int {
+    auto simulate_playout(Node* node) -> int {
         State playout_board = node->copy_state();
         playout_board.mem_setup();
 

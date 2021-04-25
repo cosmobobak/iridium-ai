@@ -17,13 +17,14 @@ class State {
     static constexpr auto WIDTH = 8;
     static constexpr auto HEIGHT = 8;
     static constexpr std::array<char, 2> players = {'X', 'O'};
+
    private:
-    std::array<std::bitset<WIDTH * HEIGHT>, 2> node;
+    std::array<unsigned long long, 2> node = {0};
     uint_fast8_t turn = 1;
     std::vector<Move> movestack;
-   public:
 
-    inline void show() const {
+   public:
+    void show() const {
         int row, col;
         for (row = 0; row < HEIGHT; ++row) {
             for (col = 0; col < WIDTH; ++col) {
@@ -40,86 +41,124 @@ class State {
         std::cout << '\n';
     }
 
-    inline void mem_setup() {
+    void mem_setup() {
         movestack.reserve(WIDTH * HEIGHT);
     }
 
-    inline auto get_turn() const -> uint_fast8_t {
+    auto get_turn() const -> int_fast8_t {
         return turn;
     }
 
-    auto get_node() const -> const std::array<std::bitset<WIDTH * HEIGHT>, 2>& {
+    // auto get_node() const -> const std::array<std::bitset<WIDTH * HEIGHT>, 2>& {
+    //     return node;
+    // }
+
+    auto get_node() const -> const std::array<unsigned long long, 2>& {
         return node;
     }
 
-    inline auto player_at(const Move i) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
+    auto player_at(const Move i) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
     {
-        return node[0].test(i);
+        return node[0] & (1ULL << (i));
     }
 
-    inline auto player_at(const Move row, const Move col) const -> bool {
-        return node[0].test(row * WIDTH + col);
+    auto player_at(const Move row, const Move col) const -> bool {
+        // return node[0].test(row * WIDTH + col);
+        return node[0] & (1ULL << (row * WIDTH + col));
     }
 
-    inline auto pos_filled(const Move i) const -> bool {
-        return (node[0] | node[1]).test(i);
+    auto pos_filled(const Move i) const -> bool {
+        return (node[0] | node[1]) & (1ULL << (i));
     }
 
-    inline auto pos_filled(const Move row, const Move col) const -> bool {
-        return (node[0] | node[1]).test(row * WIDTH + col);
+    auto pos_filled(const Move row, const Move col) const -> bool {
+        return (node[0] | node[1]) & (1ULL << (row * WIDTH + col));
     }
 
-    inline auto num_legal_moves() const -> uint_fast16_t {
-        return WIDTH * HEIGHT - (node[0] | node[1]).count();
+    auto num_legal_moves() const -> uint_fast16_t {
+        return WIDTH * HEIGHT - __builtin_popcountll(node[0] | node[1]);
     }
 
-    inline auto legal_moves() const -> std::vector<Move> {
-        std::vector<Move> moves;
-        moves.reserve(num_legal_moves());
-        // moves.push_back(-1);
-        for (Move square = 0; square < WIDTH * HEIGHT; square++) {
-            if (!pos_filled(square)) {
-                moves.push_back(square);
-            }
+    auto legal_moves() const -> std::vector<Move> {
+        unsigned long long bb = node[0] | node[1];
+        // a vector to hold the generated moves
+        std::vector<Move> moves(WIDTH * HEIGHT - __builtin_popcountll(bb));
+
+        // this line creates an inverted occupancy for
+        // the top row (0b0011000 -> 0b1100111)
+        bb = ~bb;
+
+        int counter = 0;
+
+        // the following loop runs until all the occupied
+        // spaces have had moves generated
+        while (bb) {
+            moves[counter++] = __builtin_ctzll(bb);
+            // clear the least significant bit set
+            bb &= bb - 1;
         }
+        // should be [0, 1, 2, 3, 4, 5, 6]
+        // for move 1 on a 7-wide board
         return moves;
     }
 
-    inline void random_play() {
-        std::vector<Move> moves = legal_moves();
-        play(moves[rand() % moves.size()]);
+    void random_play() {
+        // the union of the top rows
+        unsigned long long bb = node[0] | node[1];
+        int num_moves = WIDTH * HEIGHT - __builtin_popcountll(bb);
+
+        // the chosen move
+        // assert(num_moves != 0);
+        int choice = rand() % num_moves;
+
+        // this line creates an inverted occupancy for
+        // the top row (0b0011000 -> 0b1100111)
+        bb = ~bb;
+
+        // the loop runs until
+        // we hit the chosen move
+        while (choice--) {
+            // clear the least significant bit set
+            bb &= bb - 1;
+        }
+
+        play(__builtin_ctzll(bb));
     }
 
-    inline void pass_turn() {
+    void pass_turn() {
         turn = -turn;
     }
 
-    inline void play(Move square) {
+    void unpass_turn() {
+        turn = -turn;
+    }
+
+    void play(Move square) {
         if (turn == 1) {
-            node[0].set(square);
+            node[0] |= (1ULL << (square));
         } else {
-            node[1].set(square);
+            node[1] |= (1ULL << (square));
         }
         turn = -turn;
         movestack.push_back(square);
     }
 
-    inline void unplay() {
+    void unplay() {
         Move prevmove = movestack.back();
         movestack.pop_back();
         if (turn == 1) {
-            node[1].reset(prevmove);
+            node[1] ^= (1ULL << (prevmove));
         } else {
-            node[0].reset(prevmove);
+            node[0] ^= (1ULL << (prevmove));
         }
         turn = -turn;
     }
 
-    inline auto is_game_over() const -> bool {
+    auto is_game_over() const -> bool {
         return num_legal_moves() == 0 || evaluate() != 0;
     }
 
-    inline auto horizontal_term() const -> int_fast8_t {
+    auto horizontal_term() const -> int_fast8_t {
         // iterates the starting positions of the rows
         for (Move row = 0; row < WIDTH * HEIGHT; row += WIDTH) {
             for (Move i = row; i < row + WIDTH - 4; i++) {
@@ -144,7 +183,7 @@ class State {
         return 0;
     }
 
-    inline auto vertical_term() const -> int_fast8_t {
+    auto vertical_term() const -> int_fast8_t {
         // iterates the starting positions of the columns
         for (Move col = 0; col < WIDTH; col++) {
             // this line below could be fucky
@@ -170,7 +209,7 @@ class State {
         return 0;
     }
 
-    inline auto diagdown_term() const -> int_fast8_t {
+    auto diagdown_term() const -> int_fast8_t {
         // iterates the starting positions of the rows
         for (Move row = 0; row < HEIGHT - 4; row++) {
             for (Move col = 0; col < WIDTH - 4; col++) {
@@ -195,7 +234,7 @@ class State {
         return 0;
     }
 
-    inline auto diagup_term() const -> int_fast8_t {
+    auto diagup_term() const -> int_fast8_t {
         // iterates the starting positions of the rows
         for (Move row = 4; row < HEIGHT; row++) {
             for (Move col = 0; col < WIDTH - 4; col++) {
