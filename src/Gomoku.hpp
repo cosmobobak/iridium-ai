@@ -11,19 +11,46 @@ namespace Gomoku {
 
 class State {
    public:
-    using Move = uint_fast16_t;
+    using Move = uint_fast8_t;
     static constexpr auto GAME_SOLVABLE = false;
     static constexpr auto GAME_EXP_FACTOR = 8;
     static constexpr auto WIDTH = 8;
     static constexpr auto HEIGHT = 8;
+    static constexpr auto MAX_GAME_LENGTH = WIDTH * HEIGHT;
     static constexpr std::array<char, 2> players = {'X', 'O'};
 
    private:
     std::array<unsigned long long, 2> node = {0};
-    uint_fast8_t turn = 1;
-    std::vector<Move> movestack;
+    int move_count;
+    std::array<Move, MAX_GAME_LENGTH> move_stack = {0};
 
    public:
+    State() {
+        move_count = 0;
+    }
+
+    auto get_turn() const -> int {
+        return (move_count & 1) ? -1 : 1;
+    }
+
+    auto get_move_count() const -> int {
+        return move_count;
+    }
+
+    auto get_turn_index() const -> int {
+        return move_count & 1;
+    }
+
+    auto is_full() const -> bool {
+        return move_count == MAX_GAME_LENGTH;
+    }
+    
+    void reset() {
+        std::fill(node.begin(), node.end(), 0);
+        std::fill(move_stack.begin(), move_stack.end(), 0);
+        move_count = 0;
+    }
+
     void show() const {
         int row, col;
         for (row = 0; row < HEIGHT; ++row) {
@@ -42,37 +69,39 @@ class State {
     }
 
     void mem_setup() {
-        movestack.reserve(WIDTH * HEIGHT);
+        // move_stack.reserve(MAX_GAME_LENGTH);
     }
-
-    auto get_turn() const -> int_fast8_t {
-        return turn;
-    }
-
-    // auto get_node() const -> const std::array<std::bitset<WIDTH * HEIGHT>, 2>& {
-    //     return node;
-    // }
 
     auto get_node() const -> const std::array<unsigned long long, 2>& {
         return node;
     }
 
-    auto player_at(const Move i) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
-    {
+    auto player_at(int i) const -> bool {
+        //only valid to use if pos_filled() returns true, true = x, false = y
         return node[0] & (1ULL << (i));
     }
 
-    auto player_at(const Move row, const Move col) const -> bool {
+    auto player_at(int row, int col) const -> bool {
         // return node[0].test(row * WIDTH + col);
         return node[0] & (1ULL << (row * WIDTH + col));
     }
 
-    auto pos_filled(const Move i) const -> bool {
+    auto pos_filled(int i) const -> bool {
         return (node[0] | node[1]) & (1ULL << (i));
     }
 
-    auto pos_filled(const Move row, const Move col) const -> bool {
+    auto pos_filled(int row, int col) const -> bool {
         return (node[0] | node[1]) & (1ULL << (row * WIDTH + col));
+    }
+
+    auto probe_spot(int i) const -> bool {
+        // tests the bit of the most recently played side
+        return node[(move_count + 1) & 1] & (1ULL << i);
+    }
+
+    auto probe_spot(int row, int col) const -> bool {
+        // tests the bit of the most recently played side
+        return node[(move_count + 1) & 1] & (1ULL << (row * WIDTH + col));
     }
 
     auto num_legal_moves() const -> uint_fast16_t {
@@ -125,151 +154,109 @@ class State {
         play(__builtin_ctzll(bb));
     }
 
+    
     void pass_turn() {
-        turn = -turn;
+        move_count++;
     }
 
     void unpass_turn() {
-        turn = -turn;
+        move_count--;
     }
 
-    void play(Move square) {
-        if (turn == 1) {
-            node[0] |= (1ULL << (square));
-        } else {
-            node[1] |= (1ULL << (square));
-        }
-        turn = -turn;
-        movestack.push_back(square);
+    void play(int i) {
+        // move_count acts to determine which colour is played
+        node[move_count & 1] ^= (1ULL << i);
+        // store the made move in the stack
+        move_stack[move_count++] = i;
     }
 
     void unplay() {
-        Move prevmove = movestack.back();
-        movestack.pop_back();
-        if (turn == 1) {
-            node[1] ^= (1ULL << (prevmove));
-        } else {
-            node[0] ^= (1ULL << (prevmove));
-        }
-        turn = -turn;
+        // decrement move counter and get the most recently played move
+        int i = move_stack[--move_count];
+        // a bit is removed by XOR
+        node[move_count & 1] ^= (1ULL << i);
     }
 
     auto is_game_over() const -> bool {
-        return num_legal_moves() == 0 || evaluate() != 0;
+        return is_full() || evaluate();
     }
 
-    auto horizontal_term() const -> int_fast8_t {
+    auto horizontal_term() const -> int {
         // iterates the starting positions of the rows
         for (Move row = 0; row < WIDTH * HEIGHT; row += WIDTH) {
             for (Move i = row; i < row + WIDTH - 4; i++) {
-                if (pos_filled(i) &&
-                    pos_filled(i + 1) &&
-                    pos_filled(i + 2) &&
-                    pos_filled(i + 3) &&
-                    pos_filled(i + 4)) {
-                    if (player_at(i) == player_at(i + 1) &&
-                        player_at(i + 1) == player_at(i + 2) &&
-                        player_at(i + 2) == player_at(i + 3) &&
-                        player_at(i + 3) == player_at(i + 4)) {
-                        if (player_at(i)) {
-                            return 1;
-                        } else {
-                            return -1;
-                        }
-                    }
+                if (probe_spot(i) &&
+                    probe_spot(i + 1) &&
+                    probe_spot(i + 2) &&
+                    probe_spot(i + 3) &&
+                    probe_spot(i + 4)) {
+                    return -get_turn();
                 }
             }
         }
         return 0;
     }
 
-    auto vertical_term() const -> int_fast8_t {
+    auto vertical_term() const -> int {
         // iterates the starting positions of the columns
         for (Move col = 0; col < WIDTH; col++) {
             // this line below could be fucky
             for (Move i = col; i < col + (WIDTH * (HEIGHT - 4)); i += WIDTH) {
-                if (pos_filled(i) &&
-                    pos_filled(i + WIDTH * 1) &&
-                    pos_filled(i + WIDTH * 2) &&
-                    pos_filled(i + WIDTH * 3) &&
-                    pos_filled(i + WIDTH * 4)) {
-                    if (player_at(i) == player_at(i + WIDTH * 1) &&
-                        player_at(i + WIDTH * 1) == player_at(i + WIDTH * 2) &&
-                        player_at(i + WIDTH * 2) == player_at(i + WIDTH * 3) &&
-                        player_at(i + WIDTH * 3) == player_at(i + WIDTH * 4)) {
-                        if (player_at(i)) {
-                            return 1;
-                        } else {
-                            return -1;
-                        }
-                    }
+                if (probe_spot(i) &&
+                    probe_spot(i + WIDTH * 1) &&
+                    probe_spot(i + WIDTH * 2) &&
+                    probe_spot(i + WIDTH * 3) &&
+                    probe_spot(i + WIDTH * 4)) {
+                    return -get_turn();
                 }
             }
         }
         return 0;
     }
 
-    auto diagdown_term() const -> int_fast8_t {
+    auto diagdown_term() const -> int {
         // iterates the starting positions of the rows
         for (Move row = 0; row < HEIGHT - 4; row++) {
             for (Move col = 0; col < WIDTH - 4; col++) {
-                if (pos_filled(row, col) &&
-                    pos_filled(row + 1, col + 1) &&
-                    pos_filled(row + 2, col + 2) &&
-                    pos_filled(row + 3, col + 3) &&
-                    pos_filled(row + 4, col + 4)) {
-                    if (player_at(row, col) == player_at(row + 1, col + 1) &&
-                        player_at(row + 1, col + 1) == player_at(row + 2, col + 2) &&
-                        player_at(row + 2, col + 2) == player_at(row + 3, col + 3) &&
-                        player_at(row + 3, col + 3) == player_at(row + 4, col + 4)) {
-                        if (player_at(row, col)) {
-                            return 1;
-                        } else {
-                            return -1;
-                        }
-                    }
+                if (probe_spot(row, col) &&
+                    probe_spot(row + 1, col + 1) &&
+                    probe_spot(row + 2, col + 2) &&
+                    probe_spot(row + 3, col + 3) &&
+                    probe_spot(row + 4, col + 4)) {
+                    return -get_turn();
                 }
             }
         }
         return 0;
     }
 
-    auto diagup_term() const -> int_fast8_t {
+    auto diagup_term() const -> int {
         // iterates the starting positions of the rows
         for (Move row = 4; row < HEIGHT; row++) {
             for (Move col = 0; col < WIDTH - 4; col++) {
-                if (pos_filled(row, col) &&
-                    pos_filled(row - 1, col + 1) &&
-                    pos_filled(row - 2, col + 2) &&
-                    pos_filled(row - 3, col + 3) &&
-                    pos_filled(row - 4, col + 4)) {
-                    if (player_at(row, col) == player_at(row - 1, col + 1) &&
-                        player_at(row - 1, col + 1) == player_at(row - 2, col + 2) &&
-                        player_at(row - 2, col + 2) == player_at(row - 3, col + 3) &&
-                        player_at(row - 3, col + 3) == player_at(row - 4, col + 4)) {
-                        if (player_at(row, col)) {
-                            return 1;
-                        } else {
-                            return -1;
-                        }
-                    }
+                if (probe_spot(row, col) &&
+                    probe_spot(row - 1, col + 1) &&
+                    probe_spot(row - 2, col + 2) &&
+                    probe_spot(row - 3, col + 3) &&
+                    probe_spot(row - 4, col + 4)) {
+                    return -get_turn();
                 }
             }
         }
         return 0;
     }
 
-    auto evaluate() const -> int_fast8_t {
-        int_fast8_t v = vertical_term();
+    auto evaluate() const -> int {
+        int v = vertical_term();
         if (v)
             return v;
-        int_fast8_t h = horizontal_term();
+        int h = horizontal_term();
         if (h)
             return h;
-        int_fast8_t u = diagup_term();
+        int u = diagup_term();
         if (u)
             return u;
-        int_fast8_t d = diagdown_term();
+        int d = diagdown_term();
         if (d)
             return d;
 
