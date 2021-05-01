@@ -22,7 +22,7 @@ class State {
    private:
     std::array<unsigned long long, 2> node = {0};
     int move_count;
-    std::array<Move, MAX_GAME_LENGTH> move_stack = {0};
+    // std::array<Move, MAX_GAME_LENGTH> move_stack = {0};
 
    public:
     State() {
@@ -47,7 +47,7 @@ class State {
     
     void reset() {
         std::fill(node.begin(), node.end(), 0);
-        std::fill(move_stack.begin(), move_stack.end(), 0);
+        // std::fill(move_stack.begin(), move_stack.end(), 0);
         move_count = 0;
     }
 
@@ -70,6 +70,15 @@ class State {
 
     void mem_setup() {
         // move_stack.reserve(MAX_GAME_LENGTH);
+    }
+
+    void set_node(unsigned long long xs, unsigned long long ys) {
+        node[0] = xs;
+        node[1] = ys;
+    }
+
+    void set_move_count(int n) {
+        move_count = n;
     }
 
     auto get_node() const -> const std::array<unsigned long long, 2>& {
@@ -167,12 +176,20 @@ class State {
         // move_count acts to determine which colour is played
         node[move_count & 1] ^= (1ULL << i);
         // store the made move in the stack
-        move_stack[move_count++] = i;
+        // move_stack[move_count] = i;
+        move_count++;
     }
 
     void unplay() {
         // decrement move counter and get the most recently played move
-        int i = move_stack[--move_count];
+        // -------------- int i = move_stack[--move_count];
+        // a bit is removed by XOR
+        // -------------- node[move_count & 1] ^= (1ULL << i);
+    }
+
+    void unplay(int i) {
+        // decrement move counter and get the most recently played move
+        --move_count;
         // a bit is removed by XOR
         node[move_count & 1] ^= (1ULL << i);
     }
@@ -286,7 +303,7 @@ class State {
         }
 
         std::cout << "Your legal moves are: " << zipstring(rows, cols) << "\n";
-        Move row, col, pos;
+        int row, col, pos;
         std::cout << "Enter row: ";
         std::cin >> row;
         std::cout << "Enter col: ";

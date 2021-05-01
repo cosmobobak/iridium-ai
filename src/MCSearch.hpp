@@ -19,6 +19,7 @@ template <class State>
 class MCTS {
    private:
     using Node = TreeNode::TreeNode<State>;
+    static constexpr auto MAX_REWARD = 10;
     // limiter on search time
     long long time_limit;
     // limiter on rollouts
@@ -26,6 +27,9 @@ class MCTS {
 
     // the perspective that we're searching from
     int side;
+
+    // memory slot for playouts, to reduce allocation
+    // State playout_board;
 
     // flags
     bool readout = true;
@@ -161,7 +165,7 @@ class MCTS {
             (!limit_by_time || std::chrono::steady_clock::now() < end) && (!limit_by_rollouts || node_count < rollout_limit));
 
         State out = root_node->best_child()->get_state();
-        
+
         if (readout) {
             auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
             std::cout << node_count << " nodes processed in " << time << "ms at " << (double)node_count / ((double)time / 1000.0) << "NPS.\n";
@@ -178,7 +182,7 @@ class MCTS {
         side = board.get_turn();
 
         // tracks time
-        auto start = std::chrono::steady_clock::now(); 
+        auto start = std::chrono::steady_clock::now();
         auto end = start + std::chrono::milliseconds(time_limit);
 
         Node* root_node = new Node(board);
@@ -189,7 +193,9 @@ class MCTS {
         do {
             select_expand_simulate_backpropagate(root_node);
             node_count++;
-        } while ((!limit_by_time || std::chrono::steady_clock::now() < end) && (!limit_by_rollouts || node_count < rollout_limit));
+            show_debug(root_node);
+        } while (
+            (!limit_by_time || std::chrono::steady_clock::now() < end) && (!limit_by_rollouts || node_count < rollout_limit));
 
         if (readout) {
             auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
@@ -205,7 +211,7 @@ class MCTS {
             out[child_idx] = root_node->get_children()[child_idx]->get_visit_count();
         }
 
-        deleteTree(root_node);
+        delete root_node;
         return out;
     }
 
@@ -238,14 +244,21 @@ class MCTS {
         return node;
     }
 
-    void backprop(Node* nodeToExplore, int winner) {
-        Node* propagator = nodeToExplore;
-        while (propagator) {
-            propagator->increment_visits();
-            if (propagator->get_player_no() == winner) {
-                propagator->add_score(10); // 10 == REWARD
-            }
-            propagator = propagator->get_parent();
+    int relative_reward(int perspective, int reward) {
+        // designed for two-player zero-sum environments.
+        // my win == your loss
+        if (perspective == this->side) {
+            return reward;
+        } else {
+            return MAX_REWARD - reward;
+        }
+    }
+
+    void backprop(Node* nodeToExplore, int reward) {
+        // works its way up the tree, adding relative scores to all the parent nodes.
+        for (Node* bp_node = nodeToExplore; bp_node != nullptr; bp_node = bp_node->get_parent()) {
+            bp_node->increment_visits();
+            bp_node->add_score(relative_reward(bp_node->get_player_no(), reward));
         }
     }
 
@@ -253,7 +266,7 @@ class MCTS {
         State playout_board = node->copy_state();
         playout_board.mem_setup();
 
-        // tests for an immediate loss in the position 
+        // tests for an immediate loss in the position
         // and sets to MIN_VALUE if there is one.
         int status = playout_board.evaluate();
         if (status == -side) {
@@ -266,7 +279,7 @@ class MCTS {
             playout_board.random_play();
         }
 
-        return playout_board.evaluate();
+        return (playout_board.evaluate() + 1) * 5;  // 1/0/-1 -> 10/5/0
     }
 
     // DEBUG
@@ -279,6 +292,10 @@ class MCTS {
             for (auto child : root_node->get_children()) {
                 std::cout << UCT<Node, State::GAME_EXP_FACTOR>::compute_ucb1(child) << " ";
             }
+            std::cout << "| ";
+            double lw = root_node->best_child()->get_winrate();
+            lw = std::max(lw, 0.0);
+            std::cout << (root_node->get_state().get_turn() == 1 ? 10 * lw : 100 - 10 * lw);
             std::cout << "\n";
         }
     }

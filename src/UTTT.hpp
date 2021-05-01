@@ -222,6 +222,23 @@ class State {
         assert(forcingstack.size() == movecount + 1);
     }
 
+    void set_node(unsigned long long xs, unsigned long long ys) {}
+
+    void set_move_count(int n) {
+        // move_count = n;
+    }
+
+    void unplay(int i) {
+        movecount--;
+        const int board = i / 9;
+        const int square = MOD9::LOOKUP[i];
+        movestack.pop_back();
+        metaposition[board].unplay(square, movecount & 1);
+        forcingstack.pop_back();
+        forcingBoard = forcingstack.back();
+        assert(forcingstack.size() == movecount + 1);
+    }
+
     auto board_won(const int board) const -> bool {
         return metaposition[board].evaluate() != 0;
     }

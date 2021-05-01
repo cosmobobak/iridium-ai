@@ -130,14 +130,25 @@ class State {
         std::fill(node.begin(), node.end(), 0);
     }
 
-    void play(const Move i) {
+    void play(int i) {
         node[move_count & 1] |= (1 << i);
         move_stack[move_count++] = i;
     }
 
+    void set_node(unsigned long long xs, unsigned long long ys) {}
+
+    void set_move_count(int n) {
+        move_count = n;
+    }
+
     void unplay() {
-        Move prevmove = move_stack[--move_count];
-        node[move_count & 1] &= ~(1 << prevmove);
+        int i = move_stack[--move_count];
+        node[move_count & 1] ^= (1 << i);
+    }
+
+    void unplay(int i) {
+        move_count--;
+        node[move_count & 1] ^= (1 << i);
     }
 
     // EVALUATION

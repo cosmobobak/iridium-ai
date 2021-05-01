@@ -22,7 +22,7 @@ class State {
    private:
     static constexpr auto MAX_GAME_LENGTH = NUM_ROWS * NUM_COLS;
     std::array<std::array<Bitrow, NUM_COLS>, 2> node = {0};
-    std::array<Move, MAX_GAME_LENGTH> move_stack = {0};
+    // std::array<Move, MAX_GAME_LENGTH> move_stack = {0};
     int move_count;
 
    public:
@@ -66,6 +66,12 @@ class State {
             legals.begin(),
             legals.end(),
             [move](Move i) { return i == move; });
+    }
+
+    void set_node(unsigned long long xs, unsigned long long ys) {}
+
+    void set_move_count(int n) {
+        move_count = n;
     }
 
     // MOVE GENERATION
@@ -176,11 +182,11 @@ class State {
     void reset() {
         std::fill(node[0].begin(), node[0].end(), 0);
         std::fill(node[1].begin(), node[1].end(), 0);
-        std::fill(move_stack.begin(), move_stack.end(), 0);
+        // std::fill(move_stack.begin(), move_stack.end(), 0);
         move_count = 0;
     }
 
-    void play(Move col) {
+    void play(int col) {
         // assert(!pos_filled(0, col));
         // we assume play is not called on a filled column
         // iterate upward and break at the first empty position
@@ -191,23 +197,24 @@ class State {
         // moveCount acts to determine which colour is played
         node[move_count & 1][row - 1] ^= (1 << col);
         // store the made move in the stack
-        move_stack[move_count++] = col;
+        // move_stack[move_count++] = col;
+        move_count++;
     }
 
     void unplay() {
-        // decrement move counter and get the most recently played move
-        Move col = move_stack[--move_count];
-        // assert(pos_filled(NUM_ROWS - 1, col));
-        // iterate downward and break at the first filled position
-        int row = 0;
-        while (!pos_filled(row, col)) {
-            row++;
-        }
-        // a bit is removed by XOR
-        node[move_count & 1][row] ^= (1 << col);
+        // // decrement move counter and get the most recently played move
+        // Move col = move_stack[--move_count];
+        // // assert(pos_filled(NUM_ROWS - 1, col));
+        // // iterate downward and break at the first filled position
+        // int row = 0;
+        // while (!pos_filled(row, col)) {
+        //     row++;
+        // }
+        // // a bit is removed by XOR
+        // node[move_count & 1][row] ^= (1 << col);
     }
 
-    void unplay(Move col) {
+    void unplay(int col) {
         // assert(pos_filled(NUM_ROWS - 1, col));
         // we assume pop is not called on an empty column
         // decrement move counter

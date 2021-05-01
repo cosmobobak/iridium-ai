@@ -29,7 +29,7 @@ struct std::hash<std::array<T, N> > {
 };
 
 inline void copy_int8_array_81(const uint_fast8_t in[], uint_fast8_t out[]) {
-    for (uint_fast8_t i = 0; i < 81; i++) {
+    for (size_t i = 0; i < 81; i++) {
         out[i] = in[i];
     }
 }
@@ -39,7 +39,7 @@ auto zipstring(std::vector<T> v1, std::vector<T> v2) -> std::string {
     assert(v1.size() == v2.size());
     std::string builder;
     builder.append("{ ");
-    for (int i = 0; i < v1.size(); i++) {
+    for (size_t i = 0; i < v1.size(); i++) {
         // builder.append((std::to_string)(i));
         builder += '(';
         builder.append(std::to_string(v1[i]));
@@ -56,7 +56,7 @@ auto zipstring(std::vector<short unsigned int> v1, std::vector<short unsigned in
     assert(v1.size() == v2.size());
     std::string builder;
     builder.append("{ ");
-    for (int i = 0; i < v1.size(); i++) {
+    for (size_t i = 0; i < v1.size(); i++) {
         // builder.append((std::to_string)(i));
         builder += '(';
         builder.append(std::to_string(v1[i]));
@@ -73,7 +73,7 @@ auto zipstring(std::vector<short> v1, std::vector<short> v2) -> std::string {
     assert(v1.size() == v2.size());
     std::string builder;
     builder.append("{ ");
-    for (int i = 0; i < v1.size(); i++) {
+    for (size_t i = 0; i < v1.size(); i++) {
         // builder.append((std::to_string)(i));
         builder += '(';
         builder.append(std::to_string(v1[i]));

@@ -65,6 +65,12 @@ class State {
             [move](Move i) { return i == move; });
     }
 
+    void set_node(unsigned long long xs, unsigned long long ys) {}
+
+    void set_move_count(int n) {
+        move_count = n;
+    }
+
     // MOVE GENERATION
     auto num_legal_moves() const -> int {
         return NUM_COLS - __builtin_popcount(node[0][0] | node[1][0]);
@@ -155,7 +161,7 @@ class State {
         move_count = 0;
     }
 
-    void play(Move col) {
+    void play(int col) {
         // we assume play is not called on a filled column
         // iterate upward and break at the first empty position
         int row = NUM_ROWS;
@@ -170,7 +176,21 @@ class State {
 
     void unplay() {
         // decrement move counter and get the most recently played move
-        Move col = move_stack[--move_count];
+        int col = move_stack[--move_count];
+        // iterate downward and break at the first filled position
+        int row = 0;
+        while (!pos_filled(row, col)) {
+            row++;
+        }
+        // a bit is removed by XOR
+        node[move_count & 1][row] ^= (1 << col);
+    }
+
+    void unplay(int col) {
+        // assert(pos_filled(NUM_ROWS - 1, col));
+        // we assume pop is not called on an empty column
+        // decrement move counter
+        move_count--;
         // iterate downward and break at the first filled position
         int row = 0;
         while (!pos_filled(row, col)) {

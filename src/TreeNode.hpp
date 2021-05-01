@@ -22,7 +22,7 @@ public:
         this->board = board;
     }
     TreeNode(const TreeNode&) = delete;
-    ~TreeNode() {
+    ~TreeNode() noexcept {
         for (TreeNode* child : children) {
             delete child;
         }
@@ -103,14 +103,14 @@ public:
 
     void expand() {
         children.resize(board.num_legal_moves());
-        int x = 0;
+        int idx = 0;
         for (int move : board.legal_moves()) {
             board.play(move);
-            children[x] = new TreeNode(board);
-            children[x]->set_parent(this);
-            children[x]->set_player_no(get_opponent());
-            board.unplay();
-            x++;
+            children[idx] = new TreeNode(board);
+            children[idx]->set_parent(this);
+            children[idx]->set_player_no(get_opponent());
+            board.unplay(move);
+            idx++;
         }
     }
 

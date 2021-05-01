@@ -39,7 +39,21 @@ class State {
         turn = -turn;
     }
 
+    void set_node(unsigned long long xs, unsigned long long ys) {}
+
+    void set_move_count(int n) {
+        // move_count = n;
+    }
+
     void unplay()  // do not unplay on root
+    {
+        Move prevmove = movestack.back();
+        movestack.pop_back();
+        node = prevmove;
+        turn = -turn;
+    }
+
+    void unplay(int i)  // do not unplay on root
     {
         Move prevmove = movestack.back();
         movestack.pop_back();

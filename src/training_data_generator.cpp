@@ -5,9 +5,7 @@
 #include <vector>
 
 #include "Connect4.hpp"
-#include "MCSearch.hpp"
-
-using namespace MCSearch;
+#include "Zero.hpp"
 
 using intmatrix3 = std::vector<std::vector<std::vector<int>>>;
 using intmatrix2 = std::vector<std::vector<int>>;
@@ -18,7 +16,7 @@ double winrate_to_tanh(double wr) {
     return (wr / 50.0) - 1.0;
 }
 
-auto deepcopytodouble(intmatrix3 in) {
+auto deepcopytodouble(intmatrix3& in) {
     // create top level space
     doublematrix3 out(in.size());
 
@@ -45,7 +43,7 @@ auto deepcopytodouble(intmatrix3 in) {
     return out;
 }
 
-auto mpnorm(intmatrix3 mp) {
+auto mpnorm(intmatrix3& mp) {
     auto out = deepcopytodouble(mp);
 
     for (int game = 0; game < mp.size(); game++) {
@@ -65,7 +63,7 @@ auto mpnorm(intmatrix3 mp) {
 
 int main(int argc, char const *argv[]) {
     if (argc <= 3) {
-        std::cout << "Run with arg1: num_games, arg2: time_per_move, arg3: output filename.";
+        std::cout << "Run with arg1: num_games, arg2: rollouts_per_move, arg3: output filename.\n\n";
         return 0;
     }
 
@@ -86,8 +84,8 @@ int main(int argc, char const *argv[]) {
     std::vector<int> game_lengths(num_games);
     std::vector<int> game_results(num_games);
 
-    auto engine = Zero<Connect4::State, 8>();
-    engine.choose_rollout_limit();
+    auto engine = Zero<Connect4::State>();
+    engine.use_rollout_limit(true);
     engine.set_rollout_limit(rollouts);
     engine.set_readout(false);
 
@@ -104,7 +102,9 @@ int main(int argc, char const *argv[]) {
             move_predictions[game][move] = engine.rollout_vector(engine.get_node());
 
             // get the rating for the current board and store it.
-            state_ratings[game][move] = engine.turn_modifier() == 1 ? engine.get_win_prediction() : 100 - engine.get_win_prediction();
+            state_ratings[game][move] = engine.get_turn_modifier() == 1 ? 
+                engine.get_win_prediction() : 
+                100 - engine.get_win_prediction();
 
             // make a move at random, weighted by how good the moves are.
             engine.set_node(engine.make_sample_move(

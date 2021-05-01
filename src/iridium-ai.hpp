@@ -49,7 +49,7 @@ void run_negamax_engine(const long long TL) {
 template <class State>
 void run_mcts_engine(const long long TL) {
     Zero<State> engine = Zero<State>(TL);
-    engine.set_debug(false);
+    engine.set_debug(true);
     engine.use_time_limit(true);
     engine.set_time_limit(TL);
     typename State::Move i;
