@@ -6,7 +6,15 @@
 #include <numeric>
 #include <vector>
 
-#include "accelerations.hpp"
+template <typename T>
+void showvec(std::vector<T> v) {
+    std::cout << "{ ";
+    for (auto &&i : v) {
+        std::cout << (int)i;
+        std::cout << ", ";
+    }
+    std::cout << "}";
+}
 
 namespace MOD9 {
 constexpr int LOOKUP[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8};
@@ -47,7 +55,7 @@ class SubState {
 
     auto player_at(const int i) const -> bool  //only valid to use if pos_filled() returns true, true = x, false = y
     {
-        return (position[0] & (1 << i));
+        return position[0] & (1 << i);
     }
 
     auto is_full() const -> bool {

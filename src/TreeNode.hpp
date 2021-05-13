@@ -1,11 +1,10 @@
 #pragma once
 
-#include "Connect4-4x4.hpp"
-#include "Connect4.hpp"
-#include "Gomoku.hpp"
-#include "RawTree.hpp"
-#include "TicTacToe.hpp"
-#include "UTTT.hpp"
+#include "games/Connect4-4x4.hpp"
+#include "games/Connect4.hpp"
+#include "games/Gomoku.hpp"
+#include "games/TicTacToe.hpp"
+#include "games/UTTT2.hpp"
 
 namespace TreeNode {
 template <class State>

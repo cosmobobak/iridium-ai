@@ -50,6 +50,7 @@ template <class State>
 void run_mcts_engine(const long long TL) {
     Zero<State> engine = Zero<State>(TL);
     engine.set_debug(true);
+    engine.set_readout(true);
     engine.use_time_limit(true);
     engine.set_time_limit(TL);
     typename State::Move i;
@@ -65,16 +66,8 @@ void run_mcts_engine(const long long TL) {
         if (engine.get_node().is_game_over())
             break;
         i = engine.get_player_move();
-        if (i == -1) {
-            engine.get_node().unplay();
-            engine.get_node().unplay();
-            i = engine.get_player_move();
-            engine.get_node().play(i);
-            engine.get_node().show();
-        } else {
-            engine.get_node().play(i);
-            engine.get_node().show();
-        }
+        engine.get_node().play(i);
+        engine.get_node().show();
     }
     engine.show_result();
 }
@@ -109,7 +102,7 @@ auto selfplay(const long long TL) -> int {
         /* code */
         int engine_turn = 1;
         while (!engine1.is_game_over() && !engine2.is_game_over()) {
-            // engine1.show_node();
+            engine1.show_node();
             if (engine_turn == -1) {
                 engine1.engine_move();
                 engine2.set_node(engine1.get_node());
@@ -157,8 +150,8 @@ void testsuite() {
                   << (int)engine.get_node().num_legal_moves()
                   << "\nforcing board after movegen: "
                   //<< (int)engine.get_node().forcingBoard
-                  << "\nactual list of moves: ";
-        showvec(engine.get_node().legal_moves());
+                  << "\nactual list of moves: \n";
+        for (auto move : engine.get_node().legal_moves()) std::cout << move << " ";
         std::cout << "\nstate of play (is engine over?): "
                   << engine.get_node().is_game_over()
                   << '\n';

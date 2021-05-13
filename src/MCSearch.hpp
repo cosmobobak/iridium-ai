@@ -3,14 +3,8 @@
 #include <chrono>
 #include <limits>
 
-#include "Connect4-4x4.hpp"
-#include "Connect4.hpp"
-#include "Gomoku.hpp"
-#include "RawTree.hpp"
-#include "TicTacToe.hpp"
-#include "TreeNode.hpp"
 #include "UCT.hpp"
-#include "UTTT.hpp"
+#include "TreeNode.hpp"
 
 constexpr auto INF = std::numeric_limits<int>::max();
 constexpr auto N_INF = std::numeric_limits<int>::lowest() + 1;
@@ -33,11 +27,12 @@ class MCTS {
 
     // flags
     bool readout = true;
-    bool debug = true;
+    bool debug = false;
     bool limit_by_rollouts;
     bool limit_by_time;
 
     // recorded search data
+    // std::array<int, State::NUM_UNIQUE_MOVES> amaf_counters;
     // the win / loss ratio of the most recently played move
     double last_winloss;
     int node_count;
@@ -244,7 +239,7 @@ class MCTS {
         return node;
     }
 
-    int relative_reward(int perspective, int reward) {
+    int relative_reward(int perspective, int reward) const {
         // designed for two-player zero-sum environments.
         // my win == your loss
         if (perspective == this->side) {
@@ -280,6 +275,7 @@ class MCTS {
         }
 
         return (playout_board.evaluate() + 1) * 5;  // 1/0/-1 -> 10/5/0
+        // return playout_board.evaluate() == side ? 10 : -10;  // 1/0/-1 -> 10/0/-10
     }
 
     // DEBUG

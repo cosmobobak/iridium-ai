@@ -9,32 +9,6 @@
 #include <string>
 
 template <typename T>
-auto pop(std::vector<T> v) -> T {
-    T result = v.back();
-    v.pop_back();
-    return result;
-}
-
-template <typename T, std::size_t N>
-struct std::hash<std::array<T, N> > {
-    std::size_t operator()(const std::array<T, N>& arr) const {
-        /* 32 bit FNV-1a hash */
-        std::size_t h = 2166136261;
-        for (const auto& item : arr) {
-            h ^= std::hash<T>()(item);
-            h *= 16777619;
-        }
-        return h;
-    }
-};
-
-inline void copy_int8_array_81(const uint_fast8_t in[], uint_fast8_t out[]) {
-    for (size_t i = 0; i < 81; i++) {
-        out[i] = in[i];
-    }
-}
-
-template <typename T>
 auto zipstring(std::vector<T> v1, std::vector<T> v2) -> std::string {
     assert(v1.size() == v2.size());
     std::string builder;

@@ -4,9 +4,8 @@
 #include <array>
 #include <iostream>
 #include <numeric>
+#include <sstream>
 #include <vector>
-
-#include "accelerations.hpp"
 
 namespace TicTacToe {
 
@@ -23,6 +22,7 @@ class State {
    public:
     static constexpr auto GAME_SOLVABLE = true;
     static constexpr auto GAME_EXP_FACTOR = 6;
+    static constexpr auto NUM_UNIQUE_MOVES = 9;
     static constexpr auto BB_ALL = 0b111111111;
 
     // GETTERS
@@ -181,20 +181,25 @@ class State {
     }
 
     // I/O
-    void show() const {
-        for (int x = 0; x < 3; x++) {
-            for (int y = 0; y < 3; y++) {
-                if (pos_filled(x * 3 + y)) {
-                    if (player_at(x * 3 + y))
-                        std::cout << "X ";
-                    else
-                        std::cout << "0 ";
-                } else
-                    std::cout << ". ";
-            }
-            std::cout << "\n";
+    auto charat(int y, int x) const {
+        if (pos_filled(x * 3 + y)) {
+            if (player_at(x * 3 + y))
+                return 'X';
+            else
+                return '0';
+        } else {
+            return ' ';
         }
-        std::cout << "\n";
+    }
+
+    void show() const {
+        std::stringstream sb;
+        sb << "  " << charat(0, 0) << " │ " << charat(1, 0) << " │ " << charat(2, 0) << " \n";
+        sb << " ───┼───┼─── \n";
+        sb << "  " << charat(0, 1) << " │ " << charat(1, 1) << " │ " << charat(2, 1) << " \n";
+        sb << " ───┼───┼─── \n";
+        sb << "  " << charat(0, 2) << " │ " << charat(1, 2) << " │ " << charat(2, 2) << " \n";
+        std::cout << sb.str();
     }
 
     void show_legal_moves() const {
@@ -202,7 +207,12 @@ class State {
         std::vector<Move> shiftedLegals;
         std::transform(legals.begin(), legals.end(), std::back_inserter(shiftedLegals), [](Move n) { return n + 1; });
         std::cout << "Your legal moves are: ";
-        showvec(shiftedLegals);
+        std::cout << "{ ";
+        for (auto i : shiftedLegals) {
+            std::cout << (int)i;
+            std::cout << ", ";
+        }
+        std::cout << "}";
     }
 
     auto get_player_move() const -> Move {

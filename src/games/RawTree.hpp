@@ -4,8 +4,6 @@
 #include <iostream>
 #include <vector>
 
-#include "accelerations.hpp"
-
 namespace RawTree {
 
 

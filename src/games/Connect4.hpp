@@ -6,8 +6,6 @@
 #include <numeric>
 #include <vector>
 
-#include "accelerations.hpp"
-
 namespace Connect4 {
 using Bitrow = uint_fast8_t;
 using Bitboard = unsigned long long;
@@ -51,6 +49,11 @@ class State {
         return node;
     }
 
+    // SETTERS
+    void set_move_count(int n) {
+        move_count = n;
+    }
+
     // PREDICATES
     auto is_full() const -> bool {
         return move_count == MAX_GAME_LENGTH;
@@ -66,12 +69,6 @@ class State {
             legals.begin(),
             legals.end(),
             [move](Move i) { return i == move; });
-    }
-
-    void set_node(unsigned long long xs, unsigned long long ys) {}
-
-    void set_move_count(int n) {
-        move_count = n;
     }
 
     // MOVE GENERATION
@@ -366,7 +363,12 @@ class State {
         std::vector<Move> shiftedLegals;
         std::transform(legals.begin(), legals.end(), std::back_inserter(shiftedLegals), [](Move n) { return n + 1; });
         std::cout << "Your legal moves are: ";
-        showvec(shiftedLegals);
+        std::cout << "{ ";
+        for (auto i : shiftedLegals) {
+            std::cout << (int)i;
+            std::cout << ", ";
+        }
+        std::cout << "}";
     }
 
     auto get_player_move() const -> Move {
@@ -381,10 +383,9 @@ class State {
         }
         return move - 1;
     }
-};
 
-bool operator==(const State a, const State b) {
-    return a.get_node()[0] == b.get_node()[0] 
-    && a.get_node()[1] == b.get_node()[1];
-}
+    friend bool operator==(const State& a, const State& b) {
+        return a.node == b.node;
+    }
+};
 }  // namespace Connect4

@@ -1,22 +1,20 @@
 #pragma once
 
-#include <limits>
 #include <cmath>
+#include <limits>
 
-#include "Connect4-4x4.hpp"
-#include "Connect4.hpp"
-#include "Gomoku.hpp"
-#include "RawTree.hpp"
-#include "TicTacToe.hpp"
-#include "TreeNode.hpp"
-#include "UTTT.hpp"
+#include "games/Connect4-4x4.hpp"
+#include "games/Connect4.hpp"
+#include "games/Gomoku.hpp"
+#include "games/TicTacToe.hpp"
+#include "games/UTTT2.hpp"
 
 template <class Node, int EXP_FACTOR>
 class UCT {
    public:
     static auto ucb1_value(int parent_visits, int win_count, int visits) -> double {
         if (visits == 0) {
-            return std::numeric_limits<double>::max();
+            return std::numeric_limits<double>::max() - 1;
         }
         double exploitation = (double)win_count / (double)visits;
         double exploration = sqrt(log((double)parent_visits) / (double)visits) * EXP_FACTOR;

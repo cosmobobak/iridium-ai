@@ -4,8 +4,25 @@
 #include <bitset>
 #include <iostream>
 #include <vector>
+#include <cassert>
 
-#include "accelerations.hpp"
+template <typename T>
+auto zipstring(std::vector<T> v1, std::vector<T> v2) -> std::string {
+    assert(v1.size() == v2.size());
+    std::string builder;
+    builder.append("{ ");
+    for (size_t i = 0; i < v1.size(); i++) {
+        // builder.append((std::to_string)(i));
+        builder += '(';
+        builder.append(std::to_string(v1[i]));
+        builder += ',';
+        builder.append(std::to_string(v2[i]));
+        builder += ')';
+        builder.append(", ");
+    }
+    builder.append("}");
+    return builder;
+}
 
 namespace Gomoku {
 
@@ -17,6 +34,7 @@ class State {
     static constexpr auto WIDTH = 8;
     static constexpr auto HEIGHT = 8;
     static constexpr auto MAX_GAME_LENGTH = WIDTH * HEIGHT;
+    static constexpr auto NUM_UNIQUE_MOVES = WIDTH * HEIGHT;
     static constexpr std::array<char, 2> players = {'X', 'O'};
 
    private:

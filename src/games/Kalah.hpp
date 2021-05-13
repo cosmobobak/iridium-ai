@@ -6,29 +6,29 @@
 #include <numeric>
 #include <vector>
 
-#include "accelerations.hpp"
-
-namespace Connect4x4 {
+namespace Kalah {
 
 class State {
    public:
-    using Move = uint_fast8_t;
-    using Bitrow = uint_fast8_t;
-    static constexpr auto GAME_SOLVABLE = true;
-    static constexpr auto NUM_ROWS = 4;
-    static constexpr auto NUM_COLS = 4;
-    static constexpr auto GAME_EXP_FACTOR = 8;
-    static constexpr auto BB_ALL = 0b1111;
-    static constexpr std::array<int, NUM_COLS> weights = {2, 1, 1, 2};
-
+    // a move is an integer that represents an ordered list of pot choices.
+    // e.g. the move 0b110001 (110, 001 --> 5, 1) means "move from pot 1, then pot 5".
+    using Move = unsigned long long;
    private:
-    std::array<std::array<Bitrow, NUM_COLS>, 2> node = {0};
-    std::array<Move, NUM_ROWS * NUM_COLS> move_stack;
-    int move_count = 0;
+    static constexpr auto NUM_SLOTS = 14;
+    static constexpr auto P1_STORE = 0;
+    static constexpr auto P2_STORE = 7;
+    std::array<int8_t, NUM_SLOTS> slots;
+    int move_count;
 
    public:
+    static constexpr auto GAME_SOLVABLE = false;
+    static constexpr auto GAME_EXP_FACTOR = 8;
+
     State() {
         move_count = 0;
+        std::fill(slots.begin(), slots.end(), 4);
+        slots[P1_STORE] = 0;
+        slots[P2_STORE] = 0;
     }
 
     // GETTERS
@@ -36,25 +36,24 @@ class State {
         return (move_count & 1) ? -1 : 1;
     }
 
-    auto get_move_count() const {
+    auto get_move_count() const -> int {
         return move_count;
     }
 
-    auto get_turn_index() const {
-        return move_count & 1;
+    auto& get_node() const {
+        return slots;
     }
 
-    auto get_node() const -> const std::array<std::array<Bitrow, NUM_COLS>, 2>& {
-        return node;
-    }  
-    
     // PREDICATES
-    auto is_full() const -> bool {
-        return move_count == NUM_COLS * NUM_ROWS;
-    }
-
     auto is_game_over() const -> bool {
-        return is_full() || evaluate();
+        return std::all_of(
+                   slots.begin() + 1,
+                   slots.begin() + 7,
+                   [](uint8_t x) { return x == 0; }) ||
+               std::all_of(
+                   slots.begin() + 8,
+                   slots.begin() + 14,
+                   [](uint8_t x) { return x == 0; });
     }
 
     auto is_legal(Move move) const -> bool {
@@ -73,29 +72,28 @@ class State {
 
     // MOVE GENERATION
     auto num_legal_moves() const -> int {
-        return NUM_COLS - __builtin_popcount(node[0][0] | node[1][0]);
+        // this function is really hard to do for Kalah.
+        return legal_moves().size();
     }
-
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////// UNDER CONSTRUCTION ////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+    auto add_to_vec(std::vector<Move>& target) {
+        
+    }
+    
     auto legal_moves() const -> std::vector<Move> {
-        int bb = node[0][0] | node[1][0];
-        // a vector to hold the generated moves
-        std::vector<Move> moves(NUM_COLS - __builtin_popcount(bb));
-
-        // this line creates an inverted occupancy for
-        // the top row (0b0011000 -> 0b1100111)
-        bb = ~bb & BB_ALL;
-
-        int counter = 0;
-
-        // the following loop runs until all the occupied
-        // spaces have had moves generated
-        while (bb) {
-            moves[counter++] = __builtin_ctz(bb);
-            // clear the least significant bit set
-            bb &= bb - 1;
+        std::vector<Move> moves;
+        bool done = false;
+        // 1 or 8
+        int offset = (move_count & 1) * 7 + 1;
+        for (size_t i = offset; i < 6 + offset; i++) {
+            if (slots[i] != 0) {
+                moves.push_back(i - offset);
+            }
         }
-        // should be [0, 1, 2, 3, 4, 5, 6]
-        // for move 1 on a 7-wide board
+        // generate all legal moves
+        // if a move ends in the pot, shift back and recurse.
         return moves;
     }
 
@@ -105,6 +103,7 @@ class State {
         int num_moves = NUM_COLS - __builtin_popcount(bb);
 
         // the chosen move
+        // assert(num_moves != 0);
         int choice = rand() % num_moves;
 
         // this line creates an inverted occupancy for
@@ -122,18 +121,37 @@ class State {
     }
 
     // DATA VIEWS
-    auto union_bb(int r) const -> Bitrow {
+    auto union_bitboard(int r) const -> Bitrow {
+        // this function provides an occupancy number for a given row r, counting
+        // downward, indexed from 0
+        //
+        // for example, in the case of the board:
+        // . . . . . . .
+        // . . . . . . .
+        // . . . . . . .
+        // . . . X . . .
+        // . . . O . . .
+        // . . O X . X .
+        // unionBitboard(5) = 0b0011010, or 26
         return node[0][r] | node[1][r];
     }
 
     auto pos_filled(int row, int col) const -> bool {
+        // tests if a given location is filled, indexed by the row and column
+        // this is done by indexing the row in the 2D array, then performing shifts
+        // to produce a mask with only the desired bit. This mask is then AND-ed with
+        // the row values to test for occupancy, as 0 = false and any other value =
+        // true.
         return node[0][row] & (1 << col) || node[1][row] & (1 << col);
     }
 
-    auto player_at(int row, int col) const -> bool  
-    {
+    auto player_at(int row, int col) const -> bool {
+        // only valid to use if posFilled returns true
+        // this function essentially performs the same job as posFilled
+        // except it only checks against the first half of the array
+        // and assumes that the space is filled
         return node[0][row] & (1 << col);
-        //only valid to use if pos_filled() returns true, true = x, false = y
+        // true = X, false = O
     }
 
     auto probe_spot(int row, int col) const -> bool {
@@ -143,10 +161,10 @@ class State {
 
     // STATE INTERACTIONS
     void mem_setup() {
-        // move_stack.reserve(4 * 4);
+        // move_stack.reserve(7 * 6);
     }
 
-    inline void pass_turn() {
+    void pass_turn() {
         move_count++;
     }
 
@@ -157,11 +175,12 @@ class State {
     void reset() {
         std::fill(node[0].begin(), node[0].end(), 0);
         std::fill(node[1].begin(), node[1].end(), 0);
-        std::fill(move_stack.begin(), move_stack.end(), 0);
+        // std::fill(move_stack.begin(), move_stack.end(), 0);
         move_count = 0;
     }
 
     void play(int col) {
+        // assert(!pos_filled(0, col));
         // we assume play is not called on a filled column
         // iterate upward and break at the first empty position
         int row = NUM_ROWS;
@@ -171,19 +190,21 @@ class State {
         // moveCount acts to determine which colour is played
         node[move_count & 1][row - 1] ^= (1 << col);
         // store the made move in the stack
-        move_stack[move_count++] = col;
+        // move_stack[move_count++] = col;
+        move_count++;
     }
 
     void unplay() {
-        // decrement move counter and get the most recently played move
-        int col = move_stack[--move_count];
-        // iterate downward and break at the first filled position
-        int row = 0;
-        while (!pos_filled(row, col)) {
-            row++;
-        }
-        // a bit is removed by XOR
-        node[move_count & 1][row] ^= (1 << col);
+        // // decrement move counter and get the most recently played move
+        // Move col = move_stack[--move_count];
+        // // assert(pos_filled(NUM_ROWS - 1, col));
+        // // iterate downward and break at the first filled position
+        // int row = 0;
+        // while (!pos_filled(row, col)) {
+        //     row++;
+        // }
+        // // a bit is removed by XOR
+        // node[move_count & 1][row] ^= (1 << col);
     }
 
     void unplay(int col) {
@@ -256,23 +277,20 @@ class State {
     }
 
     auto evaluate() const -> int {
-        int v = vertical_term();
-        if (v)
-            return v;
         int h = horizontal_term();
         if (h)
             return h;
+        int v = vertical_term();
+        if (v)
+            return v;
         int u = diagup_term();
         if (u)
             return u;
-        int d = diagdown_term();
-        if (d)
-            return d;
 
-        return 0;
+        return diagdown_term();
     }
 
-    auto heuristic_value() -> int {
+    auto heuristic_value() const -> int {
         int val = 0;
         for (int row = 0; row < NUM_ROWS; row++) {
             for (int i = 0; i < NUM_COLS; i++) {
@@ -280,6 +298,42 @@ class State {
             }
         }
         return val;  // use some sort of central weighting approach
+    }
+
+    // DATA GENERATION
+    auto game_running() const -> bool {
+        // the game is over if the board is filled up or someone has 4-in-a-row
+        return (!is_full() && evaluate() == 0);
+    }
+
+    auto game_result() const -> int {
+        if (!is_game_over()) {
+            std::cerr << "game_result() called on in-progress game.\n";
+            return -2;
+        }
+        return evaluate();
+    }
+
+    auto get_position_contents(int row, int col) const -> int {
+        if (pos_filled(row, col)) {
+            if (player_at(row, col)) {
+                return 1;
+            } else {
+                return -1;
+            }
+        } else {
+            return 0;
+        }
+    }
+
+    auto vectorise_board() const {
+        std::vector<int> out(NUM_ROWS * NUM_COLS);
+        for (int row = 0; row < NUM_ROWS; row++) {
+            for (int col = 0; col < NUM_COLS; col++) {
+                out[row * NUM_COLS + col] = get_position_contents(row, col);
+            }
+        }
+        return out;
     }
 
     // I/O
@@ -320,22 +374,9 @@ class State {
         }
         return move - 1;
     }
-
-    void show_result() const 
-    {
-        int r;
-        r = evaluate();
-        if (r == 0) {
-            std::cout << "1/2-1/2" << '\n';
-        } else if (r > 0) {
-            std::cout << "1-0" << '\n';
-        } else {
-            std::cout << "0-1" << '\n';
-        }
-    }
 };
 
-bool operator==(State a, State b) {
-    return !(a.get_node()[0] != b.get_node()[0] || a.get_node()[1] != b.get_node()[1]);
+bool operator==(const State a, const State b) {
+    return a.get_node()[0] == b.get_node()[0] && a.get_node()[1] == b.get_node()[1];
 }
-}  // namespace Connect4x4
+}  // namespace Kalah

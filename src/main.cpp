@@ -1,4 +1,5 @@
 #include <iostream>
+
 #include "iridium-ai.hpp"
 
 using namespace Iridium;
@@ -8,7 +9,7 @@ int main() {
 
     int response;
     std::cin >> response;
-    
+
     switch (response) {
         // case Games::Checkers:
         //     main_template<Checkers::State>();
@@ -25,9 +26,9 @@ int main() {
         case Games::Gomoku:
             main_template<Gomoku::State>();
             break;
-        case Games::RawTree:
-            main_template<RawTree::State>();
-            break;
+        // case Games::RawTree:
+        //     main_template<RawTree::State>();
+        //     break;
         case Games::TicTacToe:
             main_template<TicTacToe::State>();
             break;

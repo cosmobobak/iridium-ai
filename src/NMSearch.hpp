@@ -100,7 +100,7 @@ class Negamax {
         for (auto move : node.legal_moves()) {
             node.play(move);
             score = -negamax(node, depth - 1, -colour, -b, -a);
-            node.unplay();
+            node.unplay(move);
 
             if (score >= b) {
                 // beta cutoff
@@ -125,7 +125,7 @@ class Negamax {
         for (auto move : node.legal_moves()) {
             node.play(move);
             int score = -dnegamax(node, -colour, -b, -a);
-            node.unplay();
+            node.unplay(move);
             // std::cout << "score for move " << (int)move << ": " << score << "\n";
 
             if (score >= b) {
