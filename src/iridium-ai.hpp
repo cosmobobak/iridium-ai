@@ -90,7 +90,7 @@ auto selfplay(const long long TL) -> int {
     engine2.set_rollout_limit(rollouts);
 
     std::cout << "Enter the number of games to play:\n--> ";
-    int rounds;
+    size_t rounds;
     std::cin >> rounds;
 
     std::cout << "generation should be done in about " << ((double)rounds * 30.0 * (350.0 / 50000.0) * rollouts) / (1000.0 * 60.0 * 60.0) << " hours. good luck.\n";

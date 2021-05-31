@@ -71,7 +71,7 @@ class State {
     }
 
     // MOVE GENERATION
-    auto num_legal_moves() const -> int {
+    auto num_legal_moves() const -> size_t {
         // this function is really hard to do for Kalah.
         return legal_moves().size();
     }

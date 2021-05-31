@@ -60,7 +60,7 @@ class State {
     }
 
     // MOVE GENERATION
-    auto num_legal_moves() const {
+    auto num_legal_moves() const -> size_t {
         return 9 - __builtin_popcount(node[0] | node[1]);
     }
 
@@ -134,8 +134,6 @@ class State {
         node[move_count & 1] |= (1 << i);
         move_stack[move_count++] = i;
     }
-
-    void set_node(unsigned long long xs, unsigned long long ys) {}
 
     void set_move_count(int n) {
         move_count = n;

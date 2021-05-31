@@ -9,6 +9,7 @@
 namespace TreeNode {
 template <class State>
 class TreeNode {
+    // State::Move inbound_edge;
     State board;
     std::vector<TreeNode*> children;
     TreeNode* parent = nullptr;
@@ -36,13 +37,12 @@ public:
         this->parent = parent;
     }
 
-
-    void set_player_no(const int turn) {
+    void set_player_no(int turn) {
         this->turn = turn;
     }
 
-    void set_win_score(const int s) {
-        win_count = s;
+    void set_win_score(int win_count) {
+        this->win_count = win_count;
     }
 
     // GETTERS

@@ -1,11 +1,17 @@
+#include <algorithm>
+#include <chrono>
+#include <execution>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <numeric>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
-#include "Connect4.hpp"
 #include "Zero.hpp"
+#include "games/Connect4.hpp"
 
 using intmatrix3 = std::vector<std::vector<std::vector<int>>>;
 using intmatrix2 = std::vector<std::vector<int>>;
@@ -20,20 +26,20 @@ auto deepcopytodouble(intmatrix3& in) {
     // create top level space
     doublematrix3 out(in.size());
 
-    for (int i = 0; i < in.size(); i++) {
+    for (size_t i = 0; i < in.size(); i++) {
         // create second level space
         doublematrix2 x(in[i].size());
         out[i] = x;
-        for (int j = 0; j < in[i].size(); j++) {
+        for (size_t j = 0; j < in[i].size(); j++) {
             // create third level space
             std::vector<double> y(in[i][j].size());
             out[i][j] = y;
         }
     }
 
-    for (int i = 0; i < in.size(); i++) {
-        for (int j = 0; j < in[i].size(); j++) {
-            for (int k = 0; k < in[i][k].size(); k++) {
+    for (size_t i = 0; i < in.size(); i++) {
+        for (size_t j = 0; j < in[i].size(); j++) {
+            for (size_t k = 0; k < in[i][k].size(); k++) {
                 // at three deep, copy values
                 out[i][j][k] = in[i][j][k];
             }
@@ -46,33 +52,51 @@ auto deepcopytodouble(intmatrix3& in) {
 auto mpnorm(intmatrix3& mp) {
     auto out = deepcopytodouble(mp);
 
-    for (int game = 0; game < mp.size(); game++) {
-        for (int move = 0; move < mp[game].size(); move++) {
-            int total = 0;
-            for (int pred : mp[game][move]) {
-                total += pred;
-            }
-            for (int i = 0; i < mp[game][move].size(); i++) {
-                out[game][move][i] = (double)mp[game][move][i] / (double)total;
-            }
-        }
-    }
+    std::for_each(
+        std::execution::par,
+        mp.begin(),
+        mp.end(),
+        [](intmatrix2& game) {
+            std::for_each(
+                std::execution::par,
+                game.begin(),
+                game.end(),
+                [](std::vector<int>& move) {
+                    auto total = std::reduce(
+                        std::execution::par,
+                        move.begin(),
+                        move.end());
+                    std::for_each(
+                        std::execution::par,
+                        move.begin(),
+                        move.end(),
+                        [total](int e) { return (double)e / (double)total; });
+                });
+        });
 
     return out;
 }
 
-int main(int argc, char const *argv[]) {
+int main(int argc, char const* argv[]) {
+    int num_games;
+    int rollouts;
+    std::string CSV_FILE_NAME;
+
     if (argc <= 3) {
-        std::cout << "Run with arg1: num_games, arg2: rollouts_per_move, arg3: output filename.\n\n";
-        return 0;
+        std::cout << "num_games:\n--> ";
+        std::cin >> num_games;
+        std::cout << "rollouts_per_move:\n--> ";
+        std::cin >> rollouts;
+        std::cout << "output filename:\n--> ";
+        std::cin >> CSV_FILE_NAME;
+    } else {
+        num_games = atoi(argv[1]);
+        rollouts = atoi(argv[2]);
+        CSV_FILE_NAME = argv[3];
     }
 
-    int num_games = atoi(argv[1]);
-    int rollouts = atoi(argv[2]);
-    std::string CSV_FILE_NAME = argv[3];
-
     std::cout << "generating training data on " << num_games << " games, at " << rollouts << " rollouts per move.\n";
-    std::cout << "generation should be done in about " << ((double)num_games * 30.0 * (350.0/50000.0) * rollouts) / (1000.0 * 60.0 * 60.0) << " hours. good luck.\n";
+    std::cout << "generation should be done in about " << ((double)num_games * 30.0 * (350.0 / 50000.0) * rollouts) / (1000.0 * 60.0 * 60.0) << " hours. good luck.\n";
 
     // index by GAME, MOVE, SLOT
     intmatrix3 game_states(num_games, intmatrix2(42, std::vector<int>(42)));
@@ -88,12 +112,14 @@ int main(int argc, char const *argv[]) {
     engine.use_rollout_limit(true);
     engine.set_rollout_limit(rollouts);
     engine.set_readout(false);
+    engine.set_debug(false);
 
     for (int game = 0; game < num_games; game++) {
         engine.reset_node();
 
         int move = 0;
         while (!engine.is_game_over()) {
+            // engine.show_node();
             // store the current board
             game_states[game][move] = engine.get_node().vectorise_board();
 
@@ -102,12 +128,10 @@ int main(int argc, char const *argv[]) {
             move_predictions[game][move] = engine.rollout_vector(engine.get_node());
 
             // get the rating for the current board and store it.
-            state_ratings[game][move] = engine.get_turn_modifier() == 1 ? 
-                engine.get_win_prediction() : 
-                100 - engine.get_win_prediction();
+            state_ratings[game][move] = engine.get_turn_modifier() == 1 ? engine.get_win_prediction() : 100 - engine.get_win_prediction();
 
             // make a move at random, weighted by how good the moves are.
-            engine.set_node(engine.make_sample_move(
+            engine.set_node(engine.make_epsilon_greedy_move(
                 move_predictions[game][move],
                 engine.get_node()));
 
@@ -115,9 +139,9 @@ int main(int argc, char const *argv[]) {
         }
         game_lengths[game] = engine.get_node().get_move_count();
         game_results[game] = engine.get_node().evaluate();
-        if (num_games > 100 && game % (num_games / 100) == 0) {
-            std::cout << ((int)(game / ((double)num_games / 100))) << "\% done!\r";
-        }
+        // if (num_games > 100 && game % (num_games / 100) == 0) {
+        std::cout << game / ((double)num_games / 100.0) << "% done!\r";
+        // }
     }
 
     // we're done generating data

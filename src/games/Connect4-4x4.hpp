@@ -64,14 +64,12 @@ class State {
             [move](Move i) { return i == move; });
     }
 
-    void set_node(unsigned long long xs, unsigned long long ys) {}
-
     void set_move_count(int n) {
         move_count = n;
     }
 
     // MOVE GENERATION
-    auto num_legal_moves() const -> int {
+    auto num_legal_moves() const -> size_t {
         return NUM_COLS - __builtin_popcount(node[0][0] | node[1][0]);
     }
 

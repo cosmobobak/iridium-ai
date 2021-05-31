@@ -16,18 +16,17 @@ class State {
     static constexpr auto NUM_ROWS = 6;
     static constexpr auto NUM_COLS = 7;
     using Move = uint_fast8_t;
-
-   private:
-    static constexpr auto MAX_GAME_LENGTH = NUM_ROWS * NUM_COLS;
-    std::array<std::array<Bitrow, NUM_COLS>, 2> node = {0};
-    // std::array<Move, MAX_GAME_LENGTH> move_stack = {0};
-    int move_count;
-
-   public:
     static constexpr auto GAME_SOLVABLE = false;
     static constexpr auto GAME_EXP_FACTOR = 10;  // 1.41 * 5;
     static constexpr int BB_ALL = 0b1111111;
+    static constexpr auto MAX_GAME_LENGTH = NUM_ROWS * NUM_COLS;
 
+   private:
+    std::array<std::array<Bitrow, NUM_COLS>, 2> node = {0};
+    // std::array<Move, MAX_GAME_LENGTH> move_stack = {0};
+    int_fast8_t move_count;
+
+   public:
     State() {
         move_count = 0;
     }
@@ -72,7 +71,7 @@ class State {
     }
 
     // MOVE GENERATION
-    auto num_legal_moves() const -> int {
+    auto num_legal_moves() const -> size_t {
         // this is a fast function to determine the number
         // of empty spaces on the top row
         return NUM_COLS - __builtin_popcount(union_bitboard(0));
@@ -230,11 +229,8 @@ class State {
         // check all the rows for horizontal 4-in-a-rows
         for (int row = 0; row < NUM_ROWS; row++) {
             for (int bitshift = 0; bitshift < NUM_COLS - 3; bitshift++) {
-                if (((node[0][row] >> bitshift) & 0b1111) == 0b1111) {
-                    return 1;
-                }
-                if (((node[1][row] >> bitshift) & 0b1111) == 0b1111) {
-                    return -1;
+                if (((node[(move_count + 1) & 1][row] >> bitshift) & 0b1111) == 0b1111) {
+                    return -get_turn();
                 }
             }
         }
@@ -278,7 +274,7 @@ class State {
             }
         }
         return 0;  // no 4-in-a-rows found
-    }
+    } 
 
     auto evaluate() const -> int {
         int h = horizontal_term();
@@ -292,6 +288,10 @@ class State {
             return u;
 
         return diagdown_term();
+    }
+
+    auto in_bounds(int row, int col) const {
+        return row >= 0 && row < NUM_ROWS && col >= 0 && col < NUM_COLS;
     }
 
     auto heuristic_value() const -> int {

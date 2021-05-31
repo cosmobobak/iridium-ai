@@ -164,6 +164,7 @@ class MCTS {
         if (readout) {
             auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
             std::cout << node_count << " nodes processed in " << time << "ms at " << (double)node_count / ((double)time / 1000.0) << "NPS.\n";
+            std::cout << "predicted winrate: " << root_node->best_child()->get_winrate() << "\n";
         }
 
         delete root_node;
@@ -195,6 +196,7 @@ class MCTS {
         if (readout) {
             auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
             std::cout << node_count << " nodes processed in " << time << "ms at " << (double)node_count / ((double)time / 1000.0) << "NPS.\n";
+            std::cout << "predicted winrate: " << root_node->best_child()->get_winrate() << "\n";
         }
 
         last_winloss = root_node->best_child()->get_winrate();

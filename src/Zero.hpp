@@ -14,6 +14,7 @@ template <class State>
 class Zero {
     MCTS<State> search_driver = MCTS<State>();
     State node = State();
+    static constexpr double epsilon = 0.1;
 
    public:
     Zero() {
@@ -102,8 +103,8 @@ class Zero {
         return out;
     }
 
-    auto make_sample_move(std::vector<int> dist, State model) {
-        int mod = std::accumulate(dist.begin(), dist.end(), 0);
+    auto make_sample_move(const std::vector<int>& dist, State model) {
+        int mod = std::reduce(std::execution::par, dist.begin(), dist.end());
         // assert(mod != 0);
         int num = rand() % mod;
         for (auto i = 0; i < dist.size(); i++) {
@@ -113,6 +114,18 @@ class Zero {
                 break;
             }
         }
+        return model;
+    }
+
+    auto make_epsilon_greedy_move(const std::vector<int>& dist, State model) {
+        double r = (double)rand() / (double)RAND_MAX;
+        int move;
+        if (r > epsilon) {
+            move = std::distance(dist.begin(), std::max_element(dist.begin(), dist.end()));
+        } else {
+            move = rand() % dist.size();
+        }
+        model.play(move);
         return model;
     }
 

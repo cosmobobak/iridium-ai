@@ -131,7 +131,7 @@ class State {
         return node[(move_count + 1) & 1] & (1ULL << (row * WIDTH + col));
     }
 
-    auto num_legal_moves() const -> uint_fast16_t {
+    auto num_legal_moves() const -> size_t {
         return WIDTH * HEIGHT - __builtin_popcountll(node[0] | node[1]);
     }
 

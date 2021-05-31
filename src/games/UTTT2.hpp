@@ -119,7 +119,7 @@ class State {
     }
 
     // MOVE GENERATION
-    auto num_legal_moves() const -> int {
+    auto num_legal_moves() const -> size_t {
         if (current_forced_square == NO_SQUARE) {
             // benchmark vs accumulate.
             // return std::accumulate(

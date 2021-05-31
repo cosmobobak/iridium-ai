@@ -46,7 +46,7 @@ class State {
         return (node[0] | node[1]).test(i);
     }
 
-    auto num_legal_moves() const -> int {
+    auto num_legal_moves() const -> size_t {
         return WIDTH * HEIGHT - (node[0] | node[1]).count();
     }
 
