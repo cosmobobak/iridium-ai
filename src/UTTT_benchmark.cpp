@@ -2,11 +2,11 @@
 #include <iostream>
 #include <limits>
 
-#include "UTTT.hpp"
-#include "MCSearch.hpp"
+#include "games/UTTT2.hpp"
+#include "Zero.hpp"
 
 int main(int argc, char const *argv[]) {
-    auto test = MCSearch::Zero<UTTT::State, 6>();
+    auto test = Zero<UTTT::State>();
     test.use_rollout_limit(true);
     test.set_readout(false);
     test.set_debug(false);
@@ -14,7 +14,7 @@ int main(int argc, char const *argv[]) {
     if (argc <= 2) {
         test.set_rollout_limit(200000);
         test.engine_move();
-        std::cout << "Run with arg1: rollouts, arg2: iterations.";
+        std::cout << "Run with arg1: rollouts, arg2: iterations.\n";
         return 0;
     }
 

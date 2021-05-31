@@ -2,7 +2,7 @@
 #include <chrono>
 #include <limits>
 #include "Zero.hpp"
-#include "Connect4.hpp"
+#include "games/Connect4.hpp"
 
 int main(int argc, char const *argv[]) {
     auto test = Zero<Connect4::State>();
@@ -13,7 +13,7 @@ int main(int argc, char const *argv[]) {
     if (argc <= 2) {
         test.set_rollout_limit(200000);
         test.engine_move();
-        std::cout << "Run with arg1: rollouts, arg2: iterations.";
+        std::cout << "Run with arg1: rollouts, arg2: iterations.\n";
         return 0;
     }
 

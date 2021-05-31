@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <execution>
 #include <vector>
 
 #include "MCSearch.hpp"
