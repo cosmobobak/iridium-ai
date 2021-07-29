@@ -10,31 +10,28 @@ int main() {
     int response;
     std::cin >> response;
 
-    switch (response) {
-        // case Games::Checkers:
-        //     main_template<Checkers::State>();
-        //     break;
-        case Games::Connect4:
+    switch ((Game)response) {
+        case Game::Connect4:
             main_template<Connect4::State>();
             break;
-        case Games::Connect4x4:
+        case Game::Connect4x4:
             main_template<Connect4x4::State>();
             break;
-        // case Games::Go:
-        //     main_template<Go::State>();
-        //     break;
-        case Games::Gomoku:
+        case Game::Gomoku:
             main_template<Gomoku::State>();
             break;
-        // case Games::RawTree:
-        //     main_template<RawTree::State>();
-        //     break;
-        case Games::TicTacToe:
+        case Game::TicTacToe:
             main_template<TicTacToe::State>();
             break;
-        case Games::UTTT:
+        case Game::UTTT:
             main_template<UTTT::State>();
             break;
+        // case Game::Go:
+        //     main_template<Go::State>();
+        //     break;
+        // case Game::Checkers:
+        //     main_template<Checkers::State>();
+        //     break;
 
         default:
             break;

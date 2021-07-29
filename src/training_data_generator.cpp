@@ -11,12 +11,17 @@
 #include <vector>
 
 #include "Zero.hpp"
+#include "games/Connect4-4x4.hpp"
 #include "games/Connect4.hpp"
+#include "games/Gomoku.hpp"
+#include "games/TicTacToe.hpp"
+#include "games/UTTT2.hpp"
 
 using intmatrix3 = std::vector<std::vector<std::vector<int>>>;
 using intmatrix2 = std::vector<std::vector<int>>;
 using doublematrix3 = std::vector<std::vector<std::vector<double>>>;
 using doublematrix2 = std::vector<std::vector<double>>;
+
 
 double winrate_to_tanh(double wr) {
     return (wr / 50.0) - 1.0;
@@ -77,33 +82,20 @@ auto mpnorm(intmatrix3& mp) {
     return out;
 }
 
-int main(int argc, char const* argv[]) {
-    int num_games;
-    int rollouts;
-    std::string CSV_FILE_NAME;
-
-    if (argc <= 3) {
-        std::cout << "num_games:\n--> ";
-        std::cin >> num_games;
-        std::cout << "rollouts_per_move:\n--> ";
-        std::cin >> rollouts;
-        std::cout << "output filename:\n--> ";
-        std::cin >> CSV_FILE_NAME;
-    } else {
-        num_games = atoi(argv[1]);
-        rollouts = atoi(argv[2]);
-        CSV_FILE_NAME = argv[3];
-    }
+template <class State>
+auto generate_training_data(int num_games, int rollouts, const std::string& CSV_FILE_NAME) {
+    constexpr auto MAX_GAME_LENGTH = State::MAX_GAME_LENGTH;
+    constexpr auto NUM_ACTIONS = State::NUM_ACTIONS;
 
     std::cout << "generating training data on " << num_games << " games, at " << rollouts << " rollouts per move.\n";
     std::cout << "generation should be done in about " << ((double)num_games * 30.0 * (350.0 / 50000.0) * rollouts) / (1000.0 * 60.0 * 60.0) << " hours. good luck.\n";
 
     // index by GAME, MOVE, SLOT
-    intmatrix3 game_states(num_games, intmatrix2(42, std::vector<int>(42)));
+    intmatrix3 game_states(num_games, intmatrix2(MAX_GAME_LENGTH, std::vector<int>(MAX_GAME_LENGTH)));
     // index by GAME, MOVE, COLUMN
-    intmatrix3 move_predictions(num_games, intmatrix2(42, std::vector<int>(7)));
+    intmatrix3 move_predictions(num_games, intmatrix2(MAX_GAME_LENGTH, std::vector<int>(NUM_ACTIONS)));
     // index by GAME, MOVE
-    doublematrix2 state_ratings(num_games, std::vector<double>(42));
+    doublematrix2 state_ratings(num_games, std::vector<double>(MAX_GAME_LENGTH));
 
     std::vector<int> game_lengths(num_games);
     std::vector<int> game_results(num_games);
@@ -186,5 +178,27 @@ int main(int argc, char const* argv[]) {
     writer.close();
 
     std::cout << "done!       \n";
+}
+
+int main(int argc, char const* argv[]) {
+    int num_games;
+    int rollouts;
+    std::string CSV_FILE_NAME;
+
+    if (argc <= 3) {
+        std::cout << "num_games:\n--> ";
+        std::cin >> num_games;
+        std::cout << "rollouts_per_move:\n--> ";
+        std::cin >> rollouts;
+        std::cout << "output filename:\n--> ";
+        std::cin >> CSV_FILE_NAME;
+    } else {
+        num_games = atoi(argv[1]);
+        rollouts = atoi(argv[2]);
+        CSV_FILE_NAME = argv[3];
+    }
+
+
+
     return 0;
 }

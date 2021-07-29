@@ -217,17 +217,14 @@ void main_template() {
     }
 }
 
-namespace Games {
-enum names : int {
+enum class Game : int {
     Checkers = 1,
     Connect4,
     Connect4x4,
     Go,
     Gomoku,
-    RawTree,
     TicTacToe,
     UTTT
 };
-}
 
 }  // namespace Iridium

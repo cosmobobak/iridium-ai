@@ -20,6 +20,7 @@ class State {
     static constexpr auto GAME_EXP_FACTOR = 10;  // 1.41 * 5;
     static constexpr int BB_ALL = 0b1111111;
     static constexpr auto MAX_GAME_LENGTH = NUM_ROWS * NUM_COLS;
+    static constexpr auto NUM_ACTIONS = 7;
 
    private:
     std::array<std::array<Bitrow, NUM_COLS>, 2> node = {0};

@@ -6,6 +6,8 @@
 #include <vector>
 #include <cassert>
 
+namespace Gomoku {
+
 template <typename T>
 auto zipstring(std::vector<T> v1, std::vector<T> v2) -> std::string {
     assert(v1.size() == v2.size());
@@ -24,8 +26,6 @@ auto zipstring(std::vector<T> v1, std::vector<T> v2) -> std::string {
     return builder;
 }
 
-namespace Gomoku {
-
 class State {
    public:
     using Move = uint_fast8_t;
@@ -34,7 +34,7 @@ class State {
     static constexpr auto WIDTH = 8;
     static constexpr auto HEIGHT = 8;
     static constexpr auto MAX_GAME_LENGTH = WIDTH * HEIGHT;
-    static constexpr auto NUM_UNIQUE_MOVES = WIDTH * HEIGHT;
+    static constexpr auto NUM_ACTIONS = WIDTH * HEIGHT;
     static constexpr std::array<char, 2> players = {'X', 'O'};
 
    private:

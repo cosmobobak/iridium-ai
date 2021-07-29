@@ -21,12 +21,12 @@ class State {
    public:
     static constexpr auto GAME_SOLVABLE = false;
     static constexpr auto GAME_EXP_FACTOR = 8;
-    static constexpr auto NUM_UNIQUE_MOVES = 81;
+    static constexpr auto NUM_ACTIONS = 81;
+    static constexpr auto MAX_GAME_LENGTH = 81;
     using Move = int;
 
    private:
     static constexpr auto NO_SQUARE = -1;
-    static constexpr auto MAX_GAME_LENGTH = 81;
     static constexpr int masks[] = {
         0b111000000,
         0b000111000,

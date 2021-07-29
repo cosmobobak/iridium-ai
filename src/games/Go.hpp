@@ -16,7 +16,8 @@ class State {
     using Move = int;
     using Bitboard = unsigned long long;
     std::array<std::bitset<WIDTH * HEIGHT>, 2> node;
-    static constexpr auto NUM_UNIQUE_MOVES = WIDTH * HEIGHT;
+    static constexpr auto MAX_GAME_LENGTH = WIDTH * HEIGHT;
+    static constexpr auto NUM_ACTIONS = WIDTH * HEIGHT;
     int turn = 1;
     std::vector<Move> movestack;
 
