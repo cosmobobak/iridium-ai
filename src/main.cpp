@@ -7,7 +7,7 @@ using namespace Iridium;
 int main() {
     std::cout << "Which game would you like to play? Checkers[1], Connect4[2], Connect4(4x4)[3], Go[4], Gomoku[5], RawTree[6], TicTacToe[7], or UTTT[8]?\n--> ";
 
-    int response;
+    auto response = 0;
     std::cin >> response;
 
     switch ((Game)response) {

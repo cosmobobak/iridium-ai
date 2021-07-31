@@ -120,11 +120,11 @@ class State {
     }
 
     void pass_turn() {
-        move_count++;
+        ++move_count;
     }
 
     void unpass_turn() {
-        move_count--;
+        --move_count;
     }
 
     void reset() {

@@ -5,24 +5,26 @@
 #include <cassert>
 #include <iostream>
 #include <vector>
+#include <string>
+#include <sstream>
 
 namespace Othello {
 
 template <typename T>
 auto zipstring(std::vector<T> v1, std::vector<T> v2) -> std::string {
     assert(v1.size() == v2.size());
-    std::string builder;
-    builder.append("{ ");
+    std::stringstream builder;
+    builder << "{ ";
     for (size_t i = 0; i < v1.size(); i++) {
         // builder.append((std::to_string)(i));
-        builder += '(';
-        builder.append(std::to_string(v1[i]));
-        builder += ',';
-        builder.append(std::to_string(v2[i]));
-        builder += ')';
-        builder.append(", ");
+        builder << '(';
+        builder << std::to_string(v1[i]);
+        builder << ',';
+        builder << std::to_string(v2[i]);
+        builder << ')';
+        builder << ", ";
     }
-    builder.append("}");
+    builder << "}";
     return builder;
 }
 

@@ -139,10 +139,10 @@ class Negamax {
 
     auto find_best_next_board(State node) -> State {
         reset_nodes();
-        Move bestmove = -1;
+        Move bestmove = 0; // valid but will always be changed by minimax
         int bestcase = N_INF;
 
-        if (State::GAME_SOLVABLE) {
+        if constexpr (State::GAME_SOLVABLE) {
             unlimited_depth_minimax(node);
         } else {
             iterative_deepening_minimax(node);
