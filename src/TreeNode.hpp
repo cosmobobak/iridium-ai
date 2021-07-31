@@ -9,7 +9,7 @@
 namespace TreeNode {
 template <class State>
 class TreeNode {
-    // State::Move inbound_edge;
+    using Move = typename State::Move;
     State board;
     std::vector<TreeNode*> children;
     TreeNode* parent = nullptr;
@@ -46,43 +46,43 @@ public:
     }
 
     // GETTERS
-    auto get_state() const -> const State& {
+    [[nodiscard]] auto get_state() const -> const State& {
         return board;
     }
 
-    auto copy_state() const -> State {
+    [[nodiscard]] auto copy_state() const -> State {
         return board;
     }
 
-    auto get_children() const -> const std::vector<TreeNode*>& {
+    [[nodiscard]] auto get_children() const -> const std::vector<TreeNode*>& {
         return children;
     }
 
-    auto get_parent() const -> TreeNode* {
+    [[nodiscard]] auto get_parent() const -> TreeNode* {
         return parent;
     }
 
-    auto get_player_no() const -> int {
+    [[nodiscard]] auto get_player_no() const -> int {
         return turn;
     }
 
-    auto get_opponent() const -> int {
+    [[nodiscard]] auto get_opponent() const -> int {
         return -turn;
     }
 
-    auto get_win_score() const -> int {
+    [[nodiscard]] auto get_win_score() const -> int {
         return win_count;
     }
 
-    auto get_visit_count() const -> int {
+    [[nodiscard]] auto get_visit_count() const -> int {
         return visits;
     }
 
-    auto get_winrate() const -> double {
+    [[nodiscard]] auto get_winrate() const -> double {
         return (double)win_count / (double)visits;
     }
 
-    auto get_parent_visits() const -> int {
+    [[nodiscard]] auto get_parent_visits() const -> int {
         return parent->get_visit_count();
     }
 
@@ -95,8 +95,8 @@ public:
         visits++;
     }
 
-    auto random_child() -> TreeNode* {
-        assert(children.size() != 0);
+    [[nodiscard]] auto random_child() const -> TreeNode* {
+        // assert(children.size() != 0);
         return children[rand() % children.size()];
     }
 
@@ -113,22 +113,16 @@ public:
         }
     }
 
-    auto best_child() -> TreeNode* {
+    [[nodiscard]] auto best_child() const -> TreeNode* {
         return *std::max_element(
             children.begin(), children.end(),
             [](TreeNode* a, TreeNode* b) { return (a->get_visit_count() < b->get_visit_count()); });
     }
 
-    auto best_child_as_move() {
-        typename std::vector<TreeNode*>::iterator result;
-        result = std::max_element(
+    [[nodiscard]] auto best_child_as_move() const -> Move {
+        auto result = std::max_element(
             children.begin(), children.end(),
-            [](TreeNode* a, TreeNode* b) { return (a->get_visit_count() < b->get_visit_count()); });
-        // if (board.legal_moves().size() != children.size()) {
-        //     std::cout << board.legal_moves().size() << " " << children.size() << '\n';
-        //     board.show_debug();
-        //     std::terminate();
-        // }
+            [](const TreeNode* a, const TreeNode* b) { return (a->get_visit_count() < b->get_visit_count()); });
         return board.legal_moves()[std::distance(children.begin(), result)];
     }
 

@@ -13,6 +13,7 @@
 
 template <class State>
 class Zero {
+    using Move = typename State::Move;
     MCTS<State> search_driver = MCTS<State>();
     State node = State();
     static constexpr double epsilon = 0.1;
@@ -55,33 +56,33 @@ class Zero {
     }
 
     // GETTERS
-    auto get_player_move() const {
+    [[nodiscard]] auto get_player_move() const -> Move {
         return node.get_player_move();
     }
 
-    auto get_node() -> State& {
+    [[nodiscard]] auto get_node() -> State& {
         return node;
     }
 
-    auto get_turn_modifier() const {
+    [[nodiscard]] auto get_turn_modifier() const -> int {
         return node.get_turn();
     }
 
-    auto get_node_eval() const {
+    [[nodiscard]] auto get_node_eval() const -> int {
         return node.evaluate();
     }
 
-    auto get_node_count() const {
+    [[nodiscard]] auto get_node_count() const {
         return search_driver.get_nodes();
     }
 
-    auto get_win_prediction() const -> double {
+    [[nodiscard]] auto get_win_prediction() const -> double {
         // multiplies by 10 to get a weighted win-per-node percentage
         return 10 * search_driver.get_most_recent_winrate();
     }
 
     // PREDICATES
-    auto is_game_over() const -> bool {
+    [[nodiscard]] auto is_game_over() const -> bool {
         return node.is_game_over();
     }
 
@@ -94,7 +95,7 @@ class Zero {
         node = search_driver.find_best_next_board(node);
     }
 
-    auto rollout_vector(State node) {
+    [[nodiscard]] auto rollout_vector(State node) {
         std::vector<int> child_rollout_counts = search_driver.get_rollout_counts(node);
         std::vector<int> out(7);
         int idx = 0;
@@ -104,8 +105,8 @@ class Zero {
         return out;
     }
 
-    auto make_sample_move(const std::vector<int>& dist, State model) {
-        int mod = std::reduce(std::execution::par, dist.begin(), dist.end());
+    [[nodiscard]] auto make_sample_move(const std::vector<int>& dist, State model) {
+        int mod = std::reduce(dist.begin(), dist.end());
         // assert(mod != 0);
         int num = rand() % mod;
         for (auto i = 0; i < dist.size(); i++) {
@@ -118,7 +119,7 @@ class Zero {
         return model;
     }
 
-    auto make_epsilon_greedy_move(const std::vector<int>& dist, State model) {
+    [[nodiscard]] auto make_epsilon_greedy_move(const std::vector<int>& dist, State model) {
         double r = (double)rand() / (double)RAND_MAX;
         int move;
         if (r > epsilon) {

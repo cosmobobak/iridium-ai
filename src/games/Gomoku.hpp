@@ -9,7 +9,7 @@
 namespace Gomoku {
 
 template <typename T>
-auto zipstring(std::vector<T> v1, std::vector<T> v2) -> std::string {
+[[nodiscard]] auto zipstring(std::vector<T> v1, std::vector<T> v2) -> std::string {
     assert(v1.size() == v2.size());
     std::string builder;
     builder.append("{ ");
@@ -47,19 +47,19 @@ class State {
         move_count = 0;
     }
 
-    auto get_turn() const -> int {
+    [[nodiscard]] auto get_turn() const -> int {
         return (move_count & 1) ? -1 : 1;
     }
 
-    auto get_move_count() const -> int {
+    [[nodiscard]] auto get_move_count() const -> int {
         return move_count;
     }
 
-    auto get_turn_index() const -> int {
+    [[nodiscard]] auto get_turn_index() const -> int {
         return move_count & 1;
     }
 
-    auto is_full() const -> bool {
+    [[nodiscard]] auto is_full() const -> bool {
         return move_count == MAX_GAME_LENGTH;
     }
     
@@ -99,43 +99,43 @@ class State {
         move_count = n;
     }
 
-    auto get_node() const -> const std::array<unsigned long long, 2>& {
+    [[nodiscard]] auto get_node() const -> const std::array<unsigned long long, 2>& {
         return node;
     }
 
-    auto player_at(int i) const -> bool {
+    [[nodiscard]] auto player_at(int i) const -> bool {
         //only valid to use if pos_filled() returns true, true = x, false = y
         return node[0] & (1ULL << (i));
     }
 
-    auto player_at(int row, int col) const -> bool {
+    [[nodiscard]] auto player_at(int row, int col) const -> bool {
         // return node[0].test(row * WIDTH + col);
         return node[0] & (1ULL << (row * WIDTH + col));
     }
 
-    auto pos_filled(int i) const -> bool {
+    [[nodiscard]] auto pos_filled(int i) const -> bool {
         return (node[0] | node[1]) & (1ULL << (i));
     }
 
-    auto pos_filled(int row, int col) const -> bool {
+    [[nodiscard]] auto pos_filled(int row, int col) const -> bool {
         return (node[0] | node[1]) & (1ULL << (row * WIDTH + col));
     }
 
-    auto probe_spot(int i) const -> bool {
+    [[nodiscard]] auto probe_spot(int i) const -> bool {
         // tests the bit of the most recently played side
         return node[(move_count + 1) & 1] & (1ULL << i);
     }
 
-    auto probe_spot(int row, int col) const -> bool {
+    [[nodiscard]] auto probe_spot(int row, int col) const -> bool {
         // tests the bit of the most recently played side
         return node[(move_count + 1) & 1] & (1ULL << (row * WIDTH + col));
     }
 
-    auto num_legal_moves() const -> size_t {
+    [[nodiscard]] auto num_legal_moves() const -> size_t {
         return WIDTH * HEIGHT - __builtin_popcountll(node[0] | node[1]);
     }
 
-    auto legal_moves() const -> std::vector<Move> {
+    [[nodiscard]] auto legal_moves() const -> std::vector<Move> {
         unsigned long long bb = node[0] | node[1];
         // a vector to hold the generated moves
         std::vector<Move> moves(WIDTH * HEIGHT - __builtin_popcountll(bb));
@@ -212,11 +212,11 @@ class State {
         node[move_count & 1] ^= (1ULL << i);
     }
 
-    auto is_game_over() const -> bool {
+    [[nodiscard]] auto is_game_over() const -> bool {
         return is_full() || evaluate();
     }
-
-    auto horizontal_term() const -> int {
+   private:
+    [[nodiscard]] auto horizontal_term() const -> int {
         // iterates the starting positions of the rows
         for (Move row = 0; row < WIDTH * HEIGHT; row += WIDTH) {
             for (Move i = row; i < row + WIDTH - 4; i++) {
@@ -232,7 +232,7 @@ class State {
         return 0;
     }
 
-    auto vertical_term() const -> int {
+    [[nodiscard]] auto vertical_term() const -> int {
         // iterates the starting positions of the columns
         for (Move col = 0; col < WIDTH; col++) {
             // this line below could be fucky
@@ -249,7 +249,7 @@ class State {
         return 0;
     }
 
-    auto diagdown_term() const -> int {
+    [[nodiscard]] auto diagdown_term() const -> int {
         // iterates the starting positions of the rows
         for (Move row = 0; row < HEIGHT - 4; row++) {
             for (Move col = 0; col < WIDTH - 4; col++) {
@@ -265,7 +265,7 @@ class State {
         return 0;
     }
 
-    auto diagup_term() const -> int {
+    [[nodiscard]] auto diagup_term() const -> int {
         // iterates the starting positions of the rows
         for (Move row = 4; row < HEIGHT; row++) {
             for (Move col = 0; col < WIDTH - 4; col++) {
@@ -280,8 +280,8 @@ class State {
         }
         return 0;
     }
-
-    auto evaluate() const -> int {
+   public:
+    [[nodiscard]] auto evaluate() const -> int {
         int v = vertical_term();
         if (v)
             return v;
@@ -310,7 +310,7 @@ class State {
         }
     }
 
-    auto get_player_move() const -> Move {
+    [[nodiscard]] auto get_player_move() const -> Move {
         const std::vector<Move> legals = legal_moves();
         std::vector<Move> shiftedLegals;
         std::transform(legals.begin(), legals.end(), std::back_inserter(shiftedLegals), [](Move n) { return n + 1; });
@@ -338,12 +338,13 @@ class State {
         return pos;
     }
 
-    auto heuristic_value() const -> uint_fast8_t {
+    [[nodiscard]] auto heuristic_value() const -> uint_fast8_t {
         return 0;
+    }
+
+    friend auto operator==(const State& a, const State& b) -> bool {
+        return a.node == b.node;
     }
 };
 
-bool operator==(const State a, const State b) {
-    return a.get_node() == b.get_node();
-}
 }  // namespace Gomoku

@@ -28,7 +28,8 @@ class Negamax {
 
     // recorded search data
     int node_count;
-    Move pv_array[(MAX_DEPTH * MAX_DEPTH + MAX_DEPTH) / 2];
+    static constexpr auto PV_LEN = (MAX_DEPTH * MAX_DEPTH + MAX_DEPTH) / 2;
+    std::array<Move, PV_LEN> pv_array;
 
    public:
     Negamax() {
@@ -69,7 +70,7 @@ class Negamax {
     }
 
     // GETTERS
-    auto get_nodes() const -> int {
+    [[nodiscard]] auto get_nodes() const -> int {
         return node_count;
     }
 
@@ -137,7 +138,7 @@ class Negamax {
         return a;
     }
 
-    auto find_best_next_board(State node) -> State {
+    [[nodiscard]] auto find_best_next_board(State node) -> State {
         reset_nodes();
         Move bestmove = 0; // valid but will always be changed by minimax
         int bestcase = N_INF;

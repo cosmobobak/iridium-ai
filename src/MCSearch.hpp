@@ -46,7 +46,7 @@ class MCTS {
         MCTS(1, 3);
     }
     MCTS(int player, long long strength) {
-        srand(time(NULL));
+        srand(time(nullptr));
         time_limit = strength;
         side = player;
         limit_by_rollouts = false;
@@ -55,7 +55,7 @@ class MCTS {
         node_count = 0;
     }
     MCTS(int player, long long strength, bool limiter_type) {
-        srand(time(NULL));
+        srand(time(nullptr));
         this->limit_by_rollouts = limiter_type;
         this->limit_by_time = !limiter_type;
         if (limiter_type) {
@@ -68,7 +68,7 @@ class MCTS {
         node_count = 0;
     }
     MCTS(bool url) {
-        srand(time(NULL));
+        srand(time(nullptr));
         time_limit = 1000;
         side = 1;
         limit_by_rollouts = url;
@@ -113,11 +113,11 @@ class MCTS {
     }
 
     // GETTERS
-    auto get_nodes() const -> int {
+    [[nodiscard]] auto get_nodes() const -> int {
         return node_count;
     }
 
-    double get_most_recent_winrate() const {
+    [[nodiscard]] auto get_most_recent_winrate() const -> double {
         return last_winloss;
     }
 
@@ -241,7 +241,7 @@ class MCTS {
         return node;
     }
 
-    int relative_reward(int perspective, int reward) const {
+    [[nodiscard]] auto relative_reward(int perspective, int reward) const -> int {
         // designed for two-player zero-sum environments.
         // my win == your loss
         if (perspective == this->side) {

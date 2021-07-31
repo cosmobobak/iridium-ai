@@ -27,32 +27,32 @@ class State {
     static constexpr auto BB_ALL = 0b111111111;
 
     // GETTERS
-    auto get_turn() const -> int {
+    [[nodiscard]] auto get_turn() const -> int {
         return (move_count & 1) ? -1 : 1;
     }
 
-    auto get_move_count() const -> int {
+    [[nodiscard]] auto get_move_count() const -> int {
         return move_count;
     }
 
-    auto get_turn_index() const -> int {
+    [[nodiscard]] auto get_turn_index() const -> int {
         return move_count & 1;
     }
 
-    auto get_node() const -> const std::array<Bitboard, 2>& {
+    [[nodiscard]] auto get_node() const -> const std::array<Bitboard, 2>& {
         return node;
     }
 
     // PREDICATES
-    auto is_full() const -> bool {
+    [[nodiscard]] auto is_full() const -> bool {
         return move_count == 9;
     }
 
-    auto is_game_over() const -> bool {
+    [[nodiscard]] auto is_game_over() const -> bool {
         return is_full() || evaluate();
     }
 
-    auto is_legal(Move move) const -> bool {
+    [[nodiscard]] auto is_legal(Move move) const -> bool {
         auto legals = legal_moves();
         return std::any_of(
             legals.begin(),
@@ -61,11 +61,11 @@ class State {
     }
 
     // MOVE GENERATION
-    auto num_legal_moves() const -> size_t {
+    [[nodiscard]] auto num_legal_moves() const -> size_t {
         return 9 - __builtin_popcount(node[0] | node[1]);
     }
 
-    auto legal_moves() const -> std::vector<Move> {
+    [[nodiscard]] auto legal_moves() const -> std::vector<Move> {
         Bitboard bb = node[0] | node[1];
         std::vector<Move> moves(9 - __builtin_popcount(bb));
         bb = ~bb & BB_ALL;
@@ -100,16 +100,16 @@ class State {
     }
 
     // DATA VIEWS
-    auto pos_filled(const int i) const -> bool {
+    [[nodiscard]] auto pos_filled(const int i) const -> bool {
         return (node[0] | node[1]) & (1 << i);
     }
 
-    auto player_at(const int i) const -> bool {
+    [[nodiscard]] auto player_at(const int i) const -> bool {
         return node[0] & (1 << i);
         //only valid to use if pos_filled() returns true, true = x, false = y
     }
 
-    auto probe_spot(int i) const -> bool {
+    [[nodiscard]] auto probe_spot(int i) const -> bool {
         // tests the bit of the most recently played side
         return node[(move_count + 1) & 1] & (1 << i);
     }
@@ -151,7 +151,7 @@ class State {
     }
 
     // EVALUATION
-    auto evaluate() const -> int {
+    [[nodiscard]] auto evaluate() const -> int {
         // check first diagonal
         if (probe_spot(0) && probe_spot(4) && probe_spot(8)) {
             return -get_turn();
@@ -175,12 +175,12 @@ class State {
         return 0;
     }
 
-    auto heuristic_value() const -> int {
+    [[nodiscard]] auto heuristic_value() const -> int {
         return 0;
     }
 
     // I/O
-    auto charat(int y, int x) const {
+    [[nodiscard]] auto charat(int y, int x) const {
         if (pos_filled(x * 3 + y)) {
             if (player_at(x * 3 + y))
                 return 'X';
@@ -214,7 +214,7 @@ class State {
         std::cout << "}";
     }
 
-    auto get_player_move() const -> Move {
+    [[nodiscard]] auto get_player_move() const -> Move {
         show_legal_moves();
         std::cout << "\n--> ";
         int move;
@@ -226,9 +226,11 @@ class State {
         }
         return move - 1;
     }
+    
+    friend auto operator==(const State& a, const State& b) -> bool {
+        return a.node == b.node;
+    }
 };
 
-bool operator==(const State a, const State b) {
-    return a.get_node() == b.get_node();
-}
+
 }  // namespace TicTacToe

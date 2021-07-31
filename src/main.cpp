@@ -4,7 +4,7 @@
 
 using namespace Iridium;
 
-int main() {
+auto main() -> int {
     std::cout << "Which game would you like to play? Checkers[1], Connect4[2], Connect4(4x4)[3], Go[4], Gomoku[5], RawTree[6], TicTacToe[7], or UTTT[8]?\n--> ";
 
     auto response = 0;
@@ -12,7 +12,7 @@ int main() {
 
     switch ((Game)response) {
         case Game::Connect4:
-            main_template<Connect4::State>();
+            main_template<Connect4::State<6, 7>>();
             break;
         case Game::Connect4x4:
             main_template<Connect4x4::State>();

@@ -26,7 +26,7 @@ auto get_first_player() -> bool {
 
 template <class State>
 void run_negamax_engine(const long long TL) {
-    Istus<State> engine = Istus<State>(TL);
+    auto engine = Istus<State>(TL);
     typename State::Move i;
     engine.get_node().show();
     if (get_first_player()) {
@@ -48,7 +48,7 @@ void run_negamax_engine(const long long TL) {
 
 template <class State>
 void run_mcts_engine(const long long TL) {
-    Zero<State> engine = Zero<State>(TL);
+    auto engine = Zero<State>(TL);
     engine.set_debug(false);
     engine.set_readout(false);
     engine.use_time_limit(true);
@@ -125,7 +125,7 @@ auto selfplay(const long long TL) -> int {
 
 template <class State>
 void userplay() {
-    Zero<State> engine = Zero<State>();
+    auto engine = Zero<State>();
     engine.get_node().show();
     while (!engine.get_node().is_game_over() && !engine.get_node().is_game_over()) {
         int i;
@@ -139,7 +139,7 @@ void userplay() {
 
 template <class State>
 void testsuite() {
-    Zero<State> engine = Zero<State>();
+    auto engine = Zero<State>();
     while (!engine.get_node().is_game_over()) {
         engine.get_node().show();
         std::cout << "\nforcing board: "
@@ -167,7 +167,7 @@ void benchmark() {
     const int width = 50;
     std::vector<int> nodecounts(len * width);
     for (int i = 0; i < width; i++) {
-        Zero<State> engine = Zero<State>(99);
+        auto engine = Zero<State>(99);
         engine.set_debug(false);
         engine.set_readout(false);
         for (int j = 0; j < len && !engine.get_node().is_game_over(); j++) {
