@@ -1,6 +1,7 @@
 #include <chrono>
 #include <iostream>
 #include <limits>
+#include <cstdio>
 
 #include "games/UTTT2.hpp"
 #include "Zero.hpp"
@@ -18,10 +19,10 @@ int main(int argc, char const *argv[]) {
         return 0;
     }
 
-    int rollouts = atoi(argv[1]);
-    int iterations = atoi(argv[2]);
+    auto rollouts = atoi(argv[1]);
+    auto iterations = atoi(argv[2]);
 
-    std::cout << rollouts << " " << iterations << "\n";
+    printf("%d %d\n", rollouts, iterations);
 
     test.set_rollout_limit(rollouts);
 
@@ -38,9 +39,9 @@ int main(int argc, char const *argv[]) {
         total_time += time_taken;
     }
 
-    std::cout << "Min time: " << min_time << "ms\n";
-    std::cout << "Max time: " << max_time << "ms\n";
-    std::cout << "Avg time: " << total_time / iterations << "ms\n";
+    printf("Min time: %lldms\n", min_time);
+    printf("Max time: %lldms\n", max_time);
+    printf("Avg time: %lldms\n", total_time / iterations);
 
     return 0;
 }
