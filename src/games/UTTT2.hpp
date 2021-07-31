@@ -121,12 +121,6 @@ class State {
     // MOVE GENERATION
     [[nodiscard]] auto num_legal_moves() const -> size_t {
         if (current_forced_square == NO_SQUARE) {
-            // benchmark vs accumulate.
-            // return std::accumulate(
-            //     node.begin(),
-            //     node.end(),
-            //     81,
-            //     [](int ticker, Square3x3& sq) { return ticker - is_square_dead(sq) ? 9 : __builtin_popcount(sq.slots[0] | sq.slots[1]); });
             int count = 81;
             for (const auto& sq : node) {
                 if (!is_square_dead(sq)) {
