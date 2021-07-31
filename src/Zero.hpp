@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <array>
-#include <execution>
+// #include <execution>
 #include <vector>
 
 #include "MCSearch.hpp"
@@ -82,7 +82,7 @@ class Zero {
     }
 
     // PREDICATES
-    [[nodiscard]] auto is_game_over() const -> bool {
+    [[nodiscard]] auto is_game_over() -> bool {
         return node.is_game_over();
     }
 

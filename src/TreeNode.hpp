@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cassert>
+
 #include "games/Connect4-4x4.hpp"
 #include "games/Connect4.hpp"
 #include "games/Gomoku.hpp"
@@ -22,6 +24,7 @@ public:
         this->board = board;
     }
     TreeNode(const TreeNode&) = delete;
+    TreeNode(TreeNode&&) = delete;
     ~TreeNode() noexcept {
         for (TreeNode* child : children) {
             delete child;
@@ -46,7 +49,7 @@ public:
     }
 
     // GETTERS
-    [[nodiscard]] auto get_state() const -> const State& {
+    [[nodiscard]] auto get_state() -> State& {
         return board;
     }
 
@@ -96,11 +99,12 @@ public:
     }
 
     [[nodiscard]] auto random_child() const -> TreeNode* {
-        // assert(children.size() != 0);
+        assert(!children.empty());
         return children[rand() % children.size()];
     }
 
     void expand() {
+        assert(board.num_legal_moves() == board.legal_moves().size());
         children.resize(board.num_legal_moves());
         int idx = 0;
         for (int move : board.legal_moves()) {

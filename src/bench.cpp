@@ -30,6 +30,9 @@ int main(int argc, char const *argv[]) {
     long long min_time = std::numeric_limits<long long>::max();
     long long max_time = 0;
     for (int i = 0; i < iterations; i++) {
+        printf("%d%% done!\r", i * 100 / iterations);
+        // flush
+        fflush(stdout);
         test.reset_node();
         auto start = std::chrono::steady_clock::now();
         test.engine_move();
@@ -38,6 +41,7 @@ int main(int argc, char const *argv[]) {
         min_time = std::min(min_time, time_taken);
         total_time += time_taken;
     }
+    printf("%d%% done!\n", 100);
 
     printf("Min time: %lldms\n", min_time);
     printf("Max time: %lldms\n", max_time);

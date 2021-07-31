@@ -17,7 +17,7 @@ class MCTS {
     // limiter on search time
     long long time_limit;
     // limiter on rollouts
-    long long rollout_limit;
+    long long rollout_limit = 1;
 
     // the perspective that we're searching from
     int side;
@@ -28,8 +28,8 @@ class MCTS {
     // flags
     bool readout = true;
     bool debug = false;
-    bool limit_by_rollouts;
-    bool limit_by_time;
+    bool limit_by_rollouts = true;
+    bool limit_by_time = true;
 
     // recorded search data
     // std::array<int, State::NUM_UNIQUE_MOVES> amaf_counters;
@@ -151,7 +151,7 @@ class MCTS {
         root_node->set_state(board);
         root_node->set_player_no(-side);
 
-        // assert(limit_by_rollouts != limit_by_time);
+        assert(limit_by_rollouts != limit_by_time);
         do {
             select_expand_simulate_backpropagate(root_node);
             node_count++;
@@ -166,7 +166,7 @@ class MCTS {
             std::cout << node_count << " nodes processed in " << time << "ms at " << (double)node_count / ((double)time / 1000.0) << "NPS.\n";
             std::cout << "predicted winrate: " << root_node->best_child()->get_winrate() << "\n";
         }
-
+        std::cout << "about to delete node!\n";
         delete root_node;
         return out;
     }
@@ -213,9 +213,11 @@ class MCTS {
     }
 
     void select_expand_simulate_backpropagate(Node* root_node) {
+        std::cout << "SELECTION\n";
         // SELECTION
         Node* promisingNode = select_promising_node(root_node);
 
+        std::cout << "EXPANSION\n";
         // EXPANSION
         if (!promisingNode->get_state().is_game_over()) {
             promisingNode->expand();
@@ -223,19 +225,22 @@ class MCTS {
 
         Node* nodeToExplore = promisingNode;
 
-        if (promisingNode->get_children().size() != 0) {
+        if (!promisingNode->get_children().empty()) {
             nodeToExplore = promisingNode->random_child();
         }
 
+        std::cout << "SIMULATION\n";
         // SIMULATION
         int result = simulate_playout(nodeToExplore);
+        std::cout << "BACKPROPAGATION\n";
         // BACKPROPAGATION
         backprop(nodeToExplore, result);
     }
 
     auto select_promising_node(Node* root_node) const -> Node* {
         Node* node = root_node;
-        while (node->get_children().size()) {
+        while (!node->get_children().empty()) {
+            std::cout << node;
             node = UCT<Node, State::GAME_EXP_FACTOR>::best_child_ucb1(node);
         }
         return node;

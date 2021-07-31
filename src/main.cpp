@@ -1,11 +1,13 @@
 #include <iostream>
 
+#include "games/UTTT2.hpp"
+#include "games/TicTacToe.hpp"
 #include "iridium-ai.hpp"
 
 using namespace Iridium;
 
 auto main() -> int {
-    std::cout << "Which game would you like to play? Checkers[1], Connect4[2], Connect4(4x4)[3], Go[4], Gomoku[5], RawTree[6], TicTacToe[7], or UTTT[8]?\n--> ";
+    std::cout << "Which game would you like to play? Checkers[1], Connect4[2], Connect4(4x4)[3], Go[4], Gomoku[5], TicTacToe[6], or UTTT[7]?\n--> ";
 
     auto response = 0;
     std::cin >> response;

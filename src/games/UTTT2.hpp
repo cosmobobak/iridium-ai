@@ -7,10 +7,46 @@
 #include <sstream>
 #include <vector>
 
+constexpr std::array masks = {
+    0b111000000,
+    0b000111000,
+    0b000000111,
+    0b100100100,
+    0b010010010,
+    0b001001001,
+    0b100010001,
+    0b001010100};
+
+
+
 namespace UTTT {
 class Square3x3 {
+
    public:
     std::array<int16_t, 2> slots = {0};
+
+    [[nodiscard]] auto is_won() const -> bool {
+        for (auto mask : masks) {
+            if ((slots[0] & mask) == mask)
+                return true;
+            if ((slots[1] & mask) == mask)
+                return true;
+        }
+        return false;
+    }
+
+    template < int player >
+    [[nodiscard]] auto is_won_by() const -> bool {
+        for (auto mask : masks) {
+            if ((slots[player] & mask) == mask)
+                return true;
+        }
+        return false;
+    }
+
+    [[nodiscard]] auto is_over() const -> bool {
+        return is_won() || (slots[0] | slots[1]) == 0b111111111;
+    }
 
     friend auto operator==(const Square3x3& a, const Square3x3& b) -> bool {
         return a.slots[0] == b.slots[0] && a.slots[1] == b.slots[1];
@@ -27,20 +63,19 @@ class State {
 
    private:
     static constexpr auto NO_SQUARE = -1;
-    static constexpr std::array masks = {
-        0b111000000,
-        0b000111000,
-        0b000111000,
-        0b100100100,
-        0b010010010,
-        0b001001001,
-        0b100010001,
-        0b001010100};
 
+    // the game has nine sub-games, each of which is a 3x3 grid
     std::array<Square3x3, 9> node;
+    // the number of moves made so far
     int move_count;
+    // the square upon which the player to move must play
     int current_forced_square;
+    // the forcing square on the turn before this one
     int last_forced_square;
+    // whether the last move requires a game-over check
+    bool change_flag = true;
+    // the last result of check_game_over()
+    bool last_gameover_val = false;
 
    public:
     State() {
@@ -77,15 +112,15 @@ class State {
     //     return move_count == MAX_GAME_LENGTH || std::all_of(node.begin(), node.end(), is_square_dead);
     // }
 
-    [[nodiscard]] auto is_game_over() const -> bool {
+   private:
+    [[nodiscard]] auto check_game_over() const -> bool {
         if (move_count == MAX_GAME_LENGTH || std::all_of(node.begin(), node.end(), is_square_dead)) {
             return true;
         }
 
         // construct two binary numbers that represent the meta-board in the same way the the squares individually operate
         int xs = std::accumulate(node.begin(), node.end(), 0, [](int binary_accumulator, const Square3x3& sq) {
-            int internal_xs = sq.slots[0];
-            return binary_accumulator << 1 | std::any_of(masks.begin(), masks.end(), [internal_xs](int m) { return contains_all_bits(internal_xs, m); });
+            return binary_accumulator << 1 | sq.is_won_by<0>();
         });
 
         if (std::any_of(masks.begin(), masks.end(), [xs](int m) { return contains_all_bits(xs, m); })) {
@@ -93,19 +128,30 @@ class State {
         }
 
         int os = std::accumulate(node.begin(), node.end(), 0, [](int binary_accumulator, const Square3x3& sq) {
-            int internal_os = sq.slots[1];
-            return binary_accumulator << 1 | std::any_of(masks.begin(), masks.end(), [internal_os](int m) { return contains_all_bits(internal_os, m); });
+            return binary_accumulator << 1 | sq.is_won_by<1>();
         });
 
         return std::any_of(masks.begin(), masks.end(), [os](int m) { return contains_all_bits(os, m); });
     }
+   public:
+    [[nodiscard]] auto is_game_over() -> bool {
+        // check if we need to do a check at all
+        if (!change_flag)
+            return last_gameover_val;
 
-    [[nodiscard]] auto is_legal(Move move) const -> bool {
-        auto legals = legal_moves();
-        return std::any_of(
-            legals.begin(),
-            legals.end(),
-            [move](Move i) { return i == move; });
+        // reset the change flag
+        change_flag = false;
+        last_gameover_val = check_game_over();
+
+        return last_gameover_val;
+    }
+
+    [[nodiscard]] auto is_legal(Move move) const->bool {
+            auto legals = legal_moves();
+            return std::any_of(
+                legals.begin(),
+                legals.end(),
+                [move](Move i) { return i == move; });
     }
 
     [[nodiscard]] inline static constexpr auto contains_all_bits(int x, int y) -> bool {
@@ -233,6 +279,10 @@ class State {
             current_forced_square = location_in_square;
         }
         move_count++;
+
+        // if this move won a square, we need be checking wins
+        if (node[target_square].is_won())
+            change_flag = true;
     }
 
     void unplay(int n) {
@@ -247,6 +297,8 @@ class State {
         // you'd think we now need to set LFS to something else, but we
         // A. do not have access to that information
         // B. do not ever need to access LFS again, as we never unplay more than one move at a time.
+
+        last_gameover_val = false;
     }
 
     // EVALUATION
