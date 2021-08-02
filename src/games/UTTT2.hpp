@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <iostream>
 #include <numeric>
 #include <sstream>
@@ -44,7 +45,7 @@ class Square3x3 {
         return false;
     }
 
-    [[nodiscard]] auto is_over() const -> bool {
+    [[nodiscard]] auto is_dead() const -> bool {
         return is_won() || (slots[0] | slots[1]) == 0b111111111;
     }
 
@@ -108,13 +109,9 @@ class State {
     }
 
     // PREDICATES
-    // auto is_full() const -> bool {
-    //     return move_count == MAX_GAME_LENGTH || std::all_of(node.begin(), node.end(), is_square_dead);
-    // }
-
    private:
     [[nodiscard]] auto check_game_over() const -> bool {
-        if (move_count == MAX_GAME_LENGTH || std::all_of(node.begin(), node.end(), is_square_dead)) {
+        if (std::all_of(node.begin(), node.end(), [](auto& sq) { return sq.is_dead(); })) {
             return true;
         }
 
@@ -135,6 +132,9 @@ class State {
     }
    public:
     [[nodiscard]] auto is_game_over() -> bool {
+        if (move_count == MAX_GAME_LENGTH) {
+            return true;
+        }
         // check if we need to do a check at all
         if (!change_flag)
             return last_gameover_val;
@@ -158,18 +158,12 @@ class State {
         return (x & y) == y;
     }
 
-    [[nodiscard]] static auto is_square_dead(const Square3x3& sq) -> bool {
-        int xs = sq.slots[0];
-        int os = sq.slots[1];
-        return ((xs | os) == 0b111111111) || std::any_of(masks.begin(), masks.end(), [xs](int m) { return contains_all_bits(xs, m); }) || std::any_of(masks.begin(), masks.end(), [os](int m) { return contains_all_bits(os, m); });
-    }
-
     // MOVE GENERATION
     [[nodiscard]] auto num_legal_moves() const -> size_t {
         if (current_forced_square == NO_SQUARE) {
             int count = 81;
             for (const auto& sq : node) {
-                if (!is_square_dead(sq)) {
+                if (!sq.is_dead()) {
                     count -= __builtin_popcount(sq.slots[0] | sq.slots[1]);
                 } else {
                     count -= 9;
@@ -189,7 +183,7 @@ class State {
             // benchmark vs. regular index deref loop
             int sq_index = 0;
             for (const auto& sq : node) {
-                if (!is_square_dead(sq)) {
+                if (!sq.is_dead()) {
                     int bb = ~union_bb(sq) & 0b111111111;
                     while (bb) {
                         moves[i++] = sq_index * 9 + __builtin_ctz(bb);
@@ -209,12 +203,13 @@ class State {
     }
 
     void random_play() {
+        assert(num_legal_moves() > 0);
         int choice = rand() % num_legal_moves();
         if (current_forced_square == NO_SQUARE) {
             // benchmark vs. regular index deref loop
             int sq_index = 0;
             for (const auto& sq : node) {
-                if (!is_square_dead(sq)) {
+                if (!sq.is_dead()) {
                     int bb = ~union_bb(sq) & 0b111111111;
                     while (bb) {
                         if (!choice--) {
@@ -271,17 +266,17 @@ class State {
         // as we are moving forward, the current forced square becomes the last forced square
         last_forced_square = current_forced_square;
         // set the new forced square
-        if (is_square_dead(node[location_in_square])) {
+        if (node[location_in_square].is_dead()) {
             // if the target is unplayable, the forced square is NO_SQUARE
             current_forced_square = NO_SQUARE;
         } else {
             // else the forced square is now the location in the played square.
             current_forced_square = location_in_square;
         }
-        move_count++;
+        ++move_count;
 
         // if this move won a square, we need be checking wins
-        if (node[target_square].is_won())
+        if (node[target_square].is_dead())
             change_flag = true;
     }
 
@@ -361,7 +356,7 @@ class State {
                         break;
 
                     case 0:
-                        sb << (is_square_dead(node[x * 3 + y]) ? "D " : ". ");
+                        sb << (node[x * 3 + y].is_dead() ? "D " : ". ");
                         break;
 
                     default:
