@@ -8,6 +8,8 @@
 #include <sstream>
 #include <vector>
 
+#define popcnt __builtin_popcount
+
 constexpr std::array masks = {
     0b111000000,
     0b000111000,
@@ -59,7 +61,7 @@ class Square3x3 {
     }
 
     [[nodiscard]] auto filled_slot_count() const -> int {
-        return __builtin_popcount(slots[0] | slots[1]);
+        return popcnt(slots[0] | slots[1]);
     }
 
     friend auto operator==(const Square3x3& a, const Square3x3& b) -> bool {
@@ -311,38 +313,20 @@ class State {
     }
 
     // EVALUATION
-    static auto evaluate_square(const Square3x3& sq) -> int {
-        int xs = sq.slots[0];
-        int os = sq.slots[1];
-        if (contains_mask(xs)) {
-            return 1;
-        } else if (contains_mask(os)) {
-            return -1;
-        } else {
-            return 0;
-        }
-    }
-
     [[nodiscard]] auto evaluate() const -> int {
-        // construct two binary numbers that represent the meta-board in the same way the the squares individually operate
+        // construct two binary numbers that represent the meta-board in the same way that the squares individually operate
         int xs = get_global_bitmask<0>();
-        int os = get_global_bitmask<1>();
-
-        if (contains_mask(xs)) {
+        if (contains_mask(xs))
             return 1;
-        } else if (contains_mask(os)) {
+
+        int os = get_global_bitmask<1>();
+        if (contains_mask(os)) 
             return -1;
-        } else {
-            int xcount = __builtin_popcount(xs);
-            int ocount = __builtin_popcount(os);
-            if (xcount > ocount) {
-                return 1;
-            } else if (ocount > xcount) {
-                return -1;
-            } else {
-                return 0;
-            }
-        }
+        
+        int diff = popcnt(xs) - popcnt(os);
+
+        // return the sign of diff using boolean arithmetic
+        return (diff > 0) - (diff < 0);
     }
 
     auto heuristic_value() {
@@ -351,6 +335,18 @@ class State {
 
     // IO
     void show() const {
+        auto evaluate_square = [](const Square3x3& sq) {
+            int xs = sq.slots[0];
+            int os = sq.slots[1];
+            if (contains_mask(xs)) {
+                return 1;
+            } else if (contains_mask(os)) {
+                return -1;
+            } else {
+                return 0;
+            }
+        };
+
         std::stringstream sb;
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
