@@ -13,8 +13,6 @@ int main(int argc, char const *argv[]) {
     test.set_debug(false);
 
     if (argc <= 2) {
-        test.set_rollout_limit(200000);
-        test.engine_move();
         std::cout << "Run with arg1: rollouts, arg2: iterations.\n";
         return 0;
     }
