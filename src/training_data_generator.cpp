@@ -68,11 +68,9 @@ auto mpnorm(intmatrix3& mp) {
                 game.end(),
                 [](std::vector<int>& move) {
                     auto total = std::reduce(
-                        std::execution::par,
                         move.begin(),
                         move.end());
                     std::for_each(
-                        std::execution::par,
                         move.begin(),
                         move.end(),
                         [total](int e) { return (double)e / (double)total; });

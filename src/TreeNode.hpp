@@ -26,7 +26,8 @@ public:
     TreeNode(const TreeNode&) = delete;
     TreeNode(TreeNode&&) = delete;
     ~TreeNode() noexcept {
-        for (TreeNode* child : children) {
+        for (auto child : children) {
+            std::cout << "deleting child: " << child << std::endl;
             delete child;
         }
     }

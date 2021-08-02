@@ -147,27 +147,28 @@ class MCTS {
         auto start = std::chrono::steady_clock::now();
         auto end = start + std::chrono::milliseconds(time_limit);
 
-        Node* root_node = new Node(board);
-        root_node->set_state(board);
-        root_node->set_player_no(-side);
+        auto root_node = Node(board);
+        root_node.set_state(board);
+        root_node.set_player_no(-side);
 
         assert(limit_by_rollouts != limit_by_time);
         do {
-            select_expand_simulate_backpropagate(root_node);
+            select_expand_simulate_backpropagate(&root_node);
             node_count++;
-            show_debug(root_node);
+            root_node.show();
+            //show_debug(root_node);
         } while (
             (!limit_by_time || std::chrono::steady_clock::now() < end) && (!limit_by_rollouts || node_count < rollout_limit));
 
-        State out = root_node->best_child()->get_state();
+        State out = root_node.best_child()->get_state();
 
         if (readout) {
             auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
             std::cout << node_count << " nodes processed in " << time << "ms at " << (double)node_count / ((double)time / 1000.0) << "NPS.\n";
-            std::cout << "predicted winrate: " << root_node->best_child()->get_winrate() << "\n";
+            std::cout << "predicted winrate: " << root_node.best_child()->get_winrate() << "\n";
         }
         std::cout << "about to delete node!\n";
-        delete root_node;
+        // delete root_node;
         return out;
     }
 
@@ -189,7 +190,7 @@ class MCTS {
         do {
             select_expand_simulate_backpropagate(root_node);
             node_count++;
-            show_debug(root_node);
+            //show_debug(root_node);
         } while (
             (!limit_by_time || std::chrono::steady_clock::now() < end) && (!limit_by_rollouts || node_count < rollout_limit));
 
@@ -240,7 +241,7 @@ class MCTS {
     auto select_promising_node(Node* root_node) const -> Node* {
         Node* node = root_node;
         while (!node->get_children().empty()) {
-            std::cout << node;
+            // std::cout << node;
             node = UCT<Node, State::GAME_EXP_FACTOR>::best_child_ucb1(node);
         }
         return node;
@@ -269,7 +270,7 @@ class MCTS {
         playout_board.mem_setup();
 
         // tests for an immediate loss in the position
-        // and sets to MIN_VALUE if there is one.
+        // and sets to N_INF if there is one.
         int status = playout_board.evaluate();
         if (status == -side) {
             node->get_parent()->set_win_score(N_INF);
