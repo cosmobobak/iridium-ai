@@ -21,8 +21,12 @@ build:
 
 bench:
 	@echo "Running benchmark..."
-	g++ -std=c++2a -Ofast -Wall -Wextra -Werror -Wpedantic src/bench.cpp -o target/$(__bench_name) 
-	./target/$(__bench_name) 500 5000
+	g++ -std=c++2a -Ofast -Wall -Wextra -Werror -Wpedantic src/UTTTbench.cpp -o target/UTTT$(__bench_name)
+	g++ -std=c++2a -Ofast -Wall -Wextra -Werror -Wpedantic src/C4bench.cpp -o target/C4$(__bench_name)
+	g++ -std=c++2a -Ofast -Wall -Wextra -Werror -Wpedantic src/gomokubench.cpp -o target/gomoku$(__bench_name)
+	./target/UTTT$(__bench_name) 500 5000
+	./target/C4$(__bench_name) 500 5000
+	./target/gomoku$(__bench_name) 500 5000
 
 grind:
 	g++ -std=c++2a -ggdb3 -Wall -Wextra -Werror -Wpedantic src/main.cpp -o target/$(__grind_name)
@@ -35,7 +39,7 @@ grind:
 
 graph_bench:
 	@echo "Running callgraph benchmark..."
-	g++ -std=c++2a -pg -Wall -Wextra -Werror -Wpedantic src/bench.cpp -o target/$(__graph_name)
+	g++ -std=c++2a -pg -Wall -Wextra -Werror -Wpedantic src/UTTTbench.cpp -o target/$(__graph_name)
 	./target/$(__graph_name) 100 5000
 	gprof ./target/$(__graph_name) | gprof2dot -s | dot -Tpng -o graph_bench.png
 
