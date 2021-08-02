@@ -36,16 +36,16 @@ int main(int argc, char const *argv[]) {
         test.reset_node();
         auto start = std::chrono::steady_clock::now();
         test.engine_move();
-        long long time_taken = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+        long long time_taken = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count();
         max_time = std::max(max_time, time_taken);
         min_time = std::min(min_time, time_taken);
         total_time += time_taken;
     }
     printf("%d%% done!\n", 100);
 
-    printf("Min time: %lldms\n", min_time);
-    printf("Max time: %lldms\n", max_time);
-    printf("Avg time: %lldms\n", total_time / iterations);
+    printf("Min time: %lldus\n", min_time);
+    printf("Max time: %lldus\n", max_time);
+    printf("Avg time: %lldus\n", total_time / iterations);
 
     return 0;
 }
