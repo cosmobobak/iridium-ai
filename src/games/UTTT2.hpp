@@ -83,7 +83,7 @@ class State {
     // the game has nine sub-games, each of which is a 3x3 grid
     std::array<Square3x3, 9> node;
     // a cache of which sub-games have ended that can be changed inside const methods
-    mutable std::array<bool, 9> square_ended_cache;
+    mutable std::array<bool, 9> square_ended_cache = {false};
     // the number of moves made so far
     int move_count;
     // the square upon which the player to move must play
