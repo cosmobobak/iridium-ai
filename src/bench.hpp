@@ -1,3 +1,5 @@
+#pragma once
+
 #include <chrono>
 #include <iostream>
 #include <limits>
@@ -10,27 +12,20 @@ namespace std {
     using namespace chrono;
 }
 
+namespace bench {
+
+template <typename ST>
 [[nodiscard]] auto get_benchmark_engine() {
-    auto out = Zero<UTTT::State>();
+    auto out = Zero<ST>();
     out.use_rollout_limit(true);
     out.set_readout(false);
     out.set_debug(false);
     return out;
 }
 
-int main(int argc, char const *argv[]) {
-    if (argc <= 2) {
-        std::cout << "Run with arg1: rollouts, arg2: iterations.\n";
-        return 0;
-    }
-
-    auto engine = get_benchmark_engine();
-
-    auto rollouts = atoi(argv[1]);
-    auto iterations = atoi(argv[2]);
-
-    printf("%d %d\n", rollouts, iterations);
-
+template <typename ST>
+void benchmark(int rollouts, int iterations) {
+    auto engine = get_benchmark_engine<ST>();
     engine.set_rollout_limit(rollouts);
 
     auto total_time = 0LL;
@@ -55,6 +50,5 @@ int main(int argc, char const *argv[]) {
     printf("Min time: %lldus\n", min_time);
     printf("Max time: %lldus\n", max_time);
     printf("Avg time: %lldus\n", total_time / iterations);
-
-    return 0;
+}
 }
