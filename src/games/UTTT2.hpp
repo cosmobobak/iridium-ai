@@ -82,6 +82,8 @@ class State {
 
     // the game has nine sub-games, each of which is a 3x3 grid
     std::array<Square3x3, 9> node;
+    // a cache of which sub-games have ended that can be changed inside const methods
+    mutable std::array<bool, 9> square_ended_cache;
     // the number of moves made so far
     int move_count;
     // the square upon which the player to move must play
@@ -135,9 +137,20 @@ class State {
 
     // PREDICATES
    private:
-    [[nodiscard]] auto check_game_over() const -> bool {
-        if (std::all_of(node.begin(), node.end(), [](auto& sq) { return sq.is_dead(); })) {
+    [[nodiscard]] auto cached_is_dead(int sq_idx) const -> bool {
+        if (square_ended_cache[sq_idx]) {
             return true;
+        }
+        auto death_status = node[sq_idx].is_dead();
+        square_ended_cache[sq_idx] = death_status;
+        return death_status;
+    }
+
+    [[nodiscard]] auto check_game_over() const -> bool {
+        for (auto sq_idx = 0; sq_idx < 9; ++sq_idx) {
+            if (cached_is_dead(sq_idx)) {
+                return true;
+            }
         }
 
         // construct two binary numbers that represent the meta-board in the same way the the squares individually operate
@@ -179,9 +192,9 @@ class State {
     [[nodiscard]] auto num_legal_moves() const -> size_t {
         if (current_forced_square == NO_SQUARE) {
             int count = 81;
-            for (const auto& sq : node) {
-                if (!sq.is_dead()) {
-                    count -= sq.filled_slot_count();
+            for (int sq_idx = 0; sq_idx < 9; ++sq_idx) {
+                if (!cached_is_dead(sq_idx)) {
+                    count -= node[sq_idx].filled_slot_count();
                 } else {
                     count -= 9;
                 }
@@ -196,17 +209,14 @@ class State {
         std::vector<Move> moves(num_legal_moves());
         int i = 0;
         if (current_forced_square == NO_SQUARE) {
-            // benchmark vs. regular index deref loop
-            int sq_index = 0;
-            for (const auto& sq : node) {
-                if (!sq.is_dead()) {
-                    int bb = ~union_bb(sq) & 0b111111111;
+            for (int sq_idx = 0; sq_idx < 9; ++sq_idx) {
+                if (!cached_is_dead(sq_idx)) {
+                    int bb = ~union_bb(node[sq_idx]) & 0b111111111;
                     while (bb) {
-                        moves[i++] = sq_index * 9 + __builtin_ctz(bb);
+                        moves[i++] = sq_idx * 9 + __builtin_ctz(bb);
                         bb &= bb - 1;  // clear the least significant bit set
                     }
                 }
-                sq_index++;
             }
         } else {
             int bb = ~union_bb(node[current_forced_square]) & 0b111111111;
@@ -222,20 +232,17 @@ class State {
         assert(num_legal_moves() > 0);
         int choice = rand() % num_legal_moves();
         if (current_forced_square == NO_SQUARE) {
-            // benchmark vs. regular index deref loop
-            int sq_index = 0;
-            for (const auto& sq : node) {
-                if (!sq.is_dead()) {
-                    int bb = ~union_bb(sq) & 0b111111111;
+            for (int sq_idx = 0; sq_idx < 9; ++sq_idx) {
+                if (!cached_is_dead(sq_idx)) {
+                    int bb = ~union_bb(node[sq_idx]) & 0b111111111;
                     while (bb) {
                         if (!choice--) {
-                            play(sq_index * 9 + __builtin_ctz(bb));
+                            play(sq_idx * 9 + __builtin_ctz(bb));
                             return;
                         }
                         bb &= bb - 1;  // clear the least significant bit set
                     }
                 }
-                sq_index++;
             }
         } else {
             int bb = ~union_bb(node[current_forced_square]) & 0b111111111;
@@ -282,7 +289,7 @@ class State {
         // as we are moving forward, the current forced square becomes the last forced square
         last_forced_square = current_forced_square;
         // set the new forced square
-        if (node[location_in_square].is_dead()) {
+        if (cached_is_dead(location_in_square)) {
             // if the target is unplayable, the forced square is NO_SQUARE
             current_forced_square = NO_SQUARE;
         } else {
@@ -292,7 +299,7 @@ class State {
         ++move_count;
 
         // if this move won a square, we need be checking wins
-        if (node[target_square].is_dead())
+        if (cached_is_dead(target_square))
             change_flag = true;
     }
 
