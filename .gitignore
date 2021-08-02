@@ -4,3 +4,5 @@
 .idea/
 .vs/
 target/
+graph_bench.png
+valgrind-out.txt
