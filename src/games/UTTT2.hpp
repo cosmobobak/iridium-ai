@@ -31,7 +31,6 @@ constexpr std::array masks = {
 
 namespace UTTT {
 class Square3x3 {
-
    public:
     std::array<int16_t, 2> slots = {0};
 
