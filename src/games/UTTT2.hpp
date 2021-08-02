@@ -18,7 +18,14 @@ constexpr std::array masks = {
     0b100010001,
     0b001010100};
 
-
+[[nodiscard]] constexpr auto contains_mask(int bb) -> bool {
+    for (auto m : masks) {
+        if ((bb & m) == m) {
+            return true;
+        }
+    }
+    return false;
+}
 
 namespace UTTT {
 class Square3x3 {
@@ -28,10 +35,12 @@ class Square3x3 {
 
     [[nodiscard]] auto is_won() const -> bool {
         for (auto mask : masks) {
-            if ((slots[0] & mask) == mask)
+            if ((slots[0] & mask) == mask) {
                 return true;
-            if ((slots[1] & mask) == mask)
+            }
+            if ((slots[1] & mask) == mask) {
                 return true;
+            }
         }
         return false;
     }
@@ -47,6 +56,10 @@ class Square3x3 {
 
     [[nodiscard]] auto is_dead() const -> bool {
         return is_won() || (slots[0] | slots[1]) == 0b111111111;
+    }
+
+    [[nodiscard]] auto filled_slot_count() const -> int {
+        return __builtin_popcount(slots[0] | slots[1]);
     }
 
     friend auto operator==(const Square3x3& a, const Square3x3& b) -> bool {
@@ -103,6 +116,16 @@ class State {
         return node;
     }
 
+    template < int player >
+    [[nodiscard]] auto get_global_bitmask() const -> int {
+        int binary_accumulator = 0;
+        for (const auto& sq : node) {
+            binary_accumulator <<= 1;
+            binary_accumulator |= sq.is_won_by<player>();
+        }
+        return binary_accumulator;
+    }
+
     // SETTERS
     void set_move_count(int n) {
         move_count = n;
@@ -116,19 +139,15 @@ class State {
         }
 
         // construct two binary numbers that represent the meta-board in the same way the the squares individually operate
-        int xs = std::accumulate(node.begin(), node.end(), 0, [](int binary_accumulator, const Square3x3& sq) {
-            return binary_accumulator << 1 | sq.is_won_by<0>();
-        });
+        int xs = get_global_bitmask<0>();
 
-        if (std::any_of(masks.begin(), masks.end(), [xs](int m) { return contains_all_bits(xs, m); })) {
+        if (contains_mask(xs)) {
             return true;
         }
 
-        int os = std::accumulate(node.begin(), node.end(), 0, [](int binary_accumulator, const Square3x3& sq) {
-            return binary_accumulator << 1 | sq.is_won_by<1>();
-        });
+        int os = get_global_bitmask<1>();
 
-        return std::any_of(masks.begin(), masks.end(), [os](int m) { return contains_all_bits(os, m); });
+        return contains_mask(os);
     }
    public:
     [[nodiscard]] auto is_game_over() -> bool {
@@ -146,16 +165,12 @@ class State {
         return last_gameover_val;
     }
 
-    [[nodiscard]] auto is_legal(Move move) const->bool {
+    [[nodiscard]] auto is_legal(Move move) const -> bool {
             auto legals = legal_moves();
             return std::any_of(
                 legals.begin(),
                 legals.end(),
                 [move](Move i) { return i == move; });
-    }
-
-    [[nodiscard]] inline static constexpr auto contains_all_bits(int x, int y) -> bool {
-        return (x & y) == y;
     }
 
     // MOVE GENERATION
@@ -164,15 +179,14 @@ class State {
             int count = 81;
             for (const auto& sq : node) {
                 if (!sq.is_dead()) {
-                    count -= __builtin_popcount(sq.slots[0] | sq.slots[1]);
+                    count -= sq.filled_slot_count();
                 } else {
                     count -= 9;
                 }
             }
             return count;
         } else {
-            return 9 - __builtin_popcount(
-                           node[current_forced_square].slots[0] | node[current_forced_square].slots[1]);
+            return 9 - node[current_forced_square].filled_slot_count();
         }
     }
 
@@ -300,9 +314,9 @@ class State {
     static auto evaluate_square(const Square3x3& sq) -> int {
         int xs = sq.slots[0];
         int os = sq.slots[1];
-        if (std::any_of(masks.begin(), masks.end(), [xs](int m) { return contains_all_bits(xs, m); })) {
+        if (contains_mask(xs)) {
             return 1;
-        } else if (std::any_of(masks.begin(), masks.end(), [os](int m) { return contains_all_bits(os, m); })) {
+        } else if (contains_mask(os)) {
             return -1;
         } else {
             return 0;
@@ -310,19 +324,13 @@ class State {
     }
 
     [[nodiscard]] auto evaluate() const -> int {
-        // construct two binary numbers that represent the meta-board in the same way the the square individually operate
-        int xs = std::accumulate(node.begin(), node.end(), 0, [](int binary_accumulator, const Square3x3& sq) {
-            int internal_xs = sq.slots[0];
-            return binary_accumulator << 1 | std::any_of(masks.begin(), masks.end(), [internal_xs](int m) { return contains_all_bits(internal_xs, m); });
-        });
-        int os = std::accumulate(node.begin(), node.end(), 0, [](int binary_accumulator, const Square3x3& sq) {
-            int internal_os = sq.slots[1];
-            return binary_accumulator << 1 | std::any_of(masks.begin(), masks.end(), [internal_os](int m) { return contains_all_bits(internal_os, m); });
-        });
+        // construct two binary numbers that represent the meta-board in the same way the the squares individually operate
+        int xs = get_global_bitmask<0>();
+        int os = get_global_bitmask<1>();
 
-        if (std::any_of(masks.begin(), masks.end(), [xs](int m) { return contains_all_bits(xs, m); })) {
+        if (contains_mask(xs)) {
             return 1;
-        } else if (std::any_of(masks.begin(), masks.end(), [os](int m) { return contains_all_bits(os, m); })) {
+        } else if (contains_mask(os)) {
             return -1;
         } else {
             int xcount = __builtin_popcount(xs);
