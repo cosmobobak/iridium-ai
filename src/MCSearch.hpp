@@ -155,7 +155,7 @@ class MCTS {
         do {
             select_expand_simulate_backpropagate(&root_node);
             node_count++;
-            root_node.show();
+            // root_node.show();
             //show_debug(root_node);
         } while (
             (!limit_by_time || std::chrono::steady_clock::now() < end) && (!limit_by_rollouts || node_count < rollout_limit));
@@ -167,8 +167,7 @@ class MCTS {
             std::cout << node_count << " nodes processed in " << time << "ms at " << (double)node_count / ((double)time / 1000.0) << "NPS.\n";
             std::cout << "predicted winrate: " << root_node.best_child()->get_winrate() << "\n";
         }
-        std::cout << "about to delete node!\n";
-        // delete root_node;
+        
         return out;
     }
 
@@ -214,11 +213,9 @@ class MCTS {
     }
 
     void select_expand_simulate_backpropagate(Node* root_node) {
-        std::cout << "SELECTION\n";
         // SELECTION
         Node* promisingNode = select_promising_node(root_node);
 
-        std::cout << "EXPANSION\n";
         // EXPANSION
         if (!promisingNode->get_state().is_game_over()) {
             promisingNode->expand();
@@ -230,10 +227,9 @@ class MCTS {
             nodeToExplore = promisingNode->random_child();
         }
 
-        std::cout << "SIMULATION\n";
         // SIMULATION
         int result = simulate_playout(nodeToExplore);
-        std::cout << "BACKPROPAGATION\n";
+
         // BACKPROPAGATION
         backprop(nodeToExplore, result);
     }
@@ -241,7 +237,6 @@ class MCTS {
     auto select_promising_node(Node* root_node) const -> Node* {
         Node* node = root_node;
         while (!node->get_children().empty()) {
-            // std::cout << node;
             node = UCT<Node, State::GAME_EXP_FACTOR>::best_child_ucb1(node);
         }
         return node;
