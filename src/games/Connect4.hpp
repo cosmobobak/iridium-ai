@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <iostream>
 #include <numeric>
 #include <vector>
@@ -17,9 +18,11 @@ class State {
     using Move = uint_fast8_t;
     static constexpr auto GAME_SOLVABLE = NUM_COLS * NUM_ROWS <= 25;
     static constexpr auto GAME_EXP_FACTOR = 10;  // 1.41 * 5;
-    static constexpr int BB_ALL = (1 << NUM_ROWS) - 1;
+    static constexpr int BB_ALL = (1 << NUM_COLS) - 1;
     static constexpr auto MAX_GAME_LENGTH = NUM_ROWS * NUM_COLS;
     static constexpr auto NUM_ACTIONS = NUM_COLS;
+
+    static_assert(!(NUM_ROWS == 6 && NUM_COLS == 7) || BB_ALL == 0b1111111, "Invalid BB_ALL");
 
    private:
     std::array<std::array<Bitrow, NUM_COLS>, 2> node = {0};
@@ -115,12 +118,21 @@ class State {
 
         // the loop runs until
         // we hit the chosen move
-        while (choice--) {
+        while (choice) {
             // clear the least significant bit set
             bb &= bb - 1;
+            --choice;
         }
 
-        play(__builtin_ctz(bb));
+        if (!bb) {
+            std::cout << "you fucked up: " << std::endl;
+            auto original_bb = node[0][0] | node[1][0];
+            std::cout << "node: " << original_bb << std::endl;
+            std::cout << "num_moves: " << NUM_COLS - __builtin_popcount(original_bb) << std::endl;
+        }
+        auto move = __builtin_ctz(bb);
+
+        play(move);
     }
 
     // DATA VIEWS
@@ -191,6 +203,8 @@ class State {
             row--;
         }
         // moveCount acts to determine which colour is played
+        // assert that row - 1 is in bounds
+        assert(row - 1 >= 0 && row - 1 < NUM_ROWS);
         node[move_count & 1][row - 1] ^= (1 << col);
         // store the made move in the stack
         // move_stack[move_count++] = col;
