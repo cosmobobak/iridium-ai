@@ -138,6 +138,7 @@ class State {
     // PREDICATES
    private:
     [[nodiscard]] auto cached_is_dead(int sq_idx) const -> bool {
+        // NOTE FOR FUTURE COSMO: YOU HAVE USED THE mutable KEYWORD, HERE BE DRAGONS.
         if (square_ended_cache[sq_idx]) {
             return true;
         }
@@ -153,16 +154,8 @@ class State {
             }
         }
 
-        // construct two binary numbers that represent the meta-board in the same way the the squares individually operate
-        int xs = get_global_bitmask<0>();
-
-        if (contains_mask(xs)) {
-            return true;
-        }
-
-        int os = get_global_bitmask<1>();
-
-        return contains_mask(os);
+        return contains_mask(get_global_bitmask<0>()) 
+            || contains_mask(get_global_bitmask<1>());
     }
    public:
     [[nodiscard]] auto is_game_over() -> bool {
