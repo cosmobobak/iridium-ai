@@ -39,7 +39,7 @@ grind:
 
 graph_bench:
 	@echo "Running callgraph benchmark..."
-	g++ -std=c++2a -pg -Wall -Wextra -Werror -Wpedantic src/UTTTbench.cpp -o target/$(__graph_name)
+	g++ -std=c++2a -pg -Wall -Wextra -Werror -Wpedantic src/gomokubench.cpp -o target/$(__graph_name)
 	./target/$(__graph_name) 100 5000
 	gprof ./target/$(__graph_name) | gprof2dot -s | dot -Tpng -o graph_bench.png
 

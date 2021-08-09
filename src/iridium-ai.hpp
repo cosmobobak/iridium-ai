@@ -127,8 +127,8 @@ template <class State>
 void userplay() {
     auto engine = Zero<State>();
     engine.get_node().show();
+    int i;
     while (!engine.get_node().is_game_over() && !engine.get_node().is_game_over()) {
-        int i;
         i = engine.get_player_move();
         engine.get_node().play(i);
         engine.get_node().show();
@@ -140,7 +140,26 @@ void userplay() {
 template <class State>
 void testsuite() {
     auto engine = Zero<State>();
+    engine.get_node().show();
+    std::cout << "\nforcing board: "
+              //<< (int)engine.get_node().forcingBoard
+              << "\nposition legal moves: "
+              << engine.get_node().legal_moves().size()
+              << "\nfast move counter: "
+              << (int)engine.get_node().num_legal_moves()
+              << "\nforcing board after movegen: "
+              //<< (int)engine.get_node().forcingBoard
+              << "\nactual list of moves: \n";
+    for (auto move : engine.get_node().legal_moves()) {
+        std::cout << (int)move << " ";
+    }
+    std::cout << "\nstate of play (is engine over?): "
+              << engine.get_node().is_game_over()
+              << '\n';
+    // assert(engine.get_node().evaluate() == engine.get_node().evaluateOLD());
+    assert(engine.get_node().legal_moves().size() == engine.get_node().num_legal_moves());
     while (!engine.get_node().is_game_over()) {
+        engine.get_node().random_play();
         engine.get_node().show();
         std::cout << "\nforcing board: "
                   //<< (int)engine.get_node().forcingBoard
@@ -151,13 +170,14 @@ void testsuite() {
                   << "\nforcing board after movegen: "
                   //<< (int)engine.get_node().forcingBoard
                   << "\nactual list of moves: \n";
-        for (auto move : engine.get_node().legal_moves()) std::cout << move << " ";
+        for (auto move : engine.get_node().legal_moves()) {
+            std::cout << (int)move << " ";
+        }
         std::cout << "\nstate of play (is engine over?): "
                   << engine.get_node().is_game_over()
                   << '\n';
         // assert(engine.get_node().evaluate() == engine.get_node().evaluateOLD());
         assert(engine.get_node().legal_moves().size() == engine.get_node().num_legal_moves());
-        engine.get_node().random_play();
     }
 }
 

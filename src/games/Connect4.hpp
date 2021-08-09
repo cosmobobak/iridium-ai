@@ -47,10 +47,6 @@ class State {
         return move_count & 1;
     }
 
-    [[nodiscard]] auto get_node() const -> const std::array<std::array<Bitrow, NUM_COLS>, 2>& {
-        return node;
-    }
-
     // SETTERS
     void set_move_count(int n) {
         move_count = n;

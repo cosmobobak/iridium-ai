@@ -2,18 +2,19 @@
 
 #include <chrono>
 #include <limits>
+#include <random>
 
 #include "UCT.hpp"
 #include "TreeNode.hpp"
 
 constexpr auto INF = std::numeric_limits<int>::max();
-constexpr auto N_INF = std::numeric_limits<int>::lowest() + 1;
+constexpr auto N_INF = -std::numeric_limits<int>::max();
 
 template <class State>
 class MCTS {
    private:
     using Node = TreeNode::TreeNode<State>;
-    static constexpr auto MAX_REWARD = 10;
+    static constexpr auto WIN_SCORE = 10;
     // limiter on search time
     long long time_limit;
     // limiter on rollouts
@@ -141,22 +142,20 @@ class MCTS {
         // board is immediately copied    ^^^
 
         node_count = 0;
-        side = board.get_turn();
 
         // tracks time
         auto start = std::chrono::steady_clock::now();
         auto end = start + std::chrono::milliseconds(time_limit);
 
         auto root_node = Node(board);
-        root_node.set_state(board);
-        root_node.set_player_no(-side);
 
         assert(limit_by_rollouts != limit_by_time);
         do {
             select_expand_simulate_backpropagate(&root_node);
             node_count++;
             // root_node.show();
-            //show_debug(root_node);
+            // show_debug(&root_node);
+            // show_pv(&root_node);
         } while (
             (!limit_by_time || std::chrono::steady_clock::now() < end) && (!limit_by_rollouts || node_count < rollout_limit));
 
@@ -168,6 +167,8 @@ class MCTS {
             std::cout << "predicted winrate: " << root_node.best_child()->get_winrate() << "\n";
         }
         
+        // root_node.print_pv();
+        // root_node.print_tree();
         return out;
     }
 
@@ -175,15 +176,12 @@ class MCTS {
         // board is immediately copied  ^^^
 
         node_count = 0;
-        side = board.get_turn();
 
         // tracks time
         auto start = std::chrono::steady_clock::now();
         auto end = start + std::chrono::milliseconds(time_limit);
 
         Node* root_node = new Node(board);
-        root_node->set_state(board);
-        root_node->set_player_no(-side);
 
         // assert(limit_by_rollouts != limit_by_time);
         do {
@@ -228,10 +226,20 @@ class MCTS {
         }
 
         // SIMULATION
-        int result = simulate_playout(nodeToExplore);
+        int winning_side = simulate_playout(nodeToExplore);
 
         // BACKPROPAGATION
-        backprop(nodeToExplore, result);
+        backprop(nodeToExplore, winning_side);
+    }
+
+    auto relative_reward(int perspective, int reward) const -> int {
+        // designed for two-player zero-sum environments.
+        // my win == your loss
+        if (perspective == this->side) {
+            return reward;
+        } else {
+            return 10 - reward;
+        }
     }
 
     auto select_promising_node(Node* root_node) const -> Node* {
@@ -242,24 +250,6 @@ class MCTS {
         return node;
     }
 
-    [[nodiscard]] auto relative_reward(int perspective, int reward) const -> int {
-        // designed for two-player zero-sum environments.
-        // my win == your loss
-        if (perspective == this->side) {
-            return reward;
-        } else {
-            return MAX_REWARD - reward;
-        }
-    }
-
-    void backprop(Node* nodeToExplore, int reward) {
-        // works its way up the tree, adding relative scores to all the parent nodes.
-        for (Node* bp_node = nodeToExplore; bp_node != nullptr; bp_node = bp_node->get_parent()) {
-            bp_node->increment_visits();
-            bp_node->add_score(relative_reward(bp_node->get_player_no(), reward));
-        }
-    }
-
     auto simulate_playout(Node* node) -> int {
         State playout_board = node->copy_state();
         playout_board.mem_setup();
@@ -267,8 +257,12 @@ class MCTS {
         // tests for an immediate loss in the position
         // and sets to N_INF if there is one.
         int status = playout_board.evaluate();
+        assert(side != 0);
         if (status == -side) {
             node->get_parent()->set_win_score(N_INF);
+            // printf("this position should be immediately lost!\n");
+            // playout_board.show();
+            // printf("The evaluation of this position is: %d\n", status);
             return status;
         }
 
@@ -277,8 +271,22 @@ class MCTS {
             playout_board.random_play();
         }
 
-        return (playout_board.evaluate() + 1) * 5;  // 1/0/-1 -> 10/5/0
+        int winning_side = playout_board.evaluate();
+
+        return winning_side;
+        // return (playout_board.evaluate() + 1) * 5;  // 1/0/-1 -> 10/5/0
         // return playout_board.evaluate() == side ? 10 : -10;  // 1/0/-1 -> 10/0/-10
+    }
+
+    void backprop(Node* nodeToExplore, int winning_side) {
+        // works its way up the tree, adding relative scores to all the parent nodes.
+        for (Node* bp_node = nodeToExplore; bp_node != nullptr; bp_node = bp_node->get_parent()) {
+            bp_node->increment_visits();
+            if (bp_node->get_player_no() == winning_side) {
+                bp_node->add_score(WIN_SCORE);
+            }
+            // bp_node->add_score(relative_reward(bp_node->get_player_no(), reward));
+        }
     }
 
     // DEBUG
@@ -296,6 +304,11 @@ class MCTS {
             lw = std::max(lw, 0.0);
             std::cout << (root_node->get_state().get_turn() == 1 ? 10 * lw : 100 - 10 * lw);
             std::cout << "\n";
+        }
+    }
+    void show_pv(Node* node) {
+        if (readout && __builtin_popcount(node_count) == 1) {
+            node->print_pv();
         }
     }
 };

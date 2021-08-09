@@ -92,6 +92,7 @@ class Zero {
     }
 
     void engine_move() {
+        search_driver.set_side(node.get_turn());
         node = search_driver.find_best_next_board(node);
     }
 

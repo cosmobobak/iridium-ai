@@ -1,10 +1,13 @@
 #pragma once
 
+#include "../utilities/bitset"
+#include "../utilities/random.hpp"
 #include <array>
-#include <bitset>
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <numeric>
+#include <algorithm>
 
 namespace Gomoku {
 
@@ -26,19 +29,259 @@ template <typename T>
     return builder;
 }
 
+[[nodiscard]] constexpr auto generate_bitmask(int n) -> uint64_t {
+    if (n == 0) {
+        return 0xffffffffffffffff;
+    }
+    // return a bitmask of width n
+    return (1ULL << (n + 2)) - 1;
+}
+
+template <int WIDTH, int HEIGHT>
+[[nodiscard]] constexpr auto columnar_bitmask() -> std::bitset<WIDTH * HEIGHT> {
+    std::bitset<WIDTH * HEIGHT> out;
+    for (int i = 0; i < HEIGHT; i++) {
+        out.set(i * WIDTH);
+    }
+    return out;
+}
+
+template <int WIDTH, int HEIGHT>
+class BitMatrix {
+public:
+    // A bit matrix of size WIDTH x HEIGHT.
+    static constexpr auto SIZE = WIDTH * HEIGHT;
+    using bitvec = std::bitset<SIZE>;
+    static constexpr bitvec COL_MASK = columnar_bitmask<WIDTH, HEIGHT>();
+    bitvec data;
+
+    // an enum of directions for checking rows
+    enum Direction {
+        VERTICAL,
+        HORIZONTAL,
+        DIAGONAL_45,
+        DIAGONAL_135,
+    };
+
+   public:
+    [[nodiscard]] static auto from_u64(uint64_t num) noexcept -> BitMatrix {
+        BitMatrix result;
+        result.data = num;
+        return result;
+    }
+
+    [[nodiscard]] auto operator[](int x) const noexcept -> uint64_t {
+        return data[x];
+    }
+
+    [[nodiscard]] auto operator()(int x, int y) const noexcept -> uint64_t {
+        // access a bit at position x, y
+        auto linear_index = x + y * WIDTH;
+        return data[linear_index];
+    }
+
+    [[nodiscard]] auto popcount() const noexcept -> int {
+        return data.count();
+    }
+
+    [[nodiscard]] auto ctz() const noexcept -> int {
+        // horrible terrible slow approach
+        for (int i = 0; i < SIZE; i++) {
+            if (data[i]) {
+                return i - 1;
+            }
+        }
+        assert(false);
+        return SIZE * 64;
+    }
+
+    void reset() {
+        // zero out the matrix
+        std::fill(data.begin(), data.end(), 0ULL);
+    }
+
+    [[nodiscard]] auto test_bit(int x) const noexcept -> bool {
+        // test if a bit at position x is set
+        return data.test(x);
+    }
+
+    [[nodiscard]] auto test_bit(int x, int y) const noexcept -> bool {
+        // test if a bit at position x, y is set
+        auto linear_index = x + y * WIDTH;
+        return data.test(linear_index);
+    }
+
+    void set_bit(int x) {
+        // set a bit at position x
+        data.set(x);
+    }
+
+    void clear_bit(int x) {
+        // clear a bit at position x
+        data.reset(x);
+    }
+
+    void flip() {
+        // flip all bits
+        data.flip();
+    }
+
+    void bitscan(std::vector<uint_fast8_t>& positions) const {
+        positions.resize(popcount());
+        int idx = 0;
+        // find all the bits set in the matrix
+        for (int i = 0; i < SIZE; ++i) {
+            if (data[i]) {
+                positions[idx++] = i;
+            }
+        }
+    }
+
+    void clear_bit() {
+        // this function shouldn't really be needed
+        assert(false);
+    }
+
+    [[nodiscard]] static constexpr auto safe_bitshift(bitvec bb, int n) -> bitvec {
+        // when we shift the data, we have to ensure that we aren't shifting across edges.
+        // because shifts operate forward and backward, the edges we will run over are the left and right edges.
+        // for this reason, we want a vertical bitmask "column"
+        bitvec mask = 0;
+        for (int i = 0; i < n; i++) {
+            mask |= COL_MASK << i;
+        }
+        bb << n;
+        bb &= mask;
+        return bb;
+    }
+
+    template < int N , Direction dir >
+    auto has_n_in_a_row() const -> bool {
+        std::array < int, N > bitshifts;
+        if constexpr (dir == Direction::HORIZONTAL) {
+            // simple special case for horizontal
+            std::iota(bitshifts.begin(), bitshifts.end(), 0);
+        } else if (dir == Direction::VERTICAL) {
+            // increase by a bitshift that moves everything up
+            for (int i = 0; i < N; ++i) {
+                bitshifts[i] = i * WIDTH;
+            }
+        } else if (dir == Direction::DIAGONAL_45) {
+            // increase by a bitshift that moves everything up and to the right
+            for (int i = 0; i < N; ++i) {
+                bitshifts[i] = i * WIDTH + i;
+            }
+        } else if (dir == Direction::DIAGONAL_135) {
+            // increase by a bitshift that moves everything up and to the left
+            for (int i = 0; i < N; ++i) {
+                bitshifts[i] = i * WIDTH - i;
+            }
+        }
+
+        auto result = data;
+        for (auto shift : bitshifts) {
+            result &= safe_bitshift(data, shift);
+        }
+
+        return result.any();
+    }
+
+    template <Direction dir>
+    auto has_n_in_a_row(int n) const -> bool {
+        std::vector<int> bitshifts(n);
+        if constexpr (dir == Direction::HORIZONTAL) {
+            // simple special case for horizontal
+            std::iota(bitshifts.begin(), bitshifts.end(), 0);
+        } else if (dir == Direction::VERTICAL) {
+            // increase by a bitshift that moves everything up
+            for (int i = 0; i < n; ++i) {
+                bitshifts[i] = i * WIDTH;
+            }
+        } else if (dir == Direction::DIAGONAL_45) {
+            // increase by a bitshift that moves everything up and to the right
+            for (int i = 0; i < n; ++i) {
+                bitshifts[i] = i * WIDTH + i;
+            }
+        } else if (dir == Direction::DIAGONAL_135) {
+            // increase by a bitshift that moves everything up and to the left
+            for (int i = 0; i < n; ++i) {
+                bitshifts[i] = i * WIDTH - i;
+            }
+        }
+
+        auto result = data;
+        for (auto shift : bitshifts) {
+            result &= safe_bitshift(data, shift);
+        }
+
+        return result.any();
+    }
+
+    template <int N>
+    auto has_n_in_a_row() const -> bool {
+        // printf("has_n_in_a_row(%d, %d, %d)\n", x, y, n);
+        // check if there are n in a row in any direction
+        return has_n_in_a_row<N, Direction::VERTICAL>() ||
+               has_n_in_a_row<N, Direction::HORIZONTAL>() ||
+               has_n_in_a_row<N, Direction::DIAGONAL_45>() ||
+               has_n_in_a_row<N, Direction::DIAGONAL_135>();
+    }
+
+    auto has_n_in_a_row(int n) const -> bool {
+        // printf("has_n_in_a_row(%d, %d, %d)\n", x, y, n);
+        // check if there are n in a row in any direction
+        return has_n_in_a_row<Direction::VERTICAL>(n) ||
+               has_n_in_a_row<Direction::HORIZONTAL>(n) ||
+               has_n_in_a_row<Direction::DIAGONAL_45>(n) ||
+               has_n_in_a_row<Direction::DIAGONAL_135>(n);
+    }
+
+    friend auto operator|(const BitMatrix& lhs, const BitMatrix& rhs) -> BitMatrix {
+        // take the union of two bit matrices
+        auto result = BitMatrix<WIDTH, HEIGHT>();
+        for (int i = 0; i < SIZE; ++i) {
+            result.data[i] = lhs.data[i] | rhs.data[i];
+        }
+        return result;
+    }
+
+    friend auto operator==(const BitMatrix& lhs, const BitMatrix& rhs) -> bool {
+        // test if two bit matrices are equal
+        for (int i = 0; i < SIZE; ++i) {
+            if (lhs.data[i] != rhs.data[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void show() const {
+        for (int x = 0; x < WIDTH; ++x) {
+            for (int y = 0; y < HEIGHT; ++y) {
+                if (test_bit(x, y)) {
+                    printf("1");
+                } else {
+                    printf("0");
+                }
+            }
+            printf("\n");
+        }
+    }
+};
+
+template < int WIDTH = 8, int HEIGHT = 8 >
 class State {
    public:
     using Move = uint_fast8_t;
+    using BB = BitMatrix<WIDTH, HEIGHT>;
     static constexpr auto GAME_SOLVABLE = false;
     static constexpr auto GAME_EXP_FACTOR = 8;
-    static constexpr auto WIDTH = 8;
-    static constexpr auto HEIGHT = 8;
     static constexpr auto MAX_GAME_LENGTH = WIDTH * HEIGHT;
     static constexpr auto NUM_ACTIONS = WIDTH * HEIGHT;
     static constexpr std::array<char, 2> players = {'X', 'O'};
 
    private:
-    std::array<unsigned long long, 2> node = {0};
+    std::array<BB, 2> node;
     int move_count;
     // std::array<Move, MAX_GAME_LENGTH> move_stack = {0};
 
@@ -64,7 +307,8 @@ class State {
     }
     
     void reset() {
-        std::fill(node.begin(), node.end(), 0);
+        node[0].reset();
+        node[1].reset();
         // std::fill(move_stack.begin(), move_stack.end(), 0);
         move_count = 0;
     }
@@ -90,98 +334,73 @@ class State {
         // move_stack.reserve(MAX_GAME_LENGTH);
     }
 
-    void set_node(unsigned long long xs, unsigned long long ys) {
-        node[0] = xs;
-        node[1] = ys;
-    }
-
     void set_move_count(int n) {
         move_count = n;
     }
 
-    [[nodiscard]] auto get_node() const -> const std::array<unsigned long long, 2>& {
+    [[nodiscard]] auto get_node() const -> const std::array<BB, 2>& {
         return node;
     }
 
     [[nodiscard]] auto player_at(int i) const -> bool {
         //only valid to use if pos_filled() returns true, true = x, false = y
-        return node[0] & (1ULL << (i));
+        return node[0].test_bit(i);
     }
 
     [[nodiscard]] auto player_at(int row, int col) const -> bool {
-        // return node[0].test(row * WIDTH + col);
-        return node[0] & (1ULL << (row * WIDTH + col));
+        return node[0].test_bit(row * WIDTH + col);
     }
 
     [[nodiscard]] auto pos_filled(int i) const -> bool {
-        return (node[0] | node[1]) & (1ULL << (i));
+        return (node[0] | node[1]).test_bit(i);
     }
 
     [[nodiscard]] auto pos_filled(int row, int col) const -> bool {
-        return (node[0] | node[1]) & (1ULL << (row * WIDTH + col));
+        return (node[0] | node[1]).test_bit(row * WIDTH + col);
     }
 
     [[nodiscard]] auto probe_spot(int i) const -> bool {
         // tests the bit of the most recently played side
-        return node[(move_count + 1) & 1] & (1ULL << i);
+        return node[(move_count + 1) & 1].test_bit(i);
     }
 
     [[nodiscard]] auto probe_spot(int row, int col) const -> bool {
         // tests the bit of the most recently played side
-        return node[(move_count + 1) & 1] & (1ULL << (row * WIDTH + col));
+        return node[(move_count + 1) & 1].test_bit(row * WIDTH + col);
     }
 
     [[nodiscard]] auto num_legal_moves() const -> size_t {
-        return WIDTH * HEIGHT - __builtin_popcountll(node[0] | node[1]);
+        return WIDTH * HEIGHT - (node[0] | node[1]).popcount();
     }
 
     [[nodiscard]] auto legal_moves() const -> std::vector<Move> {
-        unsigned long long bb = node[0] | node[1];
-        // a vector to hold the generated moves
-        std::vector<Move> moves(WIDTH * HEIGHT - __builtin_popcountll(bb));
+        std::vector<Move> moves;
 
-        // this line creates an inverted occupancy for
-        // the top row (0b0011000 -> 0b1100111)
-        bb = ~bb;
+        auto bb = node[0] | node[1];
 
-        int counter = 0;
+        // put bits in all the empty slots to play
+        bb.flip();
 
-        // the following loop runs until all the occupied
-        // spaces have had moves generated
-        while (bb) {
-            moves[counter++] = __builtin_ctzll(bb);
-            // clear the least significant bit set
-            bb &= bb - 1;
-        }
-        // should be [0, 1, 2, 3, 4, 5, 6]
-        // for move 1 on a 7-wide board
+        // this inserts all the empty slots into the moves vector
+        bb.bitscan(moves);
+        
         return moves;
     }
 
     void random_play() {
-        // the union of the top rows
-        unsigned long long bb = node[0] | node[1];
-        int num_moves = WIDTH * HEIGHT - __builtin_popcountll(bb);
-
-        // the chosen move
-        // assert(num_moves != 0);
-        int choice = rand() % num_moves;
-
-        // this line creates an inverted occupancy for
-        // the top row (0b0011000 -> 0b1100111)
-        bb = ~bb;
-
-        // the loop runs until
-        // we hit the chosen move
-        while (choice--) {
-            // clear the least significant bit set
-            bb &= bb - 1;
+        auto bb = node[0] | node[1];
+        bb.flip();
+        auto option_count = bb.popcount();
+        auto idx = random_int(option_count);
+        for (int i = 0; i < idx; ++i) {
+            bb.clear_bit();
         }
 
-        play(__builtin_ctzll(bb));
+        auto move = bb.ctz();
+
+        play(move);
     }
 
-    
     void pass_turn() {
         move_count++;
     }
@@ -192,7 +411,7 @@ class State {
 
     void play(int i) {
         // move_count acts to determine which colour is played
-        node[move_count & 1] ^= (1ULL << i);
+        node[move_count & 1].set_bit(i);
         // store the made move in the stack
         // move_stack[move_count] = i;
         move_count++;
@@ -208,8 +427,8 @@ class State {
     void unplay(int i) {
         // decrement move counter and get the most recently played move
         --move_count;
-        // a bit is removed by XOR
-        node[move_count & 1] ^= (1ULL << i);
+        // a bit is removed
+        node[move_count & 1].clear_bit(i);
     }
 
     [[nodiscard]] auto is_game_over() const -> bool {
@@ -280,22 +499,54 @@ class State {
         }
         return 0;
     }
+
+    [[nodiscard]] auto nevaluate() const -> int {
+        auto eval = 0;
+        if (node[0].has_n_in_a_row(5)){
+            eval = 1;
+        } else if (node[1].has_n_in_a_row(5)) {
+            eval = -1;
+        }
+        return eval;
+    }
+
    public:
     [[nodiscard]] auto evaluate() const -> int {
-        int v = vertical_term();
-        if (v)
-            return v;
-        int h = horizontal_term();
-        if (h)
-            return h;
-        int u = diagup_term();
-        if (u)
-            return u;
-        int d = diagdown_term();
-        if (d)
-            return d;
+        if (!move_count)
+            return 0;
 
-        return 0;
+        auto out = 0;
+        int v, h, u, d;
+        v = vertical_term();
+        if (v) {
+            out = v;
+            goto ret;
+        }
+        h = horizontal_term();
+        if (h) {
+            out = h;
+            goto ret;
+        }
+        u = diagup_term();
+        if (u) {
+            out = u;
+            goto ret;
+        }
+        d = diagdown_term();
+        if (d) {
+            out = d;
+            goto ret;
+        }
+
+       ret:
+        out = 0;
+
+        auto new_eval = nevaluate();
+
+        printf("new eval: %d\n", new_eval);
+        printf("old eval: %d\n", out);
+
+        return out;
     }
 
     void show_result() {

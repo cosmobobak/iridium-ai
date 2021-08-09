@@ -133,7 +133,8 @@ class State {
 
     void play(int i) {
         node[move_count & 1] |= (1 << i);
-        move_stack[move_count++] = i;
+        move_stack[move_count] = i;
+        ++move_count;
     }
 
     void set_move_count(int n) {
@@ -146,7 +147,7 @@ class State {
     }
 
     void unplay(int i) {
-        move_count--;
+        --move_count;
         node[move_count & 1] ^= (1 << i);
     }
 

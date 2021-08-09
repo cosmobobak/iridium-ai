@@ -20,7 +20,7 @@ auto main() -> int {
             main_template<Connect4x4::State>();
             break;
         case Game::Gomoku:
-            main_template<Gomoku::State>();
+            main_template<Gomoku::State<15,15>>();
             break;
         case Game::TicTacToe:
             main_template<TicTacToe::State>();
