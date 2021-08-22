@@ -15,7 +15,7 @@ namespace std {
 namespace bench {
 
 template <typename ST>
-[[nodiscard]] auto get_benchmark_engine() {
+auto get_benchmark_engine() {
     auto out = Zero<ST>();
     out.use_rollout_limit(true);
     out.set_readout(false);

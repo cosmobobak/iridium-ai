@@ -54,43 +54,43 @@ template <class State>
         }
 
         // GETTERS
-        [[nodiscard]] auto get_state() -> State& {
+        auto get_state() -> State& {
             return board;
         }
 
-        [[nodiscard]] auto copy_state() const -> State {
+        auto copy_state() const -> State {
             return board;
         }
 
-        [[nodiscard]] auto get_children() const -> const std::vector<TreeNode*>& {
+        auto get_children() const -> const std::vector<TreeNode*>& {
             return children;
         }
 
-        [[nodiscard]] auto get_parent() const -> TreeNode* {
+        auto get_parent() const -> TreeNode* {
             return parent;
         }
 
-        [[nodiscard]] auto get_player_no() const -> int {
+        auto get_player_no() const -> int {
             return turn;
         }
 
-        [[nodiscard]] auto get_opponent() const -> int {
+        auto get_opponent() const -> int {
             return -turn;
         }
 
-        [[nodiscard]] auto get_win_score() const -> int {
+        auto get_win_score() const -> int {
             return win_count;
         }
 
-        [[nodiscard]] auto get_visit_count() const -> int {
+        auto get_visit_count() const -> int {
             return visits;
         }
 
-        [[nodiscard]] auto get_winrate() const -> double {
+        auto get_winrate() const -> double {
             return (double)win_count / (double)visits;
         }
 
-        [[nodiscard]] auto get_parent_visits() const -> int {
+        auto get_parent_visits() const -> int {
             return parent->get_visit_count();
         }
 
@@ -103,7 +103,7 @@ template <class State>
             ++visits;
         }
 
-        [[nodiscard]] auto random_child() const -> TreeNode* {
+        auto random_child() const -> TreeNode* {
             assert(!children.empty());
             auto range = children.size();
             auto index = random_int(range);
@@ -126,13 +126,13 @@ template <class State>
             }
         }
 
-        [[nodiscard]] auto best_child() const -> TreeNode* {
+        auto best_child() const -> TreeNode* {
             return *std::max_element(
                 children.begin(), children.end(),
                 [](TreeNode* a, TreeNode* b) { return (a->get_visit_count() < b->get_visit_count()); });
         }
 
-        [[nodiscard]] auto best_child_as_move() const -> Move {
+        auto best_child_as_move() const -> Move {
             auto result = std::max_element(
                 children.begin(), children.end(),
                 [](const TreeNode* a, const TreeNode* b) { return (a->get_visit_count() < b->get_visit_count()); });

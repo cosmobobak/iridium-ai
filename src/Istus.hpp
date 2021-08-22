@@ -45,7 +45,7 @@ class Istus {
     }
 
     // GETTERS
-    [[nodiscard]] auto get_player_move() const {
+    auto get_player_move() const {
         return node.get_player_move();
     }
 
@@ -53,20 +53,20 @@ class Istus {
         return node;
     }
 
-    [[nodiscard]] auto get_turn_modifier() const {
+    auto get_turn_modifier() const {
         return node.get_turn();
     }
 
-    [[nodiscard]] auto get_node_eval() const {
+    auto get_node_eval() const {
         return node.evaluate();
     }
 
-    [[nodiscard]] auto get_node_count() const {
+    auto get_node_count() const {
         return search_driver.get_nodes();
     }
 
     // PREDICATES
-    [[nodiscard]] auto is_game_over() const -> bool {
+    auto is_game_over() const -> bool {
         return node.is_game_over();
     }
 

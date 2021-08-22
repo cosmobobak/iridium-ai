@@ -1,9 +1,11 @@
 #pragma once
 
 #include <array>
+#include <bitset>
 #include <iostream>
 #include <vector>
-#include <bitset>
+
+#include "../utilities/rng.hpp"
 
 namespace Go {
 
@@ -65,7 +67,7 @@ class State {
 
     void random_play() {
         std::vector<Move> moves = legal_moves();
-        play(moves[rand() % moves.size()]);
+        play(rng::choice(moves));
     }
 
     void pass_turn() {

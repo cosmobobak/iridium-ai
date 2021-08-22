@@ -7,6 +7,8 @@
 #include <sstream>
 #include <vector>
 
+#include "../utilities/rng.hpp"
+
 namespace TicTacToe {
 
 class State {
@@ -27,32 +29,32 @@ class State {
     static constexpr auto BB_ALL = 0b111111111;
 
     // GETTERS
-    [[nodiscard]] auto get_turn() const -> int {
+    auto get_turn() const -> int {
         return (move_count & 1) ? -1 : 1;
     }
 
-    [[nodiscard]] auto get_move_count() const -> int {
+    auto get_move_count() const -> int {
         return move_count;
     }
 
-    [[nodiscard]] auto get_turn_index() const -> int {
+    auto get_turn_index() const -> int {
         return move_count & 1;
     }
 
-    [[nodiscard]] auto get_node() const -> const std::array<Bitboard, 2>& {
+    auto get_node() const -> const std::array<Bitboard, 2>& {
         return node;
     }
 
     // PREDICATES
-    [[nodiscard]] auto is_full() const -> bool {
+    auto is_full() const -> bool {
         return move_count == 9;
     }
 
-    [[nodiscard]] auto is_game_over() const -> bool {
+    auto is_game_over() const -> bool {
         return is_full() || evaluate();
     }
 
-    [[nodiscard]] auto is_legal(Move move) const -> bool {
+    auto is_legal(Move move) const -> bool {
         auto legals = legal_moves();
         return std::any_of(
             legals.begin(),
@@ -61,11 +63,11 @@ class State {
     }
 
     // MOVE GENERATION
-    [[nodiscard]] auto num_legal_moves() const -> size_t {
+    auto num_legal_moves() const -> size_t {
         return 9 - __builtin_popcount(node[0] | node[1]);
     }
 
-    [[nodiscard]] auto legal_moves() const -> std::vector<Move> {
+    auto legal_moves() const -> std::vector<Move> {
         Bitboard bb = node[0] | node[1];
         std::vector<Move> moves(9 - __builtin_popcount(bb));
         bb = ~bb & BB_ALL;
@@ -83,7 +85,7 @@ class State {
         int num_moves = 9 - __builtin_popcount(bb);
 
         // the chosen move
-        int choice = rand() % num_moves;
+        int choice = rng::random_int(num_moves);
 
         // this line creates an inverted occupancy for
         // the top row (0b0011000 -> 0b1100111)
@@ -100,16 +102,16 @@ class State {
     }
 
     // DATA VIEWS
-    [[nodiscard]] auto pos_filled(const int i) const -> bool {
+    auto pos_filled(const int i) const -> bool {
         return (node[0] | node[1]) & (1 << i);
     }
 
-    [[nodiscard]] auto player_at(const int i) const -> bool {
+    auto player_at(const int i) const -> bool {
         return node[0] & (1 << i);
         //only valid to use if pos_filled() returns true, true = x, false = y
     }
 
-    [[nodiscard]] auto probe_spot(int i) const -> bool {
+    auto probe_spot(int i) const -> bool {
         // tests the bit of the most recently played side
         return node[(move_count + 1) & 1] & (1 << i);
     }
@@ -152,7 +154,7 @@ class State {
     }
 
     // EVALUATION
-    [[nodiscard]] auto evaluate() const -> int {
+    auto evaluate() const -> int {
         // check first diagonal
         if (probe_spot(0) && probe_spot(4) && probe_spot(8)) {
             return -get_turn();
@@ -176,12 +178,12 @@ class State {
         return 0;
     }
 
-    [[nodiscard]] auto heuristic_value() const -> int {
+    auto heuristic_value() const -> int {
         return 0;
     }
 
     // I/O
-    [[nodiscard]] auto charat(int y, int x) const {
+    auto charat(int y, int x) const {
         if (pos_filled(x * 3 + y)) {
             if (player_at(x * 3 + y))
                 return 'X';
@@ -215,7 +217,7 @@ class State {
         std::cout << "}";
     }
 
-    [[nodiscard]] auto get_player_move() const -> Move {
+    auto get_player_move() const -> Move {
         show_legal_moves();
         std::cout << "\n--> ";
         int move;

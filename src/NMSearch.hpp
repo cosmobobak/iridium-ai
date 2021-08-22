@@ -70,7 +70,7 @@ class Negamax {
     }
 
     // GETTERS
-    [[nodiscard]] auto get_nodes() const -> int {
+    auto get_nodes() const -> int {
         return node_count;
     }
 
@@ -138,7 +138,7 @@ class Negamax {
         return a;
     }
 
-    [[nodiscard]] auto find_best_next_board(State node) -> State {
+    auto find_best_next_board(State node) -> State {
         reset_nodes();
         Move bestmove = 0; // valid but will always be changed by minimax
         int bestcase = N_INF;

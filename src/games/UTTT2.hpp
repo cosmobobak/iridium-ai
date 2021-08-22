@@ -8,6 +8,8 @@
 #include <sstream>
 #include <vector>
 
+#include "../utilities/rng.hpp"
+
 #define popcnt __builtin_popcount
 
 constexpr std::array masks = {
@@ -20,7 +22,7 @@ constexpr std::array masks = {
     0b100010001,
     0b001010100};
 
-[[nodiscard]] constexpr auto contains_mask(int bb) -> bool {
+constexpr auto contains_mask(int bb) -> bool {
     for (auto m : masks) {
         if ((bb & m) == m) {
             return true;
@@ -34,7 +36,7 @@ class Square3x3 {
    public:
     std::array<int16_t, 2> slots = {0};
 
-    [[nodiscard]] auto is_won() const -> bool {
+    auto is_won() const -> bool {
         for (auto mask : masks) {
             if ((slots[0] & mask) == mask) {
                 return true;
@@ -47,7 +49,7 @@ class Square3x3 {
     }
 
     template < int player >
-    [[nodiscard]] auto is_won_by() const -> bool {
+    auto is_won_by() const -> bool {
         for (auto mask : masks) {
             if ((slots[player] & mask) == mask)
                 return true;
@@ -55,11 +57,11 @@ class Square3x3 {
         return false;
     }
 
-    [[nodiscard]] auto is_dead() const -> bool {
+    auto is_dead() const -> bool {
         return is_won() || (slots[0] | slots[1]) == 0b111111111;
     }
 
-    [[nodiscard]] auto filled_slot_count() const -> int {
+    auto filled_slot_count() const -> int {
         return popcnt(slots[0] | slots[1]);
     }
 
@@ -103,24 +105,24 @@ class State {
     }
 
     // GETTERS
-    [[nodiscard]] auto get_turn() const -> int {
+    auto get_turn() const -> int {
         return (move_count & 1) ? -1 : 1;
     }
 
-    [[nodiscard]] auto get_move_count() const -> int {
+    auto get_move_count() const -> int {
         return move_count;
     }
 
-    [[nodiscard]] auto get_turn_index() const -> int {
+    auto get_turn_index() const -> int {
         return move_count & 1;
     }
 
-    [[nodiscard]] auto get_node() const -> const std::array<Square3x3, 9>& {
+    auto get_node() const -> const std::array<Square3x3, 9>& {
         return node;
     }
 
     template < int player >
-    [[nodiscard]] auto get_global_bitmask() const -> int {
+    auto get_global_bitmask() const -> int {
         int binary_accumulator = 0;
         for (const auto& sq : node) {
             binary_accumulator <<= 1;
@@ -136,7 +138,7 @@ class State {
 
     // PREDICATES
    private:
-    [[nodiscard]] auto cached_is_dead(int sq_idx) const -> bool {
+    auto cached_is_dead(int sq_idx) const -> bool {
         // NOTE FOR FUTURE COSMO: YOU HAVE USED THE mutable KEYWORD, HERE BE DRAGONS.
         if (square_ended_cache[sq_idx]) {
             return true;
@@ -146,7 +148,7 @@ class State {
         return death_status;
     }
 
-    [[nodiscard]] auto check_game_over() const -> bool {
+    auto check_game_over() const -> bool {
         for (auto sq_idx = 0; sq_idx < 9; ++sq_idx) {
             if (cached_is_dead(sq_idx)) {
                 return true;
@@ -157,7 +159,7 @@ class State {
             || contains_mask(get_global_bitmask<1>());
     }
    public:
-    [[nodiscard]] auto is_game_over() -> bool {
+    auto is_game_over() -> bool {
         if (move_count == MAX_GAME_LENGTH) {
             return true;
         }
@@ -172,7 +174,7 @@ class State {
         return last_gameover_val;
     }
 
-    [[nodiscard]] auto is_legal(Move move) const -> bool {
+    auto is_legal(Move move) const -> bool {
             auto legals = legal_moves();
             return std::any_of(
                 legals.begin(),
@@ -181,7 +183,7 @@ class State {
     }
 
     // MOVE GENERATION
-    [[nodiscard]] auto num_legal_moves() const -> size_t {
+    auto num_legal_moves() const -> size_t {
         if (current_forced_square == NO_SQUARE) {
             int count = 81;
             for (int sq_idx = 0; sq_idx < 9; ++sq_idx) {
@@ -197,7 +199,7 @@ class State {
         }
     }
 
-    [[nodiscard]] auto legal_moves() const -> std::vector<Move> {
+    auto legal_moves() const -> std::vector<Move> {
         std::vector<Move> moves(num_legal_moves());
         int i = 0;
         if (current_forced_square == NO_SQUARE) {
@@ -222,7 +224,7 @@ class State {
 
     void random_play() {
         assert(num_legal_moves() > 0);
-        int choice = rand() % num_legal_moves();
+        int choice = rng::random_int(num_legal_moves());
         if (current_forced_square == NO_SQUARE) {
             for (int sq_idx = 0; sq_idx < 9; ++sq_idx) {
                 if (!cached_is_dead(sq_idx)) {
@@ -312,7 +314,7 @@ class State {
     }
 
     // EVALUATION
-    [[nodiscard]] auto evaluate() const -> int {
+    auto evaluate() const -> int {
         // construct two binary numbers that represent the meta-board in the same way that the squares individually operate
         int xs = get_global_bitmask<0>();
         if (contains_mask(xs))
@@ -413,7 +415,7 @@ class State {
         std::cout << "}";
     }
 
-    [[nodiscard]] auto get_player_move() const -> Move {
+    auto get_player_move() const -> Move {
         show_legal_moves();
         std::cout << "\n--> ";
         int move;

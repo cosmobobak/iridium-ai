@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 
+#include "../utilities/rng.hpp"
+
 namespace Checkers {
 
 using Move = int;
@@ -65,9 +67,9 @@ class State {
 
     void random_play() {
         int col;
-        col = rand() % 7;
+        col = rng::random_int(7);
         while (node[0][col] != '.') {
-            col = rand() % 7;
+            col = rng::random_int(7);
         }
         play(col);
     }

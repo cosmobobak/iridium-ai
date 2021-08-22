@@ -1,10 +1,5 @@
 #pragma once
 
-#include <algorithm>
-#include <array>
-#include <iostream>
-#include <numeric>
-#include <vector>
 #include "Connect4.hpp"
 
 namespace Connect4x4 {

@@ -7,6 +7,8 @@
 #include <numeric>
 #include <vector>
 
+#include "../utilities/rng.hpp"
+
 namespace Connect4 {
 using Bitrow = uint_fast8_t;
 using Bitboard = unsigned long long;
@@ -35,15 +37,15 @@ class State {
     }
 
     // GETTERS
-    [[nodiscard]] auto get_turn() const -> int {
+    auto get_turn() const -> int {
         return (move_count & 1) ? -1 : 1;
     }
 
-    [[nodiscard]] auto get_move_count() const -> int {
+    auto get_move_count() const -> int {
         return move_count;
     }
 
-    [[nodiscard]] auto get_turn_index() const -> int {
+    auto get_turn_index() const -> int {
         return move_count & 1;
     }
 
@@ -53,15 +55,15 @@ class State {
     }
 
     // PREDICATES
-    [[nodiscard]] auto is_full() const -> bool {
+    auto is_full() const -> bool {
         return move_count == MAX_GAME_LENGTH;
     }
 
-    [[nodiscard]] auto is_game_over() const -> bool {
+    auto is_game_over() const -> bool {
         return is_full() || evaluate();
     }
 
-    [[nodiscard]] auto is_legal(Move move) const -> bool {
+    auto is_legal(Move move) const -> bool {
         auto legals = legal_moves();
         return std::any_of(
             legals.begin(),
@@ -70,13 +72,13 @@ class State {
     }
 
     // MOVE GENERATION
-    [[nodiscard]] auto num_legal_moves() const -> size_t {
+    auto num_legal_moves() const -> size_t {
         // this is a fast function to determine the number
         // of empty spaces on the top row
         return NUM_COLS - __builtin_popcount(union_bitboard(0));
     }
 
-    [[nodiscard]] auto legal_moves() const -> std::vector<Move> {
+    auto legal_moves() const -> std::vector<Move> {
         int bb = node[0][0] | node[1][0];
         // a vector to hold the generated moves
         std::vector<Move> moves(NUM_COLS - __builtin_popcount(bb));
@@ -106,7 +108,7 @@ class State {
 
         // the chosen move
         // assert(num_moves != 0);
-        int choice = rand() % num_moves;
+        int choice = random_int(num_moves);
 
         // this line creates an inverted occupancy for
         // the top row (0b0011000 -> 0b1100111)
@@ -132,7 +134,7 @@ class State {
     }
 
     // DATA VIEWS
-    [[nodiscard]] auto union_bitboard(int r) const -> Bitrow {
+    auto union_bitboard(int r) const -> Bitrow {
         // this function provides an occupancy number for a given row r, counting
         // downward, indexed from 0
         //
@@ -147,7 +149,7 @@ class State {
         return node[0][r] | node[1][r];
     }
 
-    [[nodiscard]] auto pos_filled(int row, int col) const -> bool {
+    auto pos_filled(int row, int col) const -> bool {
         // tests if a given location is filled, indexed by the row and column
         // this is done by indexing the row in the 2D array, then performing shifts
         // to produce a mask with only the desired bit. This mask is then AND-ed with
@@ -156,7 +158,7 @@ class State {
         return node[0][row] & (1 << col) || node[1][row] & (1 << col);
     }
 
-    [[nodiscard]] auto player_at(int row, int col) const -> bool {
+    auto player_at(int row, int col) const -> bool {
         // only valid to use if posFilled returns true
         // this function essentially performs the same job as posFilled
         // except it only checks against the first half of the array
@@ -165,7 +167,7 @@ class State {
         // true = X, false = O
     }
 
-    [[nodiscard]] auto probe_spot(int row, int col) const -> bool {
+    auto probe_spot(int row, int col) const -> bool {
         // tests the bit of the most recently played side
         return node[(move_count + 1) & 1][row] & (1 << col);
     }
@@ -236,7 +238,7 @@ class State {
 
     // EVALUATION
    private:
-    [[nodiscard]] auto horizontal_term() const -> int {
+    auto horizontal_term() const -> int {
         // check all the rows for horizontal 4-in-a-rows
         for (int row = 0; row < NUM_ROWS; row++) {
             for (int bitshift = 0; bitshift < NUM_COLS - 3; bitshift++) {
@@ -248,7 +250,7 @@ class State {
         return 0;  // no 4-in-a-rows found
     }
 
-    [[nodiscard]] auto vertical_term() const -> int {
+    auto vertical_term() const -> int {
         // check all the columns for vertical 4-in-a-rows
         for (int row = 0; row < NUM_ROWS - 3; row++) {
             for (int col = 0; col < NUM_COLS; col++) {
@@ -261,7 +263,7 @@ class State {
         return 0;  // no 4-in-a-rows found
     }
 
-    [[nodiscard]] auto diagup_term() const -> int {
+    auto diagup_term() const -> int {
         // check all the upward diagonals for 4-in-a-rows
         for (int row = 3; row < NUM_ROWS; row++) {
             for (int col = 0; col < NUM_COLS - 3; col++) {
@@ -274,7 +276,7 @@ class State {
         return 0;  // no 4-in-a-rows found
     }
 
-    [[nodiscard]] auto diagdown_term() const -> int {
+    auto diagdown_term() const -> int {
         // check all the downward diagonals for 4-in-a-rows
         for (int row = 0; row < NUM_ROWS - 3; row++) {
             for (int col = 0; col < NUM_COLS - 3; col++) {
@@ -287,7 +289,7 @@ class State {
         return 0;  // no 4-in-a-rows found
     }
    public:
-    [[nodiscard]] auto evaluate() const -> int {
+    auto evaluate() const -> int {
         int h = horizontal_term();
         if (h)
             return h;
@@ -301,11 +303,11 @@ class State {
         return diagdown_term();
     }
 
-    [[nodiscard]] auto in_bounds(int row, int col) const -> bool {
+    auto in_bounds(int row, int col) const -> bool {
         return row >= 0 && row < NUM_ROWS && col >= 0 && col < NUM_COLS;
     }
 
-    [[nodiscard]] auto heuristic_value() const -> int {
+    auto heuristic_value() const -> int {
         int val = 0;
         for (int row = 0; row < NUM_ROWS; row++) {
             for (int i = 0; i < NUM_COLS; i++) {
@@ -316,12 +318,12 @@ class State {
     }
 
     // DATA GENERATION
-    [[nodiscard]] auto game_running() const -> bool {
+    auto game_running() const -> bool {
         // the game is over if the board is filled up or someone has 4-in-a-row
         return (!is_full() && evaluate() == 0);
     }
 
-    [[nodiscard]] auto game_result() const -> int {
+    auto game_result() const -> int {
         if (!is_game_over()) {
             std::cerr << "game_result() called on in-progress game.\n";
             return -2;
@@ -329,7 +331,7 @@ class State {
         return evaluate();
     }
 
-    [[nodiscard]] auto get_position_contents(int row, int col) const -> int {
+    auto get_position_contents(int row, int col) const -> int {
         if (pos_filled(row, col)) {
             if (player_at(row, col)) {
                 return 1;
@@ -341,7 +343,7 @@ class State {
         }
     }
 
-    [[nodiscard]] auto vectorise_board() const -> std::vector<int> {
+    auto vectorise_board() const -> std::vector<int> {
         std::vector<int> out(NUM_ROWS * NUM_COLS);
         for (int row = 0; row < NUM_ROWS; row++) {
             for (int col = 0; col < NUM_COLS; col++) {
@@ -382,7 +384,7 @@ class State {
         std::cout << "}";
     }
 
-    [[nodiscard]] auto get_player_move() const -> Move {
+    auto get_player_move() const -> Move {
         show_legal_moves();
         std::cout << "\n--> ";
         int move;

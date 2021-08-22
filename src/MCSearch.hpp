@@ -114,11 +114,11 @@ class MCTS {
     }
 
     // GETTERS
-    [[nodiscard]] auto get_nodes() const -> int {
+    auto get_nodes() const -> int {
         return node_count;
     }
 
-    [[nodiscard]] auto get_most_recent_winrate() const -> double {
+    auto get_most_recent_winrate() const -> double {
         return last_winloss;
     }
 

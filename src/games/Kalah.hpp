@@ -6,6 +6,8 @@
 #include <numeric>
 #include <vector>
 
+#include "../utilities/rng.hpp"
+
 namespace Kalah {
 
 class State {
@@ -104,7 +106,7 @@ class State {
 
         // the chosen move
         // assert(num_moves != 0);
-        int choice = rand() % num_moves;
+        int choice = rng::random_int(num_moves);
 
         // this line creates an inverted occupancy for
         // the top row (0b0011000 -> 0b1100111)

@@ -56,33 +56,33 @@ class Zero {
     }
 
     // GETTERS
-    [[nodiscard]] auto get_player_move() const -> Move {
+    auto get_player_move() const -> Move {
         return node.get_player_move();
     }
 
-    [[nodiscard]] auto get_node() -> State& {
+    auto get_node() -> State& {
         return node;
     }
 
-    [[nodiscard]] auto get_turn_modifier() const -> int {
+    auto get_turn_modifier() const -> int {
         return node.get_turn();
     }
 
-    [[nodiscard]] auto get_node_eval() const -> int {
+    auto get_node_eval() const -> int {
         return node.evaluate();
     }
 
-    [[nodiscard]] auto get_node_count() const {
+    auto get_node_count() const {
         return search_driver.get_nodes();
     }
 
-    [[nodiscard]] auto get_win_prediction() const -> double {
+    auto get_win_prediction() const -> double {
         // multiplies by 10 to get a weighted win-per-node percentage
         return 10 * search_driver.get_most_recent_winrate();
     }
 
     // PREDICATES
-    [[nodiscard]] auto is_game_over() -> bool {
+    auto is_game_over() -> bool {
         return node.is_game_over();
     }
 
@@ -96,7 +96,7 @@ class Zero {
         node = search_driver.find_best_next_board(node);
     }
 
-    [[nodiscard]] auto rollout_vector(State node) {
+    auto rollout_vector(State node) {
         std::vector<int> child_rollout_counts = search_driver.get_rollout_counts(node);
         std::vector<int> out(7);
         int idx = 0;
@@ -106,7 +106,7 @@ class Zero {
         return out;
     }
 
-    [[nodiscard]] auto make_sample_move(const std::vector<int>& dist, State model) {
+    auto make_sample_move(const std::vector<int>& dist, State model) {
         int mod = std::reduce(dist.begin(), dist.end());
         // assert(mod != 0);
         int num = rand() % mod;
@@ -120,7 +120,7 @@ class Zero {
         return model;
     }
 
-    [[nodiscard]] auto make_epsilon_greedy_move(const std::vector<int>& dist, State model) {
+    auto make_epsilon_greedy_move(const std::vector<int>& dist, State model) {
         double r = (double)rand() / (double)RAND_MAX;
         int move;
         if (r > epsilon) {
