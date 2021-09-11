@@ -6,7 +6,7 @@
 
 #include "games/Connect4-4x4.hpp"
 #include "games/Connect4.hpp"
-#include "games/Gomoku.hpp"
+// #include "games/Gomoku.hpp"
 #include "games/TicTacToe.hpp"
 #include "games/UTTT2.hpp"
 #include "utilities/rng.hpp"
@@ -105,11 +105,7 @@ template <class State>
 
         auto random_child() const -> TreeNode* {
             assert(!children.empty());
-            auto range = children.size();
-            auto index = random_int(range);
-            // assert index is in range
-            assert(index >= 0 && index < range);
-            return children[index];
+            return rng::choice(children);
         }
 
         void expand() {
@@ -118,6 +114,8 @@ template <class State>
             int idx = 0;
             for (int move : board.legal_moves()) {
                 board.play(move);
+                // TODO: minimise indirect writes
+                // add this shit to the constructor
                 children[idx] = new TreeNode(board);
                 children[idx]->set_parent(this);
                 children[idx]->set_player_no(get_opponent());
