@@ -14,15 +14,15 @@
 #include <vector>
 
 // #include "Checkers.hpp"
-#include "Connect4-4x4.hpp"
-#include "Connect4.hpp"
+#include "games/Connect4-4x4.hpp"
+#include "games/Connect4.hpp"
 // #include "Go.hpp"
-#include "Gomoku.hpp"
-#include "RawTree.hpp"
-#include "TicTacToe.hpp"
-#include "UTTT.hpp"
+#include "games/Gomoku.hpp"
+// #include "RawTree.hpp"
+#include "games/TicTacToe.hpp"
+#include "games/UTTT2.hpp"
 
-template <class GameType, typename Move>
+template <class GameType>
 class Perft {
    public:
     GameType node;
@@ -32,7 +32,7 @@ class Perft {
         if (n == 0) {
             nodes++;
         } else {
-            for (Move move : node.legal_moves()) {
+            for (auto move : node.legal_moves()) {
                 node.play(move);
                 perftx(n - 1);
                 node.unplay();
@@ -66,13 +66,13 @@ int main(int argc, char const *argv[]) {
     std::cin >> response;
 
     // Perft<Checkers::State> engine1;
-    Perft<Connect4::State, Connect4::Move> engine2;
-    Perft<Connect4x4::State, Connect4x4::Move> engine3;
+    Perft<Connect4::State<6, 7>> engine2;
+    Perft<Connect4x4::State> engine3;
     // Perft<Go::State> engine4;
-    Perft<Gomoku::State, Gomoku::Move> engine5;
-    Perft<RawTree::State, RawTree::Move> engine6;
-    Perft<TicTacToe::State, TicTacToe::Move> engine7;
-    Perft<UTTT::State, UTTT::Move> engine8;
+    Perft<Gomoku::State<8, 8>> engine5;
+    // Perft<RawTree::State, RawTree::Move> engine6;
+    Perft<TicTacToe::State> engine7;
+    Perft<UTTT::State> engine8;
 
     switch (response) {
         // case Games::Checkers:
@@ -100,11 +100,11 @@ int main(int argc, char const *argv[]) {
                 engine5.perft(i);
             }
             break;
-        case Games::RawTree:
-            for (int i = 0; i < 2; i++) {
-                engine6.perft(i);
-            }
-            break;
+        // case Games::RawTree:
+        //     for (int i = 0; i < 2; i++) {
+        //         engine6.perft(i);
+        //     }
+        //     break;
         case Games::TicTacToe:
             for (int i = 0; i < 9; i++) {
                 engine7.perft(i);
