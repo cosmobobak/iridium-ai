@@ -1,7 +1,5 @@
 #include <iostream>
 
-#include "games/UTTT2.hpp"
-#include "games/TicTacToe.hpp"
 #include "iridium-ai.hpp"
 
 using namespace Iridium;
