@@ -36,6 +36,8 @@ template <class State>
             }
         }
 
+        TreeNode(const State& board, TreeNode* parent, int turn) : board(board), parent(parent), turn(turn) {}
+
         // SETTERS
         void set_state(const State& board) {
             this->board = board;
@@ -110,24 +112,18 @@ template <class State>
 
         void expand() {
             assert(board.num_legal_moves() == board.legal_moves().size());
-            children.resize(board.num_legal_moves());
-            int idx = 0;
+            children.reserve(board.num_legal_moves());
             for (int move : board.legal_moves()) {
                 board.play(move);
-                // TODO: minimise indirect writes
-                // add this shit to the constructor
-                children[idx] = new TreeNode(board);
-                children[idx]->set_parent(this);
-                children[idx]->set_player_no(get_opponent());
+                children.push_back(new TreeNode(board, this, get_opponent()));
                 board.unplay(move);
-                ++idx;
             }
         }
 
         auto best_child() const -> TreeNode* {
             return *std::max_element(
                 children.begin(), children.end(),
-                [](TreeNode* a, TreeNode* b) { return (a->get_visit_count() < b->get_visit_count()); });
+                [](const TreeNode* a, const TreeNode* b) { return (a->get_visit_count() < b->get_visit_count()); });
         }
 
         auto best_child_as_move() const -> Move {
