@@ -121,9 +121,10 @@ template <class State>
         }
 
         auto best_child() const -> TreeNode* {
-            return *std::max_element(
+            auto max = std::max_element(
                 children.begin(), children.end(),
                 [](const TreeNode* a, const TreeNode* b) { return (a->get_visit_count() < b->get_visit_count()); });
+            return *max;
         }
 
         auto best_child_as_move() const -> Move {

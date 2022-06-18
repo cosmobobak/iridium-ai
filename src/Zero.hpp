@@ -5,6 +5,7 @@
 // #include <execution>
 #include <vector>
 
+#include "utilities/rng.hpp"
 #include "MCSearch.hpp"
 
 // Possible heuristic improvement: use a long search to generate MCTS values for each starting square, use them as a heuristic starter.
@@ -126,7 +127,8 @@ class Zero {
         if (r > epsilon) {
             move = std::distance(dist.begin(), std::max_element(dist.begin(), dist.end()));
         } else {
-            move = rand() % dist.size();
+            // move = rand() % dist.size();
+            move = rng::random_int(dist.size());
         }
         model.play(move);
         return model;

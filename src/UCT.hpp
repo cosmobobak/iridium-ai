@@ -5,7 +5,7 @@
 
 #include "games/Connect4-4x4.hpp"
 #include "games/Connect4.hpp"
-#include "games/Gomoku.hpp"
+// #include "games/Gomoku.hpp"
 #include "games/TicTacToe.hpp"
 #include "games/UTTT2.hpp"
 

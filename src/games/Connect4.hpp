@@ -107,7 +107,7 @@ class State {
         int num_moves = NUM_COLS - __builtin_popcount(bb);
 
         // the chosen move
-        // assert(num_moves != 0);
+        assert(num_moves != 0);
         int choice = rng::random_int(num_moves);
 
         // this line creates an inverted occupancy for

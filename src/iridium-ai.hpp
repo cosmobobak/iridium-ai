@@ -50,7 +50,7 @@ template <class State>
 void run_mcts_engine(const long long TL) {
     auto engine = Zero<State>(TL);
     engine.set_debug(false);
-    engine.set_readout(false);
+    engine.set_readout(true);
     engine.use_time_limit(true);
     engine.set_time_limit(TL);
     typename State::Move i;
